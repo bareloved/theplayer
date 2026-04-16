@@ -208,9 +208,10 @@ struct ContentView: View {
             loopRegion = nil
             loadError = nil
             NSDocumentController.shared.noteNewRecentDocumentURL(url)
+            let fallbackTitle = url.deletingPathExtension().lastPathComponent
             libraryService.addSong(
                 filePath: url.path,
-                title: audioEngine.title,
+                title: audioEngine.title.isEmpty ? fallbackTitle : audioEngine.title,
                 artist: audioEngine.artist,
                 bpm: analysisService.lastAnalysis?.bpm ?? 0,
                 duration: audioEngine.duration

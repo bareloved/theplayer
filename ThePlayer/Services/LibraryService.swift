@@ -75,6 +75,12 @@ final class LibraryService {
         library.songs[index].totalPracticeTime += seconds
     }
 
+    func renameSong(songId: UUID, title: String) {
+        guard let index = library.songIndex(byId: songId) else { return }
+        library.songs[index].title = title
+        save()
+    }
+
     func relocateSong(songId: UUID, newPath: String) {
         guard let index = library.songIndex(byId: songId) else { return }
         library.songs[index].filePath = newPath

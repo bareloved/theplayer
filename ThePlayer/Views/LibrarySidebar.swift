@@ -196,24 +196,47 @@ private struct SongRow: View {
     let libraryService: LibraryService
     let onSelect: () -> Void
 
+    @State private var isRenaming = false
+    @State private var renameText = ""
+
     var body: some View {
-        Button(action: onSelect) {
-            HStack {
-                Text(song.title.isEmpty ? "Unknown Title" : song.title)
-                    .lineLimit(1)
-                Spacer()
-                if !song.fileExists {
-                    Text("Missing")
-                        .font(.caption)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(.orange.opacity(0.2), in: RoundedRectangle(cornerRadius: 4))
-                        .foregroundStyle(.orange)
+        Group {
+            if isRenaming {
+                TextField("Song name", text: $renameText)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit {
+                        let trimmed = renameText.trimmingCharacters(in: .whitespaces)
+                        if !trimmed.isEmpty {
+                            libraryService.renameSong(songId: song.id, title: trimmed)
+                        }
+                        isRenaming = false
+                    }
+                    .onExitCommand { isRenaming = false }
+            } else {
+                Button(action: onSelect) {
+                    HStack {
+                        Text(song.title.isEmpty ? "Unknown Title" : song.title)
+                            .lineLimit(1)
+                        Spacer()
+                        if !song.fileExists {
+                            Text("Missing")
+                                .font(.caption)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(.orange.opacity(0.2), in: RoundedRectangle(cornerRadius: 4))
+                                .foregroundStyle(.orange)
+                        }
+                    }
                 }
+                .buttonStyle(.plain)
             }
         }
-        .buttonStyle(.plain)
         .contextMenu {
+            Button("Rename...") {
+                renameText = song.title
+                isRenaming = true
+            }
+            Divider()
             if !libraryService.library.setlists.isEmpty {
                 Menu("Add to Setlist...") {
                     ForEach(libraryService.library.setlists) { setlist in
@@ -227,11 +250,11 @@ private struct SongRow: View {
                 Menu("Add to Playlist...") {
                     ForEach(libraryService.library.playlists) { playlist in
                         Button(playlist.name) {
-                            libraryService.addSongToPlaylist(songId: song.id, playlistId: playlist.id)
+                                    libraryService.addSongToPlaylist(songId: song.id, playlistId: playlist.id)
+                                }
+                            }
                         }
                     }
-                }
-            }
         }
     }
 }
