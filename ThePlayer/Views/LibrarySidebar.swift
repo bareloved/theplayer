@@ -27,7 +27,7 @@ struct LibrarySidebar: View {
                     let recent = libraryService.library.recentSongs()
                     if recent.isEmpty {
                         Text("No recent songs")
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .padding(.vertical, 2)
                     } else {
@@ -44,8 +44,8 @@ struct LibrarySidebar: View {
                     }
                 } label: {
                     Label("Recent", systemImage: "clock")
-                        .font(.caption)
-                        .fontWeight(.semibold)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundStyle(.secondary)
                         .textCase(nil)
                 }
@@ -67,27 +67,27 @@ struct LibrarySidebar: View {
                         HStack {
                             TextField("Setlist name", text: $newSetlistName)
                                 .textFieldStyle(.plain)
-                                .font(.caption)
+                                .font(.subheadline)
                                 .onSubmit { submitNewSetlist() }
                             Button("Add", action: submitNewSetlist)
-                                .font(.caption2)
+                                .font(.subheadline)
                             Button("Cancel") { isAddingSetlist = false; newSetlistName = "" }
-                                .font(.caption2)
+                                .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
                         .padding(.vertical, 2)
                     } else {
                         Button(action: { isAddingSetlist = true }) {
                             Label("New Setlist", systemImage: "plus")
-                                .font(.caption)
+                                .font(.subheadline)
                         }
                         .buttonStyle(.plain)
                         .foregroundStyle(.secondary)
                     }
                 } label: {
                     Label("Setlists", systemImage: "music.note.list")
-                        .font(.caption)
-                        .fontWeight(.semibold)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundStyle(.secondary)
                         .textCase(nil)
                 }
@@ -108,27 +108,27 @@ struct LibrarySidebar: View {
                         HStack {
                             TextField("Playlist name", text: $newPlaylistName)
                                 .textFieldStyle(.plain)
-                                .font(.caption)
+                                .font(.subheadline)
                                 .onSubmit { submitNewPlaylist() }
                             Button("Add", action: submitNewPlaylist)
-                                .font(.caption2)
+                                .font(.subheadline)
                             Button("Cancel") { isAddingPlaylist = false; newPlaylistName = "" }
-                                .font(.caption2)
+                                .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
                         .padding(.vertical, 2)
                     } else {
                         Button(action: { isAddingPlaylist = true }) {
                             Label("New Playlist", systemImage: "plus")
-                                .font(.caption)
+                                .font(.subheadline)
                         }
                         .buttonStyle(.plain)
                         .foregroundStyle(.secondary)
                     }
                 } label: {
                     Label("Playlists", systemImage: "music.note")
-                        .font(.caption)
-                        .fontWeight(.semibold)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundStyle(.secondary)
                         .textCase(nil)
                 }
@@ -140,7 +140,7 @@ struct LibrarySidebar: View {
                     let songs = libraryService.library.mostPracticed()
                     if songs.isEmpty {
                         Text("No songs yet")
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .padding(.vertical, 2)
                     } else {
@@ -157,8 +157,8 @@ struct LibrarySidebar: View {
                     }
                 } label: {
                     Label("Most Practiced", systemImage: "star.fill")
-                        .font(.caption)
-                        .fontWeight(.semibold)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundStyle(.secondary)
                         .textCase(nil)
                 }
@@ -167,7 +167,7 @@ struct LibrarySidebar: View {
                     let songs = libraryService.library.needsWork()
                     if songs.isEmpty {
                         Text("All caught up!")
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .padding(.vertical, 2)
                     } else {
@@ -184,15 +184,15 @@ struct LibrarySidebar: View {
                     }
                 } label: {
                     Label("Needs Work", systemImage: "exclamationmark.triangle")
-                        .font(.caption)
-                        .fontWeight(.semibold)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundStyle(.secondary)
                         .textCase(nil)
                 }
             }
         }
         .listStyle(.sidebar)
-        .frame(minWidth: 200, idealWidth: 220)
+        .frame(minWidth: 160, idealWidth: 180, maxWidth: 350)
     }
 
     private func submitNewSetlist() {
@@ -237,11 +237,11 @@ private struct SongRow: View {
             HStack(spacing: 6) {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(song.title.isEmpty ? "Unknown Title" : song.title)
-                        .font(.caption)
+                        .font(.subheadline)
                         .lineLimit(1)
                     if !song.artist.isEmpty {
                         Text(song.artist)
-                            .font(.caption2)
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
@@ -250,7 +250,7 @@ private struct SongRow: View {
 
                 if !song.fileExists {
                     Text("Missing")
-                        .font(.caption2)
+                        .font(.subheadline)
                         .padding(.horizontal, 4)
                         .padding(.vertical, 1)
                         .background(.orange.opacity(0.2), in: RoundedRectangle(cornerRadius: 3))
@@ -304,24 +304,24 @@ private struct SetlistRow: View {
                     }) {
                         HStack(spacing: 6) {
                             Text("\(index + 1)")
-                                .font(.caption2)
+                                .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .frame(width: 16, alignment: .trailing)
 
                             if libraryService.activeSetlistId == setlist.id &&
                                libraryService.activeSetlistIndex == index {
                                 Image(systemName: "speaker.wave.2.fill")
-                                    .font(.caption2)
+                                    .font(.subheadline)
                                     .foregroundStyle(.blue)
                             }
 
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(song.title.isEmpty ? "Unknown Title" : song.title)
-                                    .font(.caption)
+                                    .font(.subheadline)
                                     .lineLimit(1)
                                 if !song.artist.isEmpty {
                                     Text(song.artist)
-                                        .font(.caption2)
+                                        .font(.subheadline)
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)
                                 }
@@ -330,7 +330,7 @@ private struct SetlistRow: View {
 
                             if !song.fileExists {
                                 Text("Missing")
-                                    .font(.caption2)
+                                    .font(.subheadline)
                                     .padding(.horizontal, 4)
                                     .padding(.vertical, 1)
                                     .background(.orange.opacity(0.2), in: RoundedRectangle(cornerRadius: 3))
@@ -343,7 +343,7 @@ private struct SetlistRow: View {
             }
         } label: {
             Text(setlist.name)
-                .font(.caption)
+                .font(.subheadline)
         }
     }
 }
@@ -365,11 +365,11 @@ private struct PlaylistRow: View {
                         HStack(spacing: 6) {
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(song.title.isEmpty ? "Unknown Title" : song.title)
-                                    .font(.caption)
+                                    .font(.subheadline)
                                     .lineLimit(1)
                                 if !song.artist.isEmpty {
                                     Text(song.artist)
-                                        .font(.caption2)
+                                        .font(.subheadline)
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)
                                 }
@@ -378,7 +378,7 @@ private struct PlaylistRow: View {
 
                             if !song.fileExists {
                                 Text("Missing")
-                                    .font(.caption2)
+                                    .font(.subheadline)
                                     .padding(.horizontal, 4)
                                     .padding(.vertical, 1)
                                     .background(.orange.opacity(0.2), in: RoundedRectangle(cornerRadius: 3))
@@ -391,7 +391,7 @@ private struct PlaylistRow: View {
             }
         } label: {
             Text(playlist.name)
-                .font(.caption)
+                .font(.subheadline)
         }
     }
 }
