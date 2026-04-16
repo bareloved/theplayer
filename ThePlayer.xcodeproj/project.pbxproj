@@ -35,6 +35,8 @@
 		A44ABC5715449232881FEF2A /* LoopRegionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB55C97EE8D9174F2C168E60 /* LoopRegionTests.swift */; };
 		B9F24165A95CEDA996213188 /* icon-source.svg in Resources */ = {isa = PBXBuildFile; fileRef = 06CC75C68AC33420992162FC /* icon-source.svg */; };
 		C339330ACCB11423558D7164 /* TrackAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5D5329004D98673486A598 /* TrackAnalysis.swift */; };
+		C4974526D99B1B285A028313 /* ResizableDivider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593AB2B4DACBC6FD4D8B2392 /* ResizableDivider.swift */; };
+		C6356943CA5A3561E3A3B7D7 /* UserEdits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65A31A0CA84FC217AAF08758 /* UserEdits.swift */; };
 		CAD3D2C0E3CD0C4850EFE74C /* ThePlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E6BE5FCB69D04322BDEA0A /* ThePlayerTests.swift */; };
 		E961C393569D82BC0011A993 /* EssentiaAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 80465283817407589D4C9CAE /* EssentiaAnalyzer.mm */; };
 		E9E5CE8A32EC4A4C6BD27FC4 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15F32C86DE7BF5020059DDBD /* WaveformView.swift */; };
@@ -72,9 +74,11 @@
 		4F1524C5706C8153F2068B56 /* TrackAnalysisTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackAnalysisTests.swift; sourceTree = "<group>"; };
 		500D286F761A41D53CCF8686 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		521777D67BC2502BC0D6E99F /* AudioEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngineTests.swift; sourceTree = "<group>"; };
+		593AB2B4DACBC6FD4D8B2392 /* ResizableDivider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResizableDivider.swift; sourceTree = "<group>"; };
 		5B90B39E3821807779A9F94D /* WaveformExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformExtractorTests.swift; sourceTree = "<group>"; };
 		600A5459E47854F1CF8EC9F3 /* Setlist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Setlist.swift; sourceTree = "<group>"; };
 		6327F1C2D46EE4A82E637B82 /* EssentiaAnalyzer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EssentiaAnalyzer.h; sourceTree = "<group>"; };
+		65A31A0CA84FC217AAF08758 /* UserEdits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserEdits.swift; sourceTree = "<group>"; };
 		6AB8B7EC78716DFB858C2274 /* AudioSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSection.swift; sourceTree = "<group>"; };
 		6E87A69A0986B002C10713F7 /* TransportBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransportBar.swift; sourceTree = "<group>"; };
 		743EBB1DA28F3FD0555C76F6 /* SpeedPitchControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedPitchControl.swift; sourceTree = "<group>"; };
@@ -134,6 +138,7 @@
 				1DF3AFF5AC44F19D8405CDA3 /* SnapDivision.swift */,
 				2ADD12242074A22EC6EB1E5A /* SongEntry.swift */,
 				7A5D5329004D98673486A598 /* TrackAnalysis.swift */,
+				65A31A0CA84FC217AAF08758 /* UserEdits.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -172,6 +177,7 @@
 			children = (
 				2186B684F94740C4334F974F /* ContentView.swift */,
 				A03B07752B72C37B23CFD647 /* LibrarySidebar.swift */,
+				593AB2B4DACBC6FD4D8B2392 /* ResizableDivider.swift */,
 				8982BCF190C14AE590C2261C /* SettingsView.swift */,
 				500D286F761A41D53CCF8686 /* SidebarView.swift */,
 				743EBB1DA28F3FD0555C76F6 /* SpeedPitchControl.swift */,
@@ -321,6 +327,7 @@
 				1DD288275F6BB9DFFD015A75 /* MockAnalyzer.swift in Sources */,
 				6DC4215F33F35BA2B290157B /* PlayerLibrary.swift in Sources */,
 				022C36FCB67CD59CD64513A4 /* Playlist.swift in Sources */,
+				C4974526D99B1B285A028313 /* ResizableDivider.swift in Sources */,
 				A3617ECD46F2CFFC5E82B380 /* Setlist.swift in Sources */,
 				7861515EFBEFE53E2F5D6A96 /* SettingsView.swift in Sources */,
 				3B3606F64ACDF745EBCA9F0B /* SidebarView.swift in Sources */,
@@ -331,6 +338,7 @@
 				C339330ACCB11423558D7164 /* TrackAnalysis.swift in Sources */,
 				2C6D74E899222C88A40C98D5 /* TrackAnalyzerProtocol.swift in Sources */,
 				4028603B18FBAA929F339EB0 /* TransportBar.swift in Sources */,
+				C6356943CA5A3561E3A3B7D7 /* UserEdits.swift in Sources */,
 				7A083D949ED86A7019CA3554 /* WaveformExtractor.swift in Sources */,
 				E9E5CE8A32EC4A4C6BD27FC4 /* WaveformView.swift in Sources */,
 			);
@@ -358,7 +366,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"1\", \"CFBundleDisplayName\": \"The Player\", \"CFBundleShortVersionString\": \"1.0\", \"LSMinimumSystemVersion\": \"14.0\"]";
+				INFOPLIST_VALUES = "[\"CFBundleShortVersionString\": \"1.0\", \"CFBundleVersion\": \"1\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -465,7 +473,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"1\", \"CFBundleDisplayName\": \"The Player\", \"CFBundleShortVersionString\": \"1.0\", \"LSMinimumSystemVersion\": \"14.0\"]";
+				INFOPLIST_VALUES = "[\"CFBundleShortVersionString\": \"1.0\", \"CFBundleVersion\": \"1\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
