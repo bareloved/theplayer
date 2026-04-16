@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var pendingLoopStart: Float?
     @State private var loadError: String?
     @State private var showErrorAlert = false
+    @State private var keyMonitor: Any?
 
     var body: some View {
         NavigationSplitView {
@@ -54,75 +55,8 @@ struct ContentView: View {
                 audioEngine.playLoop()
             }
         }
-        .onKeyPress(.space) {
-            audioEngine.togglePlayPause()
-            return .handled
-        }
-        .onKeyPress(.leftArrow) {
-            let beats = analysisService.lastAnalysis?.beats ?? []
-            if !beats.isEmpty {
-                let target = LoopRegion.snapToNearestBeat(
-                    time: audioEngine.currentTime - 0.1,
-                    beats: beats.filter { $0 < audioEngine.currentTime - 0.1 }
-                )
-                audioEngine.seek(to: max(target, 0))
-            } else {
-                audioEngine.skipBackward()
-            }
-            return .handled
-        }
-        .onKeyPress(.rightArrow) {
-            let beats = analysisService.lastAnalysis?.beats ?? []
-            if !beats.isEmpty {
-                let target = LoopRegion.snapToNearestBeat(
-                    time: audioEngine.currentTime + 0.1,
-                    beats: beats.filter { $0 > audioEngine.currentTime + 0.1 }
-                )
-                audioEngine.seek(to: min(target, audioEngine.duration))
-            } else {
-                audioEngine.skipForward()
-            }
-            return .handled
-        }
-        .onKeyPress(.upArrow) {
-            audioEngine.speed += 0.05
-            return .handled
-        }
-        .onKeyPress(.downArrow) {
-            audioEngine.speed -= 0.05
-            return .handled
-        }
-        .onKeyPress(KeyEquivalent("[")) {
-            audioEngine.pitch -= 1
-            return .handled
-        }
-        .onKeyPress(KeyEquivalent("]")) {
-            audioEngine.pitch += 1
-            return .handled
-        }
-        .onKeyPress(KeyEquivalent("l")) {
-            if loopRegion != nil {
-                loopRegion = nil
-            }
-            return .handled
-        }
-        .onKeyPress(KeyEquivalent("1")) { jumpToSection(1) }
-        .onKeyPress(KeyEquivalent("2")) { jumpToSection(2) }
-        .onKeyPress(KeyEquivalent("3")) { jumpToSection(3) }
-        .onKeyPress(KeyEquivalent("4")) { jumpToSection(4) }
-        .onKeyPress(KeyEquivalent("5")) { jumpToSection(5) }
-        .onKeyPress(KeyEquivalent("6")) { jumpToSection(6) }
-        .onKeyPress(KeyEquivalent("7")) { jumpToSection(7) }
-        .onKeyPress(KeyEquivalent("8")) { jumpToSection(8) }
-        .onKeyPress(KeyEquivalent("9")) { jumpToSection(9) }
-        .onKeyPress(.escape) {
-            loopRegion = nil
-            selectedSection = nil
-            pendingLoopStart = nil
-            isSettingLoop = false
-            return .handled
-        }
-        .focusable()
+        .onAppear { installKeyMonitor() }
+        .onDisappear { removeKeyMonitor() }
         .onReceive(NotificationCenter.default.publisher(for: .openAudioFile)) { notification in
             if let url = notification.object as? URL {
                 openFile(url: url)
@@ -245,15 +179,99 @@ struct ContentView: View {
         }
     }
 
-    private func jumpToSection(_ index: Int) -> KeyPress.Result {
+    private func installKeyMonitor() {
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if handleKeyEvent(event) { return nil }
+            return event
+        }
+    }
+
+    private func removeKeyMonitor() {
+        if let monitor = keyMonitor {
+            NSEvent.removeMonitor(monitor)
+            keyMonitor = nil
+        }
+    }
+
+    private func handleKeyEvent(_ event: NSEvent) -> Bool {
+        // Don't intercept when modifier keys are held (except shift)
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        if flags.contains(.command) || flags.contains(.control) || flags.contains(.option) {
+            return false
+        }
+
+        switch event.keyCode {
+        case 49: // Space
+            audioEngine.togglePlayPause()
+            return true
+        case 123: // Left arrow
+            let beats = analysisService.lastAnalysis?.beats ?? []
+            if !beats.isEmpty {
+                let target = LoopRegion.snapToNearestBeat(
+                    time: audioEngine.currentTime - 0.1,
+                    beats: beats.filter { $0 < audioEngine.currentTime - 0.1 }
+                )
+                audioEngine.seek(to: max(target, 0))
+            } else {
+                audioEngine.skipBackward()
+            }
+            return true
+        case 124: // Right arrow
+            let beats = analysisService.lastAnalysis?.beats ?? []
+            if !beats.isEmpty {
+                let target = LoopRegion.snapToNearestBeat(
+                    time: audioEngine.currentTime + 0.1,
+                    beats: beats.filter { $0 > audioEngine.currentTime + 0.1 }
+                )
+                audioEngine.seek(to: min(target, audioEngine.duration))
+            } else {
+                audioEngine.skipForward()
+            }
+            return true
+        case 126: // Up arrow
+            audioEngine.speed += 0.05
+            return true
+        case 125: // Down arrow
+            audioEngine.speed -= 0.05
+            return true
+        case 33: // [
+            audioEngine.pitch -= 1
+            return true
+        case 30: // ]
+            audioEngine.pitch += 1
+            return true
+        case 37: // L
+            if loopRegion != nil { loopRegion = nil }
+            return true
+        case 53: // Escape
+            loopRegion = nil
+            selectedSection = nil
+            pendingLoopStart = nil
+            isSettingLoop = false
+            return true
+        default:
+            break
+        }
+
+        // Number keys 1-9 (keyCode 18-26)
+        if let chars = event.charactersIgnoringModifiers,
+           let digit = chars.first?.wholeNumberValue,
+           digit >= 1 && digit <= 9 {
+            jumpToSection(digit)
+            return true
+        }
+
+        return false
+    }
+
+    private func jumpToSection(_ index: Int) {
         guard let sections = analysisService.lastAnalysis?.sections,
-              index <= sections.count else { return .ignored }
+              index <= sections.count else { return }
         let section = sections[index - 1]
         selectedSection = section
         let loop = LoopRegion.from(section: section)
         loopRegion = loop
         audioEngine.setLoop(loop)
         audioEngine.playLoop()
-        return .handled
     }
 }
