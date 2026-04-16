@@ -66,6 +66,12 @@ struct WaveformView: View {
             .gesture(MagnifyGesture().onChanged { value in
                 zoomLevel = max(1.0, min(zoomLevel * value.magnification, 20.0))
             })
+            .background {
+                ScrollWheelHandler { delta in
+                    let factor: CGFloat = delta > 0 ? 1.15 : 1.0 / 1.15
+                    zoomLevel = max(1.0, min(zoomLevel * factor, 20.0))
+                }
+            }
             .overlay(alignment: .bottomLeading) {
                 timeLabel(formatTime(currentTime))
                     .padding(8)
@@ -225,5 +231,31 @@ struct WaveformView: View {
         let mins = Int(seconds) / 60
         let secs = Int(seconds) % 60
         return "\(mins):\(String(format: "%02d", secs))"
+    }
+}
+
+private struct ScrollWheelHandler: NSViewRepresentable {
+    let onScroll: (CGFloat) -> Void
+
+    func makeNSView(context: Context) -> ScrollWheelNSView {
+        let view = ScrollWheelNSView()
+        view.onScroll = onScroll
+        return view
+    }
+
+    func updateNSView(_ nsView: ScrollWheelNSView, context: Context) {
+        nsView.onScroll = onScroll
+    }
+}
+
+private class ScrollWheelNSView: NSView {
+    var onScroll: ((CGFloat) -> Void)?
+
+    override func scrollWheel(with event: NSEvent) {
+        if abs(event.scrollingDeltaY) > abs(event.scrollingDeltaX) {
+            onScroll?(event.scrollingDeltaY)
+        } else {
+            super.scrollWheel(with: event)
+        }
     }
 }
