@@ -41,4 +41,25 @@ final class TrackAnalysisTests: XCTestCase {
         let section1 = AudioSection(label: "B", startTime: 1, endTime: 2, startBeat: 4, endBeat: 8, colorIndex: 1)
         XCTAssertNotEqual(section0.color, section1.color)
     }
+
+    func testAudioSectionHasStableIdAfterEncodeDecode() throws {
+        let section = AudioSection(
+            label: "Verse",
+            startTime: 0, endTime: 10,
+            startBeat: 0, endBeat: 16,
+            colorIndex: 1
+        )
+        let data = try JSONEncoder().encode(section)
+        let decoded = try JSONDecoder().decode(AudioSection.self, from: data)
+        XCTAssertEqual(decoded.stableId, section.stableId)
+    }
+
+    func testAudioSectionDecodesLegacyJSONWithoutStableId() throws {
+        let legacyJSON = """
+        {"label":"Verse","startTime":0,"endTime":10,"startBeat":0,"endBeat":16,"colorIndex":1}
+        """.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(AudioSection.self, from: legacyJSON)
+        XCTAssertEqual(decoded.label, "Verse")
+        XCTAssertNotNil(decoded.stableId)
+    }
 }
