@@ -41,3 +41,42 @@ final class AnalysisServiceMergeTests: XCTestCase {
         XCTAssertEqual(merged, analyzed)
     }
 }
+
+final class FakeAnalyzer: TrackAnalyzerProtocol {
+    var nextResult: TrackAnalysis
+    init(nextResult: TrackAnalysis) { self.nextResult = nextResult }
+    func analyze(fileURL: URL, progress: @escaping (Float) -> Void) async throws -> TrackAnalysis {
+        progress(1.0)
+        return nextResult
+    }
+}
+
+extension AnalysisServiceMergeTests {
+    func testReanalyzePreservesUserEditsAndUpdatesCache() async throws {
+        let key = "preserve-key"
+        let stale = TrackAnalysis(bpm: 100, beats: [], sections: [
+            AudioSection(label: "Old", startTime: 0, endTime: 1, startBeat: 0, endBeat: 4, colorIndex: 0)
+        ], waveformPeaks: [])
+        try cache.store(stale, forKey: key)
+        try userEdits.store(UserEdits(sections: [
+            AudioSection(label: "Mine", startTime: 0, endTime: 1, startBeat: 0, endBeat: 4, colorIndex: 2)
+        ]), forKey: key)
+
+        let fresh = TrackAnalysis(bpm: 130, beats: [], sections: [
+            AudioSection(label: "New", startTime: 0, endTime: 1, startBeat: 0, endBeat: 4, colorIndex: 1)
+        ], waveformPeaks: [])
+        let service = AnalysisService(
+            analyzer: FakeAnalyzer(nextResult: fresh),
+            cache: cache,
+            userEdits: userEdits
+        )
+
+        try await service.reanalyze(key: key, fileURL: URL(fileURLWithPath: "/dev/null"))
+
+        // Cache replaced
+        XCTAssertEqual(try cache.retrieve(forKey: key)?.bpm, 130)
+        // Sidecar still present and applied
+        XCTAssertEqual(service.lastAnalysis?.sections.first?.label, "Mine")
+        XCTAssertTrue(service.hasUserEditsForCurrent)
+    }
+}

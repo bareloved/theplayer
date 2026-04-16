@@ -110,6 +110,27 @@ final class AnalysisService {
         isAnalyzing = false
     }
 
+    func reanalyze(key providedKey: String? = nil, fileURL: URL) async throws {
+        isAnalyzing = true
+        progress = 0
+        analysisError = nil
+        lastFileURL = fileURL
+
+        let key: String
+        if let providedKey { key = providedKey }
+        else { key = try AnalysisCache.fileHash(for: fileURL) }
+        lastAnalysisKey = key
+
+        let result = try await analyzer.analyze(fileURL: fileURL) { [weak self] p in
+            Task { @MainActor in self?.progress = p }
+        }
+        try cache.store(result, forKey: key)
+        let edits = try userEdits.retrieve(forKey: key)
+        hasUserEditsForCurrent = edits != nil
+        lastAnalysis = Self.mergeCachedAnalysis(result, userEdits: edits)
+        isAnalyzing = false
+    }
+
     /// Persist edited sections for the currently loaded track.
     func saveUserEdits(_ sections: [AudioSection]) throws {
         guard let key = lastAnalysisKey else { return }
