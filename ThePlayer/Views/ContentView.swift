@@ -19,6 +19,9 @@ struct ContentView: View {
     @State private var showSectionsSidebar = true
     @State private var librarySidebarWidth: CGFloat = 180
     @State private var sectionsSidebarWidth: CGFloat = 220
+    @State private var sectionEditor: SectionEditorViewModel?
+    @State private var selectedSectionForEdit: UUID?
+    @State private var showResetConfirm = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -155,9 +158,9 @@ struct ContentView: View {
                     pendingLoopStart: pendingLoopStart,
                     onSeek: { time in audioEngine.seek(to: time) },
                     onLoopPointSet: { time in handleLoopPoint(time) },
-                    editorViewModel: nil,
-                    selectedSectionId: nil,
-                    onSelectSection: nil
+                    editorViewModel: sectionEditor,
+                    selectedSectionId: selectedSectionForEdit,
+                    onSelectSection: { selectedSectionForEdit = $0 }
                 )
 
                 if analysisService.isAnalyzing {
@@ -177,8 +180,56 @@ struct ContentView: View {
                     }
                     .padding(8)
                 }
+
+                if let vm = sectionEditor {
+                    VStack(alignment: .trailing, spacing: 8) {
+                        SectionEditorToolbar(
+                            viewModel: vm,
+                            canDelete: selectedSectionForEdit != nil && vm.sections.count > 1,
+                            onAdd: {
+                                let id = selectedSectionForEdit ?? vm.sections.first(where: {
+                                    Float(audioEngine.currentTime) >= $0.startTime && Float(audioEngine.currentTime) < $0.endTime
+                                })?.stableId
+                                if let id { vm.addSplit(inSectionId: id, atTime: Float(audioEngine.currentTime), snapToBeat: true) }
+                            },
+                            onDelete: {
+                                if let id = selectedSectionForEdit {
+                                    vm.delete(sectionId: id)
+                                    selectedSectionForEdit = nil
+                                }
+                            },
+                            onReset: { showResetConfirm = true },
+                            onDone: { exitSectionEditor() }
+                        )
+                        SectionInspector(
+                            viewModel: vm,
+                            selectedSectionId: selectedSectionForEdit,
+                            onLabelCommit: { newLabel in
+                                if let id = selectedSectionForEdit { vm.rename(sectionId: id, to: newLabel) }
+                            },
+                            onColorPick: { idx in
+                                if let id = selectedSectionForEdit { vm.recolor(sectionId: id, colorIndex: idx) }
+                            }
+                        )
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                }
             }
             .padding(16)
+            .confirmationDialog("Reset all section edits?", isPresented: $showResetConfirm) {
+                Button("Reset", role: .destructive) {
+                    Task {
+                        await analysisService.discardUserEdits()
+                        if let analysis = analysisService.lastAnalysis {
+                            sectionEditor?.replaceAll(with: analysis.sections)
+                        }
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Your manual edits will be discarded and the analyzer's sections restored.")
+            }
 
             TransportBar(
                 audioEngine: audioEngine,
@@ -187,9 +238,32 @@ struct ContentView: View {
                 snapToGrid: $snapToGrid,
                 snapDivision: $snapDivision,
                 isInSetlist: libraryService.activeSetlistId != nil,
-                onNextInSetlist: { advanceSetlist() }
+                onNextInSetlist: { advanceSetlist() },
+                onToggleSectionEditor: {
+                    if sectionEditor == nil { enterSectionEditor() } else { exitSectionEditor() }
+                },
+                isSectionEditing: sectionEditor != nil
             )
         }
+    }
+
+    private func enterSectionEditor() {
+        guard let analysis = analysisService.lastAnalysis else { return }
+        let vm = SectionEditorViewModel(
+            sections: analysis.sections,
+            beats: analysis.beats,
+            duration: Float(audioEngine.duration)
+        )
+        vm.onChange = { [weak analysisService] sections in
+            try? analysisService?.saveUserEdits(sections)
+        }
+        sectionEditor = vm
+        selectedSectionForEdit = nil
+    }
+
+    private func exitSectionEditor() {
+        sectionEditor = nil
+        selectedSectionForEdit = nil
     }
 
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
