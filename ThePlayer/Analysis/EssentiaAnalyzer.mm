@@ -122,37 +122,84 @@ using namespace essentia::standard;
         delete spectralPeaks;
         delete hpcp;
 
-        // Build beat-synchronous features: avg(MFCC + HPCP) between consecutive ticks
+        // Build beat-synchronous features: one combined (for novelty) and one chroma-only (for clustering)
         auto frameToTime = [&](size_t i) -> float {
             return (float)(i * 1024) / 44100.0f;
         };
 
-        std::vector<std::vector<Real>> beatFeatures;
+        std::vector<std::vector<Real>> beatFeaturesCombined;
+        std::vector<std::vector<Real>> beatFeaturesChroma;
+
         if (!ticks.empty() && allMfccs.size() == allHpcps.size() && allMfccs.size() > 0) {
+            size_t mfccDim = allMfccs[0].size();   // typically 13
+            size_t hpcpDim = allHpcps[0].size();   // 12
+
             size_t frameIdx = 0;
             for (size_t b = 0; b + 1 < ticks.size(); b++) {
                 float t0 = (float)ticks[b];
                 float t1 = (float)ticks[b + 1];
-                std::vector<Real> sumMfcc(allMfccs[0].size(), 0.0);
-                std::vector<Real> sumHpcp(allHpcps[0].size(), 0.0);
+                std::vector<Real> sumMfcc(mfccDim, 0.0);
+                std::vector<Real> sumHpcp(hpcpDim, 0.0);
                 int count = 0;
                 while (frameIdx < allMfccs.size() && frameToTime(frameIdx) < t1) {
                     if (frameToTime(frameIdx) >= t0) {
-                        for (size_t k = 0; k < sumMfcc.size(); k++) sumMfcc[k] += allMfccs[frameIdx][k];
-                        for (size_t k = 0; k < sumHpcp.size(); k++) sumHpcp[k] += allHpcps[frameIdx][k];
+                        for (size_t k = 0; k < mfccDim; k++) sumMfcc[k] += allMfccs[frameIdx][k];
+                        for (size_t k = 0; k < hpcpDim; k++) sumHpcp[k] += allHpcps[frameIdx][k];
                         count++;
                     }
                     frameIdx++;
                 }
+
+                std::vector<Real> mfccBeat(mfccDim, 0.0), hpcpBeat(hpcpDim, 0.0);
                 if (count > 0) {
-                    std::vector<Real> combined;
-                    combined.reserve(sumMfcc.size() + sumHpcp.size());
-                    for (auto v : sumMfcc) combined.push_back(v / count);
-                    for (auto v : sumHpcp) combined.push_back(v / count);
-                    beatFeatures.push_back(combined);
-                } else {
-                    beatFeatures.push_back(std::vector<Real>(sumMfcc.size() + sumHpcp.size(), 0.0));
+                    for (size_t k = 0; k < mfccDim; k++) mfccBeat[k] = sumMfcc[k] / count;
+                    for (size_t k = 0; k < hpcpDim; k++) hpcpBeat[k] = sumHpcp[k] / count;
                 }
+
+                // Combined: drop MFCC[0] (loudness), then concatenate MFCC[1..] + HPCP
+                std::vector<Real> combined;
+                combined.reserve((mfccDim - 1) + hpcpDim);
+                for (size_t k = 1; k < mfccDim; k++) combined.push_back(mfccBeat[k]);
+                for (auto v : hpcpBeat) combined.push_back(v);
+
+                beatFeaturesCombined.push_back(combined);
+                beatFeaturesChroma.push_back(hpcpBeat);
+            }
+        }
+
+        // Z-normalize beatFeaturesCombined across beats: per-dimension (column-wise) zero-mean, unit-std
+        if (!beatFeaturesCombined.empty()) {
+            size_t D = beatFeaturesCombined[0].size();
+            size_t M = beatFeaturesCombined.size();
+            std::vector<Real> mean(D, 0.0), stdv(D, 0.0);
+            for (size_t b = 0; b < M; b++) {
+                for (size_t k = 0; k < D; k++) mean[k] += beatFeaturesCombined[b][k];
+            }
+            for (size_t k = 0; k < D; k++) mean[k] /= (Real)M;
+            for (size_t b = 0; b < M; b++) {
+                for (size_t k = 0; k < D; k++) {
+                    Real d = beatFeaturesCombined[b][k] - mean[k];
+                    stdv[k] += d * d;
+                }
+            }
+            for (size_t k = 0; k < D; k++) {
+                stdv[k] = std::sqrt(stdv[k] / (Real)M);
+                if (stdv[k] < 1e-6) stdv[k] = 1.0;  // avoid div by zero on flat dims
+            }
+            for (size_t b = 0; b < M; b++) {
+                for (size_t k = 0; k < D; k++) {
+                    beatFeaturesCombined[b][k] = (beatFeaturesCombined[b][k] - mean[k]) / stdv[k];
+                }
+            }
+        }
+
+        // Also L2-normalize beatFeaturesChroma per-beat so cosine similarity is well-behaved on HPCP
+        for (auto& v : beatFeaturesChroma) {
+            Real n = 0;
+            for (auto x : v) n += x * x;
+            n = std::sqrt(n);
+            if (n > 1e-6) {
+                for (auto& x : v) x /= n;
             }
         }
 
@@ -168,11 +215,11 @@ using namespace essentia::standard;
             return (float)(dot / (std::sqrt(na) * std::sqrt(nb)));
         };
 
-        size_t N = beatFeatures.size();
+        size_t N = beatFeaturesCombined.size();
         std::vector<std::vector<float>> SSM(N, std::vector<float>(N, 0.0f));
         for (size_t i = 0; i < N; i++) {
             for (size_t j = i; j < N; j++) {
-                float s = cosineSim(beatFeatures[i], beatFeatures[j]);
+                float s = cosineSim(beatFeaturesCombined[i], beatFeaturesCombined[j]);
                 SSM[i][j] = s;
                 SSM[j][i] = s;
             }
@@ -292,22 +339,27 @@ using namespace essentia::standard;
         // --- Per-segment mean feature vectors ---
         size_t segCount = boundaries.size() - 1;
         std::vector<std::vector<Real>> segMeans(segCount);
-        if (!beatFeatures.empty()) {
+        if (!beatFeaturesChroma.empty()) {
             for (size_t s = 0; s < segCount; s++) {
                 float t0 = boundaries[s];
                 float t1 = boundaries[s + 1];
-                std::vector<Real> sum(beatFeatures[0].size(), 0.0);
+                std::vector<Real> sum(beatFeaturesChroma[0].size(), 0.0);
                 int count = 0;
-                for (size_t b = 0; b + 1 < ticks.size() && b < beatFeatures.size(); b++) {
+                for (size_t b = 0; b + 1 < ticks.size() && b < beatFeaturesChroma.size(); b++) {
                     float bt = (float)ticks[b];
                     if (bt >= t0 && bt < t1) {
-                        for (size_t k = 0; k < sum.size(); k++) sum[k] += beatFeatures[b][k];
+                        for (size_t k = 0; k < sum.size(); k++) sum[k] += beatFeaturesChroma[b][k];
                         count++;
                     }
                 }
                 if (count > 0) {
                     for (auto& v : sum) v /= count;
                 }
+                // L2-normalize segMeans[s] for clean cosine
+                Real nrm = 0;
+                for (auto v : sum) nrm += v * v;
+                nrm = std::sqrt(nrm);
+                if (nrm > 1e-6) for (auto& v : sum) v /= nrm;
                 segMeans[s] = sum;
             }
         }
@@ -320,7 +372,7 @@ using namespace essentia::standard;
             cluster[i] = nextCluster;
             for (size_t j = i + 1; j < segCount; j++) {
                 if (cluster[j] >= 0) continue;
-                if (cosineSim(segMeans[i], segMeans[j]) >= 0.85f) {
+                if (cosineSim(segMeans[i], segMeans[j]) >= 0.92f) {
                     cluster[j] = nextCluster;
                 }
             }
