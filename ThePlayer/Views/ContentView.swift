@@ -69,23 +69,39 @@ struct ContentView: View {
             .padding(.horizontal, 16)
             .padding(.top, 16)
 
-            // Waveform placeholder (Task 8)
-            RoundedRectangle(cornerRadius: 8)
-                .fill(.quaternary)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .overlay {
-                    if analysisService.isAnalyzing {
-                        ProgressView("Analyzing...", value: analysisService.progress, total: 1.0)
-                            .padding()
-                    } else if let error = analysisService.analysisError {
-                        Label("Could not analyze: \(error)", systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text("Waveform (coming next)")
-                            .foregroundStyle(.secondary)
+            // Waveform
+            ZStack {
+                WaveformView(
+                    peaks: analysisService.lastAnalysis?.waveformPeaks ?? [],
+                    sections: analysisService.lastAnalysis?.sections ?? [],
+                    duration: audioEngine.duration,
+                    currentTime: audioEngine.currentTime,
+                    loopRegion: loopRegion,
+                    onSeek: { time in audioEngine.seek(to: time) },
+                    onLoopDrag: { start, end in
+                        loopRegion = LoopRegion(startTime: start, endTime: end)
                     }
+                )
+
+                if analysisService.isAnalyzing {
+                    ProgressView("Analyzing...", value: analysisService.progress, total: 1.0)
+                        .padding()
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
                 }
-                .padding(16)
+
+                if let error = analysisService.analysisError {
+                    VStack {
+                        Spacer()
+                        Label("Could not analyze: \(error)", systemImage: "exclamationmark.triangle")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(8)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
+                    }
+                    .padding(8)
+                }
+            }
+            .padding(16)
 
             // Transport placeholder (Task 9)
             Text("Transport controls (coming soon)")
