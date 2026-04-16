@@ -1,6 +1,6 @@
 import Foundation
 
-struct Setlist: Codable, Identifiable, Equatable {
+struct Setlist: Codable, Identifiable, Equatable, Hashable {
     let id: UUID
     var name: String
     var songIds: [UUID]

@@ -5,194 +5,156 @@ struct LibrarySidebar: View {
     let onSongSelect: (SongEntry) -> Void
     let onSetlistSongSelect: (SongEntry, UUID, Int) -> Void
 
-    @State private var recentExpanded = true
-    @State private var setlistsExpanded = true
-    @State private var playlistsExpanded = true
-    @State private var mostPracticedExpanded = false
-    @State private var needsWorkExpanded = false
-
     @State private var newSetlistName = ""
     @State private var isAddingSetlist = false
     @State private var newPlaylistName = ""
     @State private var isAddingPlaylist = false
 
-    @State private var setlistToAddTo: UUID?
-    @State private var playlistToAddTo: UUID?
-
     var body: some View {
-        List {
-            // MARK: Recent Songs
-            Section {
-                DisclosureGroup(isExpanded: $recentExpanded) {
+        NavigationStack {
+            List {
+                // Recent
+                Section {
                     let recent = libraryService.library.recentSongs()
                     if recent.isEmpty {
                         Text("No recent songs")
-                            .font(.body)
                             .foregroundStyle(.secondary)
-                            .padding(.vertical, 2)
                     } else {
                         ForEach(recent) { song in
-                            SongRow(
-                                song: song,
-                                library: libraryService.library,
-                                onSelect: { onSongSelect(song) },
-                                onAddToSetlist: { id in libraryService.addSongToSetlist(songId: song.id, setlistId: id) },
-                                onAddToPlaylist: { id in libraryService.addSongToPlaylist(songId: song.id, playlistId: id) },
-                                onRelocate: { relocateSong(song) }
-                            )
+                            SongRow(song: song, onSelect: { onSongSelect(song) })
                         }
                     }
-                } label: {
-                    Label("Recent", systemImage: "clock")
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-                        .textCase(nil)
+                } header: {
+                    Text("Recent")
                 }
-            }
 
-            // MARK: Setlists
-            Section {
-                DisclosureGroup(isExpanded: $setlistsExpanded) {
+                // Setlists
+                Section {
                     ForEach(libraryService.library.setlists) { setlist in
-                        SetlistRow(
-                            setlist: setlist,
-                            library: libraryService.library,
-                            libraryService: libraryService,
-                            onSongSelect: { song, idx in onSetlistSongSelect(song, setlist.id, idx) }
-                        )
+                        NavigationLink(value: SetlistDestination.setlist(setlist)) {
+                            HStack {
+                                Image(systemName: "music.note.list")
+                                    .foregroundStyle(.blue)
+                                    .frame(width: 24)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(setlist.name)
+                                    Text("\(setlist.songIds.count) Items")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
                     }
 
                     if isAddingSetlist {
                         HStack {
                             TextField("Setlist name", text: $newSetlistName)
-                                .textFieldStyle(.plain)
-                                .font(.body)
+                                .textFieldStyle(.roundedBorder)
                                 .onSubmit { submitNewSetlist() }
                             Button("Add", action: submitNewSetlist)
-                                .font(.body)
+                                .font(.caption)
                             Button("Cancel") { isAddingSetlist = false; newSetlistName = "" }
-                                .font(.body)
+                                .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
-                        .padding(.vertical, 2)
                     } else {
                         Button(action: { isAddingSetlist = true }) {
                             Label("New Setlist", systemImage: "plus")
-                                .font(.body)
+                                .foregroundStyle(.secondary)
                         }
                         .buttonStyle(.plain)
-                        .foregroundStyle(.secondary)
                     }
-                } label: {
-                    Label("Setlists", systemImage: "music.note.list")
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-                        .textCase(nil)
+                } header: {
+                    Text("Setlists")
                 }
-            }
 
-            // MARK: Playlists
-            Section {
-                DisclosureGroup(isExpanded: $playlistsExpanded) {
+                // Playlists
+                Section {
                     ForEach(libraryService.library.playlists) { playlist in
-                        PlaylistRow(
-                            playlist: playlist,
-                            library: libraryService.library,
-                            onSongSelect: onSongSelect
-                        )
+                        NavigationLink(value: SetlistDestination.playlist(playlist)) {
+                            HStack {
+                                Image(systemName: "music.note")
+                                    .foregroundStyle(.purple)
+                                    .frame(width: 24)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(playlist.name)
+                                    Text("\(playlist.songIds.count) Items")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
                     }
 
                     if isAddingPlaylist {
                         HStack {
                             TextField("Playlist name", text: $newPlaylistName)
-                                .textFieldStyle(.plain)
-                                .font(.body)
+                                .textFieldStyle(.roundedBorder)
                                 .onSubmit { submitNewPlaylist() }
                             Button("Add", action: submitNewPlaylist)
-                                .font(.body)
+                                .font(.caption)
                             Button("Cancel") { isAddingPlaylist = false; newPlaylistName = "" }
-                                .font(.body)
+                                .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
-                        .padding(.vertical, 2)
                     } else {
                         Button(action: { isAddingPlaylist = true }) {
                             Label("New Playlist", systemImage: "plus")
-                                .font(.body)
+                                .foregroundStyle(.secondary)
                         }
                         .buttonStyle(.plain)
-                        .foregroundStyle(.secondary)
                     }
-                } label: {
-                    Label("Playlists", systemImage: "music.note")
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-                        .textCase(nil)
+                } header: {
+                    Text("Playlists")
+                }
+
+                // Smart
+                Section {
+                    NavigationLink(value: SetlistDestination.smart(.mostPracticed)) {
+                        Label("Most Practiced", systemImage: "star.fill")
+                    }
+                    NavigationLink(value: SetlistDestination.smart(.needsWork)) {
+                        Label("Needs Work", systemImage: "exclamationmark.triangle")
+                    }
+                } header: {
+                    Text("Smart")
                 }
             }
-
-            // MARK: Smart Playlists
-            Section {
-                DisclosureGroup(isExpanded: $mostPracticedExpanded) {
-                    let songs = libraryService.library.mostPracticed()
-                    if songs.isEmpty {
-                        Text("No songs yet")
-                            .font(.body)
-                            .foregroundStyle(.secondary)
-                            .padding(.vertical, 2)
-                    } else {
-                        ForEach(songs) { song in
-                            SongRow(
-                                song: song,
-                                library: libraryService.library,
-                                onSelect: { onSongSelect(song) },
-                                onAddToSetlist: { id in libraryService.addSongToSetlist(songId: song.id, setlistId: id) },
-                                onAddToPlaylist: { id in libraryService.addSongToPlaylist(songId: song.id, playlistId: id) },
-                                onRelocate: { relocateSong(song) }
-                            )
-                        }
-                    }
-                } label: {
-                    Label("Most Practiced", systemImage: "star.fill")
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-                        .textCase(nil)
-                }
-
-                DisclosureGroup(isExpanded: $needsWorkExpanded) {
-                    let songs = libraryService.library.needsWork()
-                    if songs.isEmpty {
-                        Text("All caught up!")
-                            .font(.body)
-                            .foregroundStyle(.secondary)
-                            .padding(.vertical, 2)
-                    } else {
-                        ForEach(songs) { song in
-                            SongRow(
-                                song: song,
-                                library: libraryService.library,
-                                onSelect: { onSongSelect(song) },
-                                onAddToSetlist: { id in libraryService.addSongToSetlist(songId: song.id, setlistId: id) },
-                                onAddToPlaylist: { id in libraryService.addSongToPlaylist(songId: song.id, playlistId: id) },
-                                onRelocate: { relocateSong(song) }
-                            )
-                        }
-                    }
-                } label: {
-                    Label("Needs Work", systemImage: "exclamationmark.triangle")
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-                        .textCase(nil)
-                }
+            .listStyle(.sidebar)
+            .navigationTitle("Library")
+            .navigationDestination(for: SetlistDestination.self) { destination in
+                destinationView(for: destination)
             }
         }
-        .listStyle(.sidebar)
     }
+
+    // MARK: - Destination Views
+
+    @ViewBuilder
+    private func destinationView(for destination: SetlistDestination) -> some View {
+        switch destination {
+        case .setlist(let setlist):
+            SetlistDetailView(
+                setlist: setlist,
+                libraryService: libraryService,
+                onSongSelect: onSetlistSongSelect
+            )
+        case .playlist(let playlist):
+            PlaylistDetailView(
+                playlist: playlist,
+                libraryService: libraryService,
+                onSongSelect: onSongSelect
+            )
+        case .smart(let kind):
+            SmartPlaylistView(
+                kind: kind,
+                libraryService: libraryService,
+                onSongSelect: onSongSelect
+            )
+        }
+    }
+
+    // MARK: - Helpers
 
     private func submitNewSetlist() {
         let name = newSetlistName.trimmingCharacters(in: .whitespaces)
@@ -209,188 +171,137 @@ struct LibrarySidebar: View {
         newPlaylistName = ""
         isAddingPlaylist = false
     }
+}
 
-    private func relocateSong(_ song: SongEntry) {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.audio, .mpeg4Audio, .wav, .aiff, .mp3]
-        panel.allowsMultipleSelection = false
-        panel.message = "Locate \"\(song.title)\""
-        if panel.runModal() == .OK, let url = panel.url {
-            libraryService.relocateSong(songId: song.id, newPath: url.path)
-        }
+// MARK: - Navigation Model
+
+private enum SetlistDestination: Hashable {
+    case setlist(Setlist)
+    case playlist(Playlist)
+    case smart(SmartKind)
+
+    enum SmartKind: Hashable {
+        case mostPracticed
+        case needsWork
     }
 }
 
-// MARK: - SongRow
+// MARK: - Song Row
 
 private struct SongRow: View {
     let song: SongEntry
-    let library: PlayerLibrary
     let onSelect: () -> Void
-    let onAddToSetlist: (UUID) -> Void
-    let onAddToPlaylist: (UUID) -> Void
-    let onRelocate: () -> Void
 
     var body: some View {
         Button(action: onSelect) {
-            HStack(spacing: 6) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(song.title.isEmpty ? "Unknown Title" : song.title)
-                        .font(.body)
-                        .lineLimit(1)
-                    if !song.artist.isEmpty {
-                        Text(song.artist)
-                            .font(.body)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
+            HStack {
+                Text(song.title.isEmpty ? "Unknown Title" : song.title)
+                    .lineLimit(1)
+                Spacer()
                 if !song.fileExists {
                     Text("Missing")
-                        .font(.body)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 1)
-                        .background(.orange.opacity(0.2), in: RoundedRectangle(cornerRadius: 3))
+                        .font(.caption)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(.orange.opacity(0.2), in: RoundedRectangle(cornerRadius: 4))
                         .foregroundStyle(.orange)
                 }
             }
         }
         .buttonStyle(.plain)
-        .contextMenu {
-            if !library.setlists.isEmpty {
-                Menu("Add to Setlist...") {
-                    ForEach(library.setlists) { setlist in
-                        Button(setlist.name) { onAddToSetlist(setlist.id) }
-                    }
-                }
-            }
-
-            if !library.playlists.isEmpty {
-                Menu("Add to Playlist...") {
-                    ForEach(library.playlists) { playlist in
-                        Button(playlist.name) { onAddToPlaylist(playlist.id) }
-                    }
-                }
-            }
-
-            if !song.fileExists {
-                Divider()
-                Button("Relocate...") { onRelocate() }
-            }
-        }
     }
 }
 
-// MARK: - SetlistRow
+// MARK: - Setlist Detail
 
-private struct SetlistRow: View {
+private struct SetlistDetailView: View {
     let setlist: Setlist
-    let library: PlayerLibrary
     @Bindable var libraryService: LibraryService
-    let onSongSelect: (SongEntry, Int) -> Void
-
-    @State private var expanded = false
+    let onSongSelect: (SongEntry, UUID, Int) -> Void
 
     var body: some View {
-        DisclosureGroup(isExpanded: $expanded) {
-            ForEach(Array(setlist.songIds.enumerated()), id: \.offset) { index, songId in
-                if let song = library.song(byId: songId) {
-                    Button(action: {
-                        libraryService.setActiveSetlist(setlist.id, startingAt: index)
-                        onSongSelect(song, index)
-                    }) {
-                        HStack(spacing: 6) {
-                            Text("\(index + 1)")
-                                .font(.body)
-                                .foregroundStyle(.secondary)
-                                .frame(width: 16, alignment: .trailing)
+        List {
+            let songs = setlist.songIds.enumerated().compactMap { index, id -> (Int, SongEntry)? in
+                guard let song = libraryService.library.song(byId: id) else { return nil }
+                return (index, song)
+            }
 
-                            if libraryService.activeSetlistId == setlist.id &&
-                               libraryService.activeSetlistIndex == index {
-                                Image(systemName: "speaker.wave.2.fill")
-                                    .font(.body)
-                                    .foregroundStyle(.blue)
-                            }
-
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(song.title.isEmpty ? "Unknown Title" : song.title)
-                                    .font(.body)
-                                    .lineLimit(1)
-                                if !song.artist.isEmpty {
-                                    Text(song.artist)
-                                        .font(.body)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
-                            if !song.fileExists {
-                                Text("Missing")
-                                    .font(.body)
-                                    .padding(.horizontal, 4)
-                                    .padding(.vertical, 1)
-                                    .background(.orange.opacity(0.2), in: RoundedRectangle(cornerRadius: 3))
-                                    .foregroundStyle(.orange)
-                            }
+            ForEach(songs, id: \.1.id) { index, song in
+                Button(action: {
+                    libraryService.setActiveSetlist(setlist.id, startingAt: index)
+                    onSongSelect(song, setlist.id, index)
+                }) {
+                    HStack {
+                        Text(song.title.isEmpty ? "Unknown Title" : song.title)
+                            .lineLimit(1)
+                        Spacer()
+                        if libraryService.activeSetlistId == setlist.id &&
+                           libraryService.activeSetlistIndex == index {
+                            Image(systemName: "speaker.wave.2.fill")
+                                .foregroundStyle(.blue)
+                                .font(.caption)
+                        }
+                        if !song.fileExists {
+                            Text("Missing")
+                                .font(.caption)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(.orange.opacity(0.2), in: RoundedRectangle(cornerRadius: 4))
+                                .foregroundStyle(.orange)
                         }
                     }
-                    .buttonStyle(.plain)
                 }
+                .buttonStyle(.plain)
             }
-        } label: {
-            Text(setlist.name)
-                .font(.body)
         }
+        .listStyle(.sidebar)
+        .navigationTitle(setlist.name)
     }
 }
 
-// MARK: - PlaylistRow
+// MARK: - Playlist Detail
 
-private struct PlaylistRow: View {
+private struct PlaylistDetailView: View {
     let playlist: Playlist
-    let library: PlayerLibrary
+    @Bindable var libraryService: LibraryService
     let onSongSelect: (SongEntry) -> Void
 
-    @State private var expanded = false
+    var body: some View {
+        List {
+            let songs = playlist.songIds.compactMap { libraryService.library.song(byId: $0) }
+            ForEach(songs) { song in
+                SongRow(song: song, onSelect: { onSongSelect(song) })
+            }
+        }
+        .listStyle(.sidebar)
+        .navigationTitle(playlist.name)
+    }
+}
+
+// MARK: - Smart Playlist
+
+private struct SmartPlaylistView: View {
+    let kind: SetlistDestination.SmartKind
+    @Bindable var libraryService: LibraryService
+    let onSongSelect: (SongEntry) -> Void
 
     var body: some View {
-        DisclosureGroup(isExpanded: $expanded) {
-            ForEach(playlist.songIds, id: \.self) { songId in
-                if let song = library.song(byId: songId) {
-                    Button(action: { onSongSelect(song) }) {
-                        HStack(spacing: 6) {
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(song.title.isEmpty ? "Unknown Title" : song.title)
-                                    .font(.body)
-                                    .lineLimit(1)
-                                if !song.artist.isEmpty {
-                                    Text(song.artist)
-                                        .font(.body)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
+        List {
+            let songs: [SongEntry] = switch kind {
+            case .mostPracticed: libraryService.library.mostPracticed()
+            case .needsWork: libraryService.library.needsWork()
+            }
 
-                            if !song.fileExists {
-                                Text("Missing")
-                                    .font(.body)
-                                    .padding(.horizontal, 4)
-                                    .padding(.vertical, 1)
-                                    .background(.orange.opacity(0.2), in: RoundedRectangle(cornerRadius: 3))
-                                    .foregroundStyle(.orange)
-                            }
-                        }
-                    }
-                    .buttonStyle(.plain)
+            if songs.isEmpty {
+                Text("No songs yet")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(songs) { song in
+                    SongRow(song: song, onSelect: { onSongSelect(song) })
                 }
             }
-        } label: {
-            Text(playlist.name)
-                .font(.body)
         }
+        .listStyle(.sidebar)
+        .navigationTitle(kind == .mostPracticed ? "Most Practiced" : "Needs Work")
     }
 }
