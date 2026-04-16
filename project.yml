@@ -1,0 +1,35 @@
+name: ThePlayer
+options:
+  bundleIdPrefix: com.theplayer
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "15.0"
+  createIntermediateGroups: true
+settings:
+  SWIFT_VERSION: "5.9"
+  MACOSX_DEPLOYMENT_TARGET: "14.0"
+targets:
+  ThePlayer:
+    type: application
+    platform: macOS
+    sources:
+      - ThePlayer
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.theplayer.app
+      PRODUCT_NAME: The Player
+      GENERATE_INFOPLIST_FILE: YES
+      INFOPLIST_VALUES:
+        CFBundleDisplayName: The Player
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        LSMinimumSystemVersion: "14.0"
+      SWIFT_OBJC_BRIDGING_HEADER: ThePlayer/ThePlayer-Bridging-Header.h
+  ThePlayerTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - ThePlayerTests
+    dependencies:
+      - target: ThePlayer
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.theplayer.tests
