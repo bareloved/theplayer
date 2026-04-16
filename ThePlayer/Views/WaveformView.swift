@@ -76,43 +76,45 @@ struct WaveformView: View {
                     zoomLevel = max(1.0, min(zoomLevel * factor, 20.0))
                 }
             }
-            .overlay(alignment: .bottomLeading) {
-                timeLabel(formatTime(currentTime))
-                    .padding(8)
-            }
-            .overlay(alignment: .bottomTrailing) {
-                HStack(spacing: 12) {
-                    timeLabel(formatTime(duration))
-                        .foregroundStyle(.secondary)
-
-                    HStack(spacing: 4) {
-                        Button(action: { zoomLevel = max(1.0, zoomLevel / 1.5) }) {
-                            Image(systemName: "minus.magnifyingglass")
-                                .font(.caption)
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(zoomLevel > 1.0 ? .primary : .tertiary)
-                        .disabled(zoomLevel <= 1.0)
-
-                        Text("\(Int(zoomLevel * 100))%")
-                            .font(.caption2.monospaced())
-                            .foregroundStyle(.secondary)
-                            .frame(width: 36)
-
-                        Button(action: { zoomLevel = min(20.0, zoomLevel * 1.5) }) {
-                            Image(systemName: "plus.magnifyingglass")
-                                .font(.caption)
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(zoomLevel < 20.0 ? .primary : .tertiary)
-                        .disabled(zoomLevel >= 20.0)
-                    }
-                }
-                .padding(8)
-            }
         }
         .background(.quaternary)
         .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(alignment: .bottomLeading) {
+            timeLabel(formatTime(currentTime))
+                .padding(8)
+        }
+        .overlay(alignment: .bottomTrailing) {
+            HStack(spacing: 12) {
+                timeLabel(formatTime(duration))
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 4) {
+                    Button(action: { zoomLevel = max(1.0, zoomLevel / 1.5) }) {
+                        Image(systemName: "minus.magnifyingglass")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(zoomLevel > 1.0 ? .primary : .tertiary)
+                    .disabled(zoomLevel <= 1.0)
+
+                    Text("\(Int(zoomLevel * 100))%")
+                        .font(.caption2.monospaced())
+                        .foregroundStyle(.secondary)
+                        .frame(width: 36)
+
+                    Button(action: { zoomLevel = min(20.0, zoomLevel * 1.5) }) {
+                        Image(systemName: "plus.magnifyingglass")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(zoomLevel < 20.0 ? .primary : .tertiary)
+                    .disabled(zoomLevel >= 20.0)
+                }
+                .padding(6)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
+            }
+            .padding(8)
+        }
         .overlay {
             if isSettingLoop {
                 RoundedRectangle(cornerRadius: 8)
