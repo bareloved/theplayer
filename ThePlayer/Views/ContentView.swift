@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var selectedSection: AudioSection?
     @State private var loopRegion: LoopRegion?
     @State private var isTargeted = false
+    @State private var isSettingLoop = false
 
     var body: some View {
         NavigationSplitView {
@@ -103,10 +104,11 @@ struct ContentView: View {
             }
             .padding(16)
 
-            // Transport placeholder (Task 9)
-            Text("Transport controls (coming soon)")
-                .foregroundStyle(.tertiary)
-                .padding(.bottom, 16)
+            TransportBar(
+                audioEngine: audioEngine,
+                loopRegion: $loopRegion,
+                isSettingLoop: $isSettingLoop
+            )
         }
     }
 

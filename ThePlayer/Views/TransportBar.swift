@@ -1,0 +1,76 @@
+import SwiftUI
+
+struct TransportBar: View {
+    @Bindable var audioEngine: AudioEngine
+    @Binding var loopRegion: LoopRegion?
+    @Binding var isSettingLoop: Bool
+
+    var body: some View {
+        HStack {
+            SpeedPitchControl(
+                label: "Speed",
+                value: $audioEngine.speed,
+                range: 0.25...2.0,
+                step: 0.05,
+                unit: "%",
+                color: .blue,
+                formatter: { "\(Int($0 * 100))" }
+            )
+
+            Spacer()
+
+            HStack(spacing: 16) {
+                Button(action: { audioEngine.skipBackward() }) {
+                    Image(systemName: "backward.fill")
+                        .font(.title3)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+
+                Button(action: { audioEngine.togglePlayPause() }) {
+                    Image(systemName: audioEngine.isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                        .font(.system(size: 40))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.blue)
+
+                Button(action: { audioEngine.skipForward() }) {
+                    Image(systemName: "forward.fill")
+                        .font(.title3)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+
+                Button(action: toggleLoopMode) {
+                    Label("A-B", systemImage: "repeat")
+                        .font(.caption)
+                }
+                .buttonStyle(.bordered)
+                .tint(loopRegion != nil ? .blue : .secondary)
+            }
+
+            Spacer()
+
+            SpeedPitchControl(
+                label: "Pitch",
+                value: $audioEngine.pitch,
+                range: -12...12,
+                step: 1.0,
+                unit: " st",
+                color: .green,
+                formatter: { v in v >= 0 ? "+\(Int(v))" : "\(Int(v))" }
+            )
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    private func toggleLoopMode() {
+        if loopRegion != nil {
+            loopRegion = nil
+            isSettingLoop = false
+        } else {
+            isSettingLoop = true
+        }
+    }
+}
