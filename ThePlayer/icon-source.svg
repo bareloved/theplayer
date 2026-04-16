@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a6af5"/>
+      <stop offset="100%" stop-color="#0d3b8f"/>
+    </linearGradient>
+    <linearGradient id="waveGlow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#a8d0ff" stop-opacity="0.8"/>
+    </linearGradient>
+    <clipPath id="iconClip">
+      <rect x="0" y="0" width="1024" height="1024" rx="228" ry="228"/>
+    </clipPath>
+    <!-- Subtle inner shadow -->
+    <filter id="innerLight" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="40" result="blur"/>
+      <feOffset dx="0" dy="-30" result="offsetBlur"/>
+      <feFlood flood-color="#ffffff" flood-opacity="0.12" result="color"/>
+      <feComposite in="color" in2="offsetBlur" operator="in" result="shadow"/>
+      <feComposite in="shadow" in2="SourceGraphic" operator="over"/>
+    </filter>
+    <!-- Bar shadow for depth -->
+    <filter id="barShadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0d3b8f" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <g clip-path="url(#iconClip)">
+    <rect width="1024" height="1024" fill="url(#bg)"/>
+    <!-- Subtle top highlight -->
+    <rect width="1024" height="512" fill="url(#bg)" opacity="0"/>
+    <ellipse cx="512" cy="0" rx="600" ry="300" fill="white" opacity="0.06"/>
+    <!-- Subtle bottom darken -->
+    <ellipse cx="512" cy="1024" rx="700" ry="300" fill="#000" opacity="0.1"/>
+  </g>
+
+  <!-- Waveform bars — asymmetric to suggest slowing down (wider spacing right side) -->
+  <g clip-path="url(#iconClip)" filter="url(#barShadow)">
+    <!-- Center line (subtle) -->
+    <line x1="140" y1="512" x2="884" y2="512" stroke="white" stroke-opacity="0.1" stroke-width="2"/>
+
+    <!-- Waveform bars — getting wider apart toward the right = "slowing down" -->
+    <!-- Left cluster (tight/fast) -->
+    <rect x="170" y="420" width="14" height="184" rx="7" fill="white" opacity="0.95"/>
+    <rect x="198" y="370" width="14" height="284" rx="7" fill="white" opacity="0.95"/>
+    <rect x="226" y="340" width="14" height="344" rx="7" fill="white" opacity="0.95"/>
+    <rect x="254" y="300" width="14" height="424" rx="7" fill="white" opacity="0.95"/>
+    <rect x="282" y="260" width="14" height="504" rx="7" fill="white" opacity="0.95"/>
+
+    <!-- Middle cluster (medium spacing) -->
+    <rect x="316" y="230" width="16" height="564" rx="8" fill="white" opacity="0.95"/>
+    <rect x="350" y="200" width="16" height="624" rx="8" fill="white" opacity="0.95"/>
+    <rect x="384" y="220" width="16" height="584" rx="8" fill="white" opacity="0.95"/>
+    <rect x="418" y="250" width="16" height="524" rx="8" fill="white" opacity="0.95"/>
+
+    <!-- Peak / center -->
+    <rect x="458" y="180" width="18" height="664" rx="9" fill="white" opacity="1"/>
+    <rect x="498" y="210" width="18" height="604" rx="9" fill="white" opacity="1"/>
+
+    <!-- Right cluster (wider spacing = "slowed down") -->
+    <rect x="546" y="250" width="18" height="524" rx="9" fill="white" opacity="0.9"/>
+    <rect x="594" y="290" width="18" height="444" rx="9" fill="white" opacity="0.85"/>
+    <rect x="646" y="330" width="20" height="364" rx="10" fill="white" opacity="0.8"/>
+    <rect x="702" y="370" width="20" height="284" rx="10" fill="white" opacity="0.75"/>
+    <rect x="762" y="400" width="22" height="224" rx="11" fill="white" opacity="0.7"/>
+    <rect x="826" y="440" width="22" height="144" rx="11" fill="white" opacity="0.6"/>
+  </g>
+
+  <!-- Loop indicator — small curved arrows at bottom -->
+  <g clip-path="url(#iconClip)" opacity="0.5">
+    <path d="M 430 780 A 60 60 0 0 1 550 780" stroke="white" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <polygon points="548,772 558,780 548,788" fill="white"/>
+    <polygon points="432,772 422,780 432,788" fill="white"/>
+  </g>
+</svg>
