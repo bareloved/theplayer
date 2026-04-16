@@ -25,6 +25,7 @@
 		4464985946445D51A232FF7F /* AnalysisCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2AB0ECA2C744F843C33BCDC /* AnalysisCache.swift */; };
 		4AF6A8E39FBF9E9C4D9054C3 /* UserEditsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26BF9246DAC36B848385421B /* UserEditsStoreTests.swift */; };
 		53B8299CCC6F85F0A5A8DB1E /* SongEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F8EC3301A0F34525C62628F /* SongEntryTests.swift */; };
+		5DAC963A111E86B89C931CAC /* SectionEditorToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287ACCC5138ECE035DE0D669 /* SectionEditorToolbar.swift */; };
 		5E5720A7B16935AA06E9FF91 /* LibrarySidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A03B07752B72C37B23CFD647 /* LibrarySidebar.swift */; };
 		6DC4215F33F35BA2B290157B /* PlayerLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4E562CF2C345A8D59AF34F7 /* PlayerLibrary.swift */; };
 		6EA5666C03AF054F8A798A8A /* LibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F97DBB529000EB77AB53A26 /* LibraryService.swift */; };
@@ -32,6 +33,7 @@
 		785D10F3EC93D4386E6E18F9 /* AudioSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AB8B7EC78716DFB858C2274 /* AudioSection.swift */; };
 		7861515EFBEFE53E2F5D6A96 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8982BCF190C14AE590C2261C /* SettingsView.swift */; };
 		7A083D949ED86A7019CA3554 /* WaveformExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3536351E8625D9CB1C72D8D5 /* WaveformExtractor.swift */; };
+		7C65E2AF2F876FE8EF222194 /* SectionBoundaryHandle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A48686E6C904A6FBA6028FBF /* SectionBoundaryHandle.swift */; };
 		8627B6EB9945F2DE636DC585 /* LibraryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BBB560288245846FECACB7B /* LibraryServiceTests.swift */; };
 		9CF23F9F27AD41DB0F89BCED /* SongEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADD12242074A22EC6EB1E5A /* SongEntry.swift */; };
 		A1FC707F579F83574BEED62C /* PlayerLibraryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19886AAD63D0E49913A39577 /* PlayerLibraryTests.swift */; };
@@ -75,6 +77,7 @@
 		2186B684F94740C4334F974F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		25E6BE5FCB69D04322BDEA0A /* ThePlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThePlayerTests.swift; sourceTree = "<group>"; };
 		26BF9246DAC36B848385421B /* UserEditsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserEditsStoreTests.swift; sourceTree = "<group>"; };
+		287ACCC5138ECE035DE0D669 /* SectionEditorToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionEditorToolbar.swift; sourceTree = "<group>"; };
 		2ADD12242074A22EC6EB1E5A /* SongEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongEntry.swift; sourceTree = "<group>"; };
 		3536351E8625D9CB1C72D8D5 /* WaveformExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformExtractor.swift; sourceTree = "<group>"; };
 		3DD1849C48D0FB2C04509BC8 /* SectionLabelPresets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionLabelPresets.swift; sourceTree = "<group>"; };
@@ -100,6 +103,7 @@
 		961C24BA4EF6CA9EDE1D6BD5 /* AnalysisServiceMergeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisServiceMergeTests.swift; sourceTree = "<group>"; };
 		9C79D8D2FE894770473CC4CE /* ThePlayerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThePlayerApp.swift; sourceTree = "<group>"; };
 		A03B07752B72C37B23CFD647 /* LibrarySidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibrarySidebar.swift; sourceTree = "<group>"; };
+		A48686E6C904A6FBA6028FBF /* SectionBoundaryHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionBoundaryHandle.swift; sourceTree = "<group>"; };
 		AB55C97EE8D9174F2C168E60 /* LoopRegionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopRegionTests.swift; sourceTree = "<group>"; };
 		B5977AA4444DB7CCED9E19ED /* AnalysisCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisCacheTests.swift; sourceTree = "<group>"; };
 		BCDBF2BE926B571A91E88911 /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
@@ -218,6 +222,8 @@
 		E37A0FCF33C578CA1FF319F8 /* SectionEditor */ = {
 			isa = PBXGroup;
 			children = (
+				A48686E6C904A6FBA6028FBF /* SectionBoundaryHandle.swift */,
+				287ACCC5138ECE035DE0D669 /* SectionEditorToolbar.swift */,
 				FE7A9AEF57B44BAC317C1109 /* SectionEditorViewModel.swift */,
 				798A28AB6F497AC3430DFC2F /* SectionInspector.swift */,
 				3DD1849C48D0FB2C04509BC8 /* SectionLabelPresets.swift */,
@@ -360,6 +366,8 @@
 				6DC4215F33F35BA2B290157B /* PlayerLibrary.swift in Sources */,
 				022C36FCB67CD59CD64513A4 /* Playlist.swift in Sources */,
 				C4974526D99B1B285A028313 /* ResizableDivider.swift in Sources */,
+				7C65E2AF2F876FE8EF222194 /* SectionBoundaryHandle.swift in Sources */,
+				5DAC963A111E86B89C931CAC /* SectionEditorToolbar.swift in Sources */,
 				33FB5D51EA02965FB20F0B81 /* SectionEditorViewModel.swift in Sources */,
 				31D284C63708762005B721BF /* SectionInspector.swift in Sources */,
 				C101B804AC3D8771DB30DA84 /* SectionLabelPresets.swift in Sources */,
@@ -402,7 +410,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"1\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"1.0\"]";
+				INFOPLIST_VALUES = "[\"CFBundleShortVersionString\": \"1.0\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleVersion\": \"1\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -509,7 +517,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"1\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"1.0\"]";
+				INFOPLIST_VALUES = "[\"CFBundleShortVersionString\": \"1.0\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleVersion\": \"1\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
