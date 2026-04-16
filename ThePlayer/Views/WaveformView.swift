@@ -252,7 +252,7 @@ private class ScrollWheelNSView: NSView {
     var onScroll: ((CGFloat) -> Void)?
 
     override func scrollWheel(with event: NSEvent) {
-        if abs(event.scrollingDeltaY) > abs(event.scrollingDeltaX) {
+        if event.modifierFlags.contains(.command) && abs(event.scrollingDeltaY) > abs(event.scrollingDeltaX) {
             onScroll?(event.scrollingDeltaY)
         } else {
             super.scrollWheel(with: event)
