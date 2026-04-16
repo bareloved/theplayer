@@ -54,7 +54,7 @@ final class AnalysisService {
     private let analyzer: TrackAnalyzerProtocol
     private let cache: AnalysisCache
 
-    init(analyzer: TrackAnalyzerProtocol = MockAnalyzer(), cache: AnalysisCache = AnalysisCache()) {
+    init(analyzer: TrackAnalyzerProtocol = EssentiaAnalyzerSwift(), cache: AnalysisCache = AnalysisCache()) {
         self.analyzer = analyzer
         self.cache = cache
     }

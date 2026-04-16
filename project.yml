@@ -35,6 +35,34 @@ targets:
         LSMinimumSystemVersion: "14.0"
       SWIFT_OBJC_BRIDGING_HEADER: ThePlayer/ThePlayer-Bridging-Header.h
       ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      HEADER_SEARCH_PATHS:
+        - $(SRCROOT)/Vendor/essentia/include
+        - /opt/homebrew/include
+        - /opt/homebrew/include/eigen3
+      LIBRARY_SEARCH_PATHS:
+        - $(SRCROOT)/Vendor/essentia/lib
+        - /opt/homebrew/lib
+        - /opt/homebrew/Cellar/fftw/3.3.10_3/lib
+        - /opt/homebrew/Cellar/ffmpeg/8.1/lib
+        - /opt/homebrew/Cellar/libsamplerate/0.2.2/lib
+        - /opt/homebrew/Cellar/taglib/2.2.1/lib
+        - /opt/homebrew/Cellar/libyaml/0.2.5/lib
+        - /opt/homebrew/Cellar/chromaprint/1.6.0/lib
+      OTHER_LDFLAGS:
+        - -lessentia
+        - -lfftw3f
+        - -lavformat
+        - -lavcodec
+        - -lavutil
+        - -lswresample
+        - -lsamplerate
+        - -ltag
+        - -lyaml
+        - -lchromaprint
+        - -lz
+        - -lc++
+      OTHER_CPLUSPLUSFLAGS:
+        - -std=c++17
   ThePlayerTests:
     type: bundle.unit-test
     platform: macOS
