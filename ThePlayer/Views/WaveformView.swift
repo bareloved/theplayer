@@ -78,6 +78,13 @@ struct WaveformView: View {
         }
         .background(.quaternary)
         .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            if isSettingLoop {
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(.orange, lineWidth: 2)
+                    .allowsHitTesting(false)
+            }
+        }
     }
 
     private func sectionBands(width: CGFloat, height: CGFloat) -> some View {

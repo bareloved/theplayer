@@ -42,11 +42,11 @@ struct TransportBar: View {
                 .foregroundStyle(.secondary)
 
                 Button(action: toggleLoopMode) {
-                    Label("A-B", systemImage: "repeat")
+                    Label(isSettingLoop ? "Click waveform..." : "A-B", systemImage: "repeat")
                         .font(.caption)
                 }
                 .buttonStyle(.bordered)
-                .tint(loopRegion != nil ? .blue : .secondary)
+                .tint(isSettingLoop ? .orange : (loopRegion != nil ? .blue : .secondary))
             }
 
             Spacer()
