@@ -111,13 +111,14 @@ using namespace essentia::standard;
                 }
             }
 
+            // Try with lower cpw (more sensitive to changes)
             Algorithm* sbic = factory.create("SBic",
                 "minLength", 10,
-                "size1", 300,
-                "size2", 200,
-                "inc1", 60,
-                "inc2", 20,
-                "cpw", 1.5);
+                "size1", 200,
+                "size2", 100,
+                "inc1", 40,
+                "inc2", 10,
+                "cpw", 0.75);
 
             sbic->input("features").set(features);
             sbic->output("segmentation").set(segmentation);
@@ -142,6 +143,7 @@ using namespace essentia::standard;
 
         std::vector<float> boundaries;
         boundaries.push_back(0);
+
         // SBic returns boundaries in frame indices — convert to seconds
         float hopSizeSeconds = 1024.0f / 44100.0f;
         for (Real seg : segmentation) {
@@ -150,11 +152,54 @@ using namespace essentia::standard;
                 boundaries.push_back(timeInSeconds);
             }
         }
+
+        // Fallback: if SBic found fewer than 3 boundaries, create segments
+        // based on bar structure (every 8 or 16 bars depending on song length)
+        if (boundaries.size() < 3 && bpm > 0 && !ticks.empty()) {
+            boundaries.clear();
+            boundaries.push_back(0);
+
+            float beatsPerBar = 4.0f;
+            float barDuration = beatsPerBar * (60.0f / bpm);
+            int totalBars = (int)(audioDuration / barDuration);
+
+            // Choose segment size: 16 bars for long songs, 8 for short
+            int barsPerSection = totalBars > 32 ? 16 : 8;
+
+            for (int bar = barsPerSection; bar < totalBars; bar += barsPerSection) {
+                float t = bar * barDuration;
+                // Snap to nearest beat
+                float bestTick = t;
+                float bestDist = 999.0f;
+                for (Real tick : ticks) {
+                    float dist = fabsf((float)tick - t);
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        bestTick = (float)tick;
+                    }
+                }
+                if (bestTick > 0 && bestTick < audioDuration - barDuration) {
+                    boundaries.push_back(bestTick);
+                }
+            }
+        }
+
         boundaries.push_back(audioDuration);
 
-        // Label assignment — use simple pattern based on section count
-        NSArray *labelPatterns = @[@"Intro", @"Verse", @"Chorus", @"Verse", @"Chorus",
-                                   @"Bridge", @"Chorus", @"Outro"];
+        // Label assignment — use pattern based on section count and position
+        NSArray *labelPatterns;
+        NSInteger sectionCount = (NSInteger)boundaries.size() - 1;
+        if (sectionCount <= 2) {
+            labelPatterns = @[@"A", @"B"];
+        } else if (sectionCount <= 4) {
+            labelPatterns = @[@"Intro", @"Verse", @"Chorus", @"Outro"];
+        } else if (sectionCount <= 6) {
+            labelPatterns = @[@"Intro", @"Verse", @"Chorus", @"Verse", @"Chorus", @"Outro"];
+        } else {
+            labelPatterns = @[@"Intro", @"Verse", @"Pre-Chorus", @"Chorus",
+                              @"Verse", @"Pre-Chorus", @"Chorus", @"Bridge",
+                              @"Chorus", @"Outro"];
+        }
 
         for (size_t i = 0; i < boundaries.size() - 1; i++) {
             EssentiaSection *section = [[EssentiaSection alloc] init];
