@@ -45,6 +45,7 @@ final class AudioEngine {
     private var displayLink: Timer?
     private var isSeeking = false
     private var seekGeneration: Int = 0
+    private var playbackOrigin: Float = 0 // absolute time offset when playback was scheduled
 
     init() {
         setupAudioChain()
@@ -181,6 +182,7 @@ final class AudioEngine {
         let frameCount = AVAudioFrameCount(endFrame - startFrame)
         guard frameCount > 0 else { return }
 
+        playbackOrigin = loop.startTime
         currentTime = loop.startTime
 
         playerNode.scheduleSegment(
@@ -202,6 +204,7 @@ final class AudioEngine {
     }
 
     private func schedulePlayback(from time: Float, file: AVAudioFile) {
+        playbackOrigin = time
         let startFrame = AVAudioFramePosition(Double(time) * file.fileFormat.sampleRate)
         let totalFrames = file.length
         guard startFrame < totalFrames else { return }
@@ -237,7 +240,8 @@ final class AudioEngine {
         guard let nodeTime = playerNode.lastRenderTime,
               nodeTime.isSampleTimeValid,
               let playerTime = playerNode.playerTime(forNodeTime: nodeTime) else { return }
-        let time = Float(playerTime.sampleTime) / Float(playerTime.sampleRate)
+        let elapsed = Float(playerTime.sampleTime) / Float(playerTime.sampleRate)
+        let time = playbackOrigin + elapsed
         if time >= 0 && time <= duration {
             currentTime = time
         }
@@ -247,7 +251,8 @@ final class AudioEngine {
         guard let nodeTime = playerNode.lastRenderTime,
               nodeTime.isSampleTimeValid,
               let playerTime = playerNode.playerTime(forNodeTime: nodeTime) else { return }
-        let time = Float(playerTime.sampleTime) / Float(playerTime.sampleRate)
+        let elapsed = Float(playerTime.sampleTime) / Float(playerTime.sampleRate)
+        let time = playbackOrigin + elapsed
         if time >= 0 && time <= duration {
             currentTime = time
         }
