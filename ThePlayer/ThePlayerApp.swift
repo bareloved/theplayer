@@ -4,10 +4,11 @@ import SwiftUI
 struct ThePlayerApp: App {
     @State private var audioEngine = AudioEngine()
     @State private var analysisService = AnalysisService()
+    @State private var libraryService = LibraryService()
 
     var body: some Scene {
         WindowGroup {
-            ContentView(audioEngine: audioEngine, analysisService: analysisService)
+            ContentView(audioEngine: audioEngine, analysisService: analysisService, libraryService: libraryService)
         }
         .commands {
             CommandGroup(replacing: .newItem) {

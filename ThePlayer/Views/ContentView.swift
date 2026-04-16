@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     @Bindable var audioEngine: AudioEngine
     @Bindable var analysisService: AnalysisService
+    @Bindable var libraryService: LibraryService
     @State private var selectedSection: AudioSection?
     @State private var loopRegion: LoopRegion?
     @State private var isTargeted = false
@@ -14,32 +15,70 @@ struct ContentView: View {
     @State private var loadError: String?
     @State private var showErrorAlert = false
     @State private var keyMonitor: Any?
+    @State private var showLibrarySidebar = true
+    @State private var showSectionsSidebar = true
 
     var body: some View {
-        NavigationSplitView {
-            SidebarView(
-                sections: analysisService.lastAnalysis?.sections ?? [],
-                bpm: analysisService.lastAnalysis?.bpm,
-                duration: audioEngine.duration,
-                sampleRate: audioEngine.sampleRate,
-                onSectionTap: { section in
-                    selectedSection = section
-                    let loop = LoopRegion.from(section: section)
-                    loopRegion = loop
-                    audioEngine.setLoop(loop)
-                    audioEngine.playLoop()
-                },
-                selectedSection: $selectedSection
-            )
-            .frame(minWidth: 220, idealWidth: 220)
-        } detail: {
-            if audioEngine.state == .empty {
-                emptyState
-            } else {
-                playerDetail
+        HStack(spacing: 0) {
+            // Left: Library sidebar
+            if showLibrarySidebar {
+                LibrarySidebar(
+                    libraryService: libraryService,
+                    onSongSelect: { song in
+                        loadSongFromLibrary(song)
+                    },
+                    onSetlistSongSelect: { song, setlistId, index in
+                        loadSongFromLibrary(song)
+                    }
+                )
+                Divider()
+            }
+
+            // Center: Player
+            Group {
+                if audioEngine.state == .empty {
+                    emptyState
+                } else {
+                    playerDetail
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            // Right: Sections sidebar
+            if showSectionsSidebar && audioEngine.state != .empty {
+                Divider()
+                SidebarView(
+                    sections: analysisService.lastAnalysis?.sections ?? [],
+                    bpm: analysisService.lastAnalysis?.bpm,
+                    duration: audioEngine.duration,
+                    sampleRate: audioEngine.sampleRate,
+                    onSectionTap: { section in
+                        selectedSection = section
+                        let loop = LoopRegion.from(section: section)
+                        loopRegion = loop
+                        audioEngine.setLoop(loop)
+                        audioEngine.playLoop()
+                    },
+                    selectedSection: $selectedSection
+                )
+                .frame(minWidth: 220, idealWidth: 220)
             }
         }
         .frame(minWidth: 800, minHeight: 500)
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button(action: { showLibrarySidebar.toggle() }) {
+                    Image(systemName: "sidebar.left")
+                }
+                .help("Toggle Library")
+            }
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button(action: { showSectionsSidebar.toggle() }) {
+                    Image(systemName: "sidebar.right")
+                }
+                .help("Toggle Sections")
+            }
+        }
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
             handleDrop(providers)
         }
@@ -137,7 +176,9 @@ struct ContentView: View {
                 loopRegion: $loopRegion,
                 isSettingLoop: $isSettingLoop,
                 snapToGrid: $snapToGrid,
-                snapDivision: $snapDivision
+                snapDivision: $snapDivision,
+                isInSetlist: libraryService.activeSetlistId != nil,
+                onNextInSetlist: { advanceSetlist() }
             )
         }
     }
@@ -161,12 +202,56 @@ struct ContentView: View {
             loopRegion = nil
             loadError = nil
             NSDocumentController.shared.noteNewRecentDocumentURL(url)
+            libraryService.addSong(
+                filePath: url.path,
+                title: audioEngine.title,
+                artist: audioEngine.artist,
+                bpm: analysisService.lastAnalysis?.bpm ?? 0,
+                duration: audioEngine.duration
+            )
             Task {
                 await analysisService.analyze(fileURL: url)
             }
         } catch {
             loadError = "Could not open file: \(error.localizedDescription)"
             showErrorAlert = true
+        }
+    }
+
+    private func loadSongFromLibrary(_ song: SongEntry) {
+        guard song.fileExists else { return }
+        let url = URL(fileURLWithPath: song.filePath)
+        saveCurrentPracticeState()
+        openFile(url: url)
+        audioEngine.speed = song.lastSpeed
+        audioEngine.pitch = song.lastPitch
+        if song.lastPosition > 0 {
+            audioEngine.seek(to: song.lastPosition)
+        }
+        if let loopStart = song.lastLoopStart, let loopEnd = song.lastLoopEnd {
+            loopRegion = LoopRegion(startTime: loopStart, endTime: loopEnd)
+        }
+        libraryService.incrementPracticeCount(songId: song.id)
+    }
+
+    private func saveCurrentPracticeState() {
+        guard let url = audioEngine.fileURL else { return }
+        if let song = libraryService.library.songByPath(url.path) {
+            libraryService.savePracticeState(
+                songId: song.id,
+                speed: audioEngine.speed,
+                pitch: audioEngine.pitch,
+                position: audioEngine.currentTime,
+                loopStart: loopRegion?.startTime,
+                loopEnd: loopRegion?.endTime
+            )
+        }
+    }
+
+    private func advanceSetlist() {
+        saveCurrentPracticeState()
+        if let nextSong = libraryService.nextSetlistSong() {
+            loadSongFromLibrary(nextSong)
         }
     }
 
@@ -190,6 +275,9 @@ struct ContentView: View {
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             if handleKeyEvent(event) { return nil }
             return event
+        }
+        NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
+            saveCurrentPracticeState()
         }
     }
 
