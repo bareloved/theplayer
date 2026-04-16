@@ -8,6 +8,15 @@ options:
 settings:
   SWIFT_VERSION: "5.9"
   MACOSX_DEPLOYMENT_TARGET: "14.0"
+schemes:
+  ThePlayer:
+    build:
+      targets:
+        ThePlayer: all
+        ThePlayerTests: [test]
+    test:
+      targets:
+        - ThePlayerTests
 targets:
   ThePlayer:
     type: application
@@ -17,6 +26,7 @@ targets:
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.theplayer.app
       PRODUCT_NAME: The Player
+      PRODUCT_MODULE_NAME: ThePlayer
       GENERATE_INFOPLIST_FILE: YES
       INFOPLIST_VALUES:
         CFBundleDisplayName: The Player
@@ -33,3 +43,6 @@ targets:
       - target: ThePlayer
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.theplayer.tests
+      GENERATE_INFOPLIST_FILE: YES
+      TEST_HOST: "$(BUILT_PRODUCTS_DIR)/The Player.app/Contents/MacOS/The Player"
+      BUNDLE_LOADER: "$(TEST_HOST)"

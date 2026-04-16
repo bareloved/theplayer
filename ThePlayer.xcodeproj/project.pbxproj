@@ -7,7 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		170566C85314AC4A2FEB46DE /* TrackAnalysisTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F1524C5706C8153F2068B56 /* TrackAnalysisTests.swift */; };
 		34FF45C280143157A0857F52 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2186B684F94740C4334F974F /* ContentView.swift */; };
+		3A4562BC8654BD495DE7A77C /* LoopRegion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AB80366F01A6405A511CD73 /* LoopRegion.swift */; };
+		785D10F3EC93D4386E6E18F9 /* AudioSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AB8B7EC78716DFB858C2274 /* AudioSection.swift */; };
+		A44ABC5715449232881FEF2A /* LoopRegionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB55C97EE8D9174F2C168E60 /* LoopRegionTests.swift */; };
+		C339330ACCB11423558D7164 /* TrackAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5D5329004D98673486A598 /* TrackAnalysis.swift */; };
 		CAD3D2C0E3CD0C4850EFE74C /* ThePlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E6BE5FCB69D04322BDEA0A /* ThePlayerTests.swift */; };
 		FA4E61AC6A7BC183DF97D905 /* ThePlayerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C79D8D2FE894770473CC4CE /* ThePlayerApp.swift */; };
 /* End PBXBuildFile section */
@@ -24,9 +29,14 @@
 
 /* Begin PBXFileReference section */
 		19B55712F4D61219172D2654 /* ThePlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ThePlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1AB80366F01A6405A511CD73 /* LoopRegion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopRegion.swift; sourceTree = "<group>"; };
 		2186B684F94740C4334F974F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		25E6BE5FCB69D04322BDEA0A /* ThePlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThePlayerTests.swift; sourceTree = "<group>"; };
+		4F1524C5706C8153F2068B56 /* TrackAnalysisTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackAnalysisTests.swift; sourceTree = "<group>"; };
+		6AB8B7EC78716DFB858C2274 /* AudioSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSection.swift; sourceTree = "<group>"; };
+		7A5D5329004D98673486A598 /* TrackAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackAnalysis.swift; sourceTree = "<group>"; };
 		9C79D8D2FE894770473CC4CE /* ThePlayerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThePlayerApp.swift; sourceTree = "<group>"; };
+		AB55C97EE8D9174F2C168E60 /* LoopRegionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopRegionTests.swift; sourceTree = "<group>"; };
 		D176EE181B6CB24E1860C08E /* ThePlayerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ThePlayerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F5FA6BAEA919480930036F64 /* ThePlayer-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ThePlayer-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -41,10 +51,22 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		33C1FC8CCFBF9FC11DA9C91D /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				6AB8B7EC78716DFB858C2274 /* AudioSection.swift */,
+				1AB80366F01A6405A511CD73 /* LoopRegion.swift */,
+				7A5D5329004D98673486A598 /* TrackAnalysis.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
 		539E47E41B42256E98F163B1 /* ThePlayerTests */ = {
 			isa = PBXGroup;
 			children = (
+				AB55C97EE8D9174F2C168E60 /* LoopRegionTests.swift */,
 				25E6BE5FCB69D04322BDEA0A /* ThePlayerTests.swift */,
+				4F1524C5706C8153F2068B56 /* TrackAnalysisTests.swift */,
 			);
 			path = ThePlayerTests;
 			sourceTree = "<group>";
@@ -71,6 +93,7 @@
 			children = (
 				F5FA6BAEA919480930036F64 /* ThePlayer-Bridging-Header.h */,
 				9C79D8D2FE894770473CC4CE /* ThePlayerApp.swift */,
+				33C1FC8CCFBF9FC11DA9C91D /* Models */,
 				6544C4598EF0BEC802A1AA71 /* Views */,
 			);
 			path = ThePlayer;
@@ -150,7 +173,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A44ABC5715449232881FEF2A /* LoopRegionTests.swift in Sources */,
 				CAD3D2C0E3CD0C4850EFE74C /* ThePlayerTests.swift in Sources */,
+				170566C85314AC4A2FEB46DE /* TrackAnalysisTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -158,8 +183,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				785D10F3EC93D4386E6E18F9 /* AudioSection.swift in Sources */,
 				34FF45C280143157A0857F52 /* ContentView.swift in Sources */,
+				3A4562BC8654BD495DE7A77C /* LoopRegion.swift in Sources */,
 				FA4E61AC6A7BC183DF97D905 /* ThePlayerApp.swift in Sources */,
+				C339330ACCB11423558D7164 /* TrackAnalysis.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -180,12 +208,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_VALUES = "[\"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"1.0\", \"CFBundleVersion\": \"1\", \"CFBundleDisplayName\": \"The Player\"]";
+				INFOPLIST_VALUES = "[\"CFBundleShortVersionString\": \"1.0\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"1\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.theplayer.app;
+				PRODUCT_MODULE_NAME = ThePlayer;
 				PRODUCT_NAME = "The Player";
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "ThePlayer/ThePlayer-Bridging-Header.h";
@@ -254,12 +283,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_VALUES = "[\"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"1.0\", \"CFBundleVersion\": \"1\", \"CFBundleDisplayName\": \"The Player\"]";
+				INFOPLIST_VALUES = "[\"CFBundleShortVersionString\": \"1.0\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"1\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.theplayer.app;
+				PRODUCT_MODULE_NAME = ThePlayer;
 				PRODUCT_NAME = "The Player";
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "ThePlayer/ThePlayer-Bridging-Header.h";
@@ -334,6 +364,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -341,7 +372,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.theplayer.tests;
 				SDKROOT = macosx;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ThePlayer.app/Contents/MacOS/ThePlayer";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/The Player.app/Contents/MacOS/The Player";
 			};
 			name = Release;
 		};
@@ -350,6 +381,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -357,7 +389,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.theplayer.tests;
 				SDKROOT = macosx;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ThePlayer.app/Contents/MacOS/ThePlayer";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/The Player.app/Contents/MacOS/The Player";
 			};
 			name = Debug;
 		};
