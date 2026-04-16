@@ -18,9 +18,10 @@ struct ContentView: View {
                 sampleRate: audioEngine.sampleRate,
                 onSectionTap: { section in
                     selectedSection = section
-                    loopRegion = LoopRegion.from(section: section)
-                    audioEngine.seek(to: section.startTime)
-                    if !audioEngine.isPlaying { audioEngine.play() }
+                    let loop = LoopRegion.from(section: section)
+                    loopRegion = loop
+                    audioEngine.setLoop(loop)
+                    audioEngine.playLoop()
                 },
                 selectedSection: $selectedSection
             )
@@ -42,6 +43,12 @@ struct ContentView: View {
                     .strokeBorder(.blue, lineWidth: 3)
                     .background(.blue.opacity(0.05))
                     .padding(4)
+            }
+        }
+        .onChange(of: loopRegion) { _, newLoop in
+            audioEngine.setLoop(newLoop)
+            if let newLoop, audioEngine.isPlaying {
+                audioEngine.playLoop()
             }
         }
     }

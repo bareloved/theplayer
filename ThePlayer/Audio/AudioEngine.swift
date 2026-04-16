@@ -28,6 +28,8 @@ final class AudioEngine {
 
     var isPlaying: Bool { state == .playing }
 
+    var activeLoop: LoopRegion?
+
     private var engine = AVAudioEngine()
     private var playerNode = AVAudioPlayerNode()
     private var timePitchNode = AVAudioUnitTimePitch()
@@ -142,6 +144,47 @@ final class AudioEngine {
 
     func skipBackward(seconds: Float = 5) {
         seek(to: currentTime - seconds)
+    }
+
+    func setLoop(_ loop: LoopRegion?) {
+        activeLoop = loop
+        if let loop, isPlaying {
+            if currentTime < loop.startTime || currentTime >= loop.endTime {
+                seek(to: loop.startTime)
+            }
+        }
+    }
+
+    func playLoop() {
+        guard let loop = activeLoop, let file = audioFile else { return }
+
+        if !engine.isRunning {
+            try? engine.start()
+        }
+
+        playerNode.stop()
+
+        let startFrame = AVAudioFramePosition(Double(loop.startTime) * file.fileFormat.sampleRate)
+        let endFrame = AVAudioFramePosition(Double(loop.endTime) * file.fileFormat.sampleRate)
+        let frameCount = AVAudioFrameCount(endFrame - startFrame)
+        guard frameCount > 0 else { return }
+
+        file.framePosition = startFrame
+        playerNode.scheduleSegment(
+            file,
+            startingFrame: startFrame,
+            frameCount: frameCount,
+            at: nil
+        ) { [weak self] in
+            Task { @MainActor in
+                if self?.activeLoop != nil {
+                    self?.playLoop()
+                }
+            }
+        }
+        playerNode.play()
+        state = .playing
+        startTimeTracking()
     }
 
     private func applyTimePitch() {
