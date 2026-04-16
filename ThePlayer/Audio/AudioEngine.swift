@@ -19,11 +19,19 @@ final class AudioEngine {
     private(set) var sampleRate: Double = 0
 
     var speed: Float = 1.0 {
-        didSet { speed = min(max(speed, 0.25), 2.0); applyTimePitch() }
+        didSet {
+            let clamped = min(max(speed, 0.25), 2.0)
+            if clamped != speed { speed = clamped; return }
+            applyTimePitch()
+        }
     }
 
     var pitch: Float = 0 {
-        didSet { pitch = min(max(pitch, -12), 12); applyTimePitch() }
+        didSet {
+            let clamped = min(max(pitch, -12), 12)
+            if clamped != pitch { pitch = clamped; return }
+            applyTimePitch()
+        }
     }
 
     var isPlaying: Bool { state == .playing }
