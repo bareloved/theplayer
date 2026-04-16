@@ -3,6 +3,8 @@ import SwiftUI
 struct WaveformView: View {
     let peaks: [Float]
     let sections: [AudioSection]
+    let beats: [Float]
+    let bpm: Float
     let duration: Float
     let currentTime: Float
     let loopRegion: LoopRegion?
@@ -24,6 +26,7 @@ struct WaveformView: View {
             ScrollView(.horizontal, showsIndicators: true) {
                 ZStack(alignment: .leading) {
                     sectionBands(width: totalWidth, height: height)
+                    barLines(width: totalWidth, height: height)
                     waveformBars(width: totalWidth, height: height)
 
                     if let loop = loopRegion {
@@ -116,6 +119,31 @@ struct WaveformView: View {
                     .allowsHitTesting(false)
             }
         }
+    }
+
+    /// Bar positions derived from beats (every 4 beats = 1 bar)
+    private var barPositions: [Float] {
+        guard beats.count >= 4 else { return [] }
+        return stride(from: 0, to: beats.count, by: 4).map { beats[$0] }
+    }
+
+    private func barLines(width: CGFloat, height: CGFloat) -> some View {
+        Canvas { context, size in
+            guard duration > 0 else { return }
+            for (i, barTime) in barPositions.enumerated() {
+                let x = CGFloat(barTime / duration) * size.width
+                let isDownbeat = (i % 4 == 0) // every 4 bars = stronger line
+                let opacity: CGFloat = isDownbeat ? 0.2 : 0.08
+                let lineWidth: CGFloat = isDownbeat ? 1.0 : 0.5
+
+                var path = Path()
+                path.move(to: CGPoint(x: x, y: 0))
+                path.addLine(to: CGPoint(x: x, y: size.height))
+                context.stroke(path, with: .color(.white.opacity(opacity)), lineWidth: lineWidth)
+            }
+        }
+        .frame(width: width, height: height)
+        .allowsHitTesting(false)
     }
 
     private func sectionBands(width: CGFloat, height: CGFloat) -> some View {

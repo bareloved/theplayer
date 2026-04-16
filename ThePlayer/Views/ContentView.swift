@@ -98,6 +98,8 @@ struct ContentView: View {
                 WaveformView(
                     peaks: analysisService.lastAnalysis?.waveformPeaks ?? [],
                     sections: analysisService.lastAnalysis?.sections ?? [],
+                    beats: analysisService.lastAnalysis?.beats ?? [],
+                    bpm: analysisService.lastAnalysis?.bpm ?? 0,
                     duration: audioEngine.duration,
                     currentTime: audioEngine.currentTime,
                     loopRegion: loopRegion,
@@ -204,26 +206,20 @@ struct ContentView: View {
         case 49: // Space
             audioEngine.togglePlayPause()
             return true
-        case 123: // Left arrow
-            let beats = analysisService.lastAnalysis?.beats ?? []
-            if !beats.isEmpty {
-                let target = LoopRegion.snapToNearestBeat(
-                    time: audioEngine.currentTime - 0.1,
-                    beats: beats.filter { $0 < audioEngine.currentTime - 0.1 }
-                )
-                audioEngine.seek(to: max(target, 0))
+        case 123: // Left arrow — snap to previous bar
+            let barPositions = getBarPositions()
+            if !barPositions.isEmpty {
+                let prev = barPositions.last(where: { $0 < audioEngine.currentTime - 0.1 })
+                audioEngine.seek(to: max(prev ?? 0, 0))
             } else {
                 audioEngine.skipBackward()
             }
             return true
-        case 124: // Right arrow
-            let beats = analysisService.lastAnalysis?.beats ?? []
-            if !beats.isEmpty {
-                let target = LoopRegion.snapToNearestBeat(
-                    time: audioEngine.currentTime + 0.1,
-                    beats: beats.filter { $0 > audioEngine.currentTime + 0.1 }
-                )
-                audioEngine.seek(to: min(target, audioEngine.duration))
+        case 124: // Right arrow — snap to next bar
+            let barPositions2 = getBarPositions()
+            if !barPositions2.isEmpty {
+                let next = barPositions2.first(where: { $0 > audioEngine.currentTime + 0.1 })
+                audioEngine.seek(to: min(next ?? audioEngine.duration, audioEngine.duration))
             } else {
                 audioEngine.skipForward()
             }
@@ -262,6 +258,12 @@ struct ContentView: View {
         }
 
         return false
+    }
+
+    private func getBarPositions() -> [Float] {
+        let beats = analysisService.lastAnalysis?.beats ?? []
+        guard beats.count >= 4 else { return [] }
+        return stride(from: 0, to: beats.count, by: 4).map { beats[$0] }
     }
 
     private func jumpToSection(_ index: Int) {
