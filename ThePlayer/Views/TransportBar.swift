@@ -9,7 +9,8 @@ struct TransportBar: View {
 
     var body: some View {
         ZStack {
-            // Bottom layer: left-anchored speed, right-anchored everything else
+            // Bottom layer: speed pinned left, all other controls pinned right.
+            // Center is empty — reserved for the transport overlay.
             HStack {
                 SpeedPitchControl(
                     label: "Speed",
@@ -53,19 +54,18 @@ struct TransportBar: View {
                     .opacity(snapToGrid ? 1 : 0)
                     .disabled(!snapToGrid)
                     .allowsHitTesting(snapToGrid)
+
+                    SpeedPitchControl(
+                        label: "Pitch",
+                        value: $audioEngine.pitch,
+                        range: -12...12,
+                        step: 1.0,
+                        unit: " st",
+                        color: .green,
+                        formatter: { v in v >= 0 ? "+\(Int(v))" : "\(Int(v))" }
+                    )
+                    .padding(.leading, 8)
                 }
-
-                Spacer()
-
-                SpeedPitchControl(
-                    label: "Pitch",
-                    value: $audioEngine.pitch,
-                    range: -12...12,
-                    step: 1.0,
-                    unit: " st",
-                    color: .green,
-                    formatter: { v in v >= 0 ? "+\(Int(v))" : "\(Int(v))" }
-                )
             }
 
             // Centered transport — pinned to geometric middle via ZStack
