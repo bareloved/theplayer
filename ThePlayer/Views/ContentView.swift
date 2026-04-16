@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var isTargeted = false
     @State private var isSettingLoop = false
     @State private var pendingLoopStart: Float?
+    @State private var snapToGrid = true
     @State private var loadError: String?
     @State private var showErrorAlert = false
     @State private var keyMonitor: Any?
@@ -132,7 +133,8 @@ struct ContentView: View {
             TransportBar(
                 audioEngine: audioEngine,
                 loopRegion: $loopRegion,
-                isSettingLoop: $isSettingLoop
+                isSettingLoop: $isSettingLoop,
+                snapToGrid: $snapToGrid
             )
         }
     }
@@ -206,20 +208,28 @@ struct ContentView: View {
         case 49: // Space
             audioEngine.togglePlayPause()
             return true
-        case 123: // Left arrow — snap to previous bar
-            let barPositions = getBarPositions()
-            if !barPositions.isEmpty {
-                let prev = barPositions.last(where: { $0 < audioEngine.currentTime - 0.1 })
-                audioEngine.seek(to: max(prev ?? 0, 0))
+        case 123: // Left arrow
+            if snapToGrid {
+                let barPositions = getBarPositions()
+                if !barPositions.isEmpty {
+                    let prev = barPositions.last(where: { $0 < audioEngine.currentTime - 0.1 })
+                    audioEngine.seek(to: max(prev ?? 0, 0))
+                } else {
+                    audioEngine.skipBackward()
+                }
             } else {
                 audioEngine.skipBackward()
             }
             return true
-        case 124: // Right arrow — snap to next bar
-            let barPositions2 = getBarPositions()
-            if !barPositions2.isEmpty {
-                let next = barPositions2.first(where: { $0 > audioEngine.currentTime + 0.1 })
-                audioEngine.seek(to: min(next ?? audioEngine.duration, audioEngine.duration))
+        case 124: // Right arrow
+            if snapToGrid {
+                let barPositions2 = getBarPositions()
+                if !barPositions2.isEmpty {
+                    let next = barPositions2.first(where: { $0 > audioEngine.currentTime + 0.1 })
+                    audioEngine.seek(to: min(next ?? audioEngine.duration, audioEngine.duration))
+                } else {
+                    audioEngine.skipForward()
+                }
             } else {
                 audioEngine.skipForward()
             }

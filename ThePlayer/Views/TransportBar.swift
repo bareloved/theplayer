@@ -4,6 +4,7 @@ struct TransportBar: View {
     @Bindable var audioEngine: AudioEngine
     @Binding var loopRegion: LoopRegion?
     @Binding var isSettingLoop: Bool
+    @Binding var snapToGrid: Bool
 
     var body: some View {
         HStack {
@@ -47,6 +48,13 @@ struct TransportBar: View {
                 }
                 .buttonStyle(.bordered)
                 .tint(isSettingLoop ? .orange : (loopRegion != nil ? .blue : .secondary))
+
+                Button(action: { snapToGrid.toggle() }) {
+                    Label("Snap", systemImage: "grid")
+                        .font(.caption)
+                }
+                .buttonStyle(.bordered)
+                .tint(snapToGrid ? .purple : .secondary)
             }
 
             Spacer()
