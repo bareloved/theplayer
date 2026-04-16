@@ -20,6 +20,7 @@ final class SectionEditorViewModel {
         self.sections = sections
         self.beats = beats
         self.duration = duration
+        self.undoManager.groupsByEvent = false
     }
 
     // MARK: - Mutations
@@ -190,11 +191,20 @@ final class SectionEditorViewModel {
     private func applyChange(undoLabel: String, _ action: @escaping () -> Void, undo: @escaping () -> Void) {
         action()
         onChange?(sections)
+        undoManager.beginUndoGrouping()
+        registerReverse(undoLabel: undoLabel, forward: action, reverse: undo)
+        undoManager.endUndoGrouping()
+    }
+
+    /// Registers `reverse` as the next undo (or redo, if we're currently
+    /// inside an undo pass). When it fires, it runs `reverse`, notifies
+    /// `onChange`, and then re-registers `forward` so the operation can be
+    /// re-applied in the opposite direction.
+    private func registerReverse(undoLabel: String, forward: @escaping () -> Void, reverse: @escaping () -> Void) {
         undoManager.registerUndo(withTarget: self) { vm in
-            undo()
+            reverse()
             vm.onChange?(vm.sections)
-            // Register redo so subsequent redo replays this action
-            vm.applyChange(undoLabel: undoLabel, action, undo: undo)
+            vm.registerReverse(undoLabel: undoLabel, forward: reverse, reverse: forward)
         }
         undoManager.setActionName(undoLabel)
     }

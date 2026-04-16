@@ -126,4 +126,41 @@ final class SectionEditorViewModelTests: XCTestCase {
         XCTAssertEqual(vm.sections[1].startTime, 10)
         XCTAssertEqual(vm.sections[2].startTime, 30)
     }
+
+    func testUndoRevertsRename() {
+        let vm = makeVM()
+        let id = vm.sections[1].stableId
+        let originalLabel = vm.sections[1].label
+        vm.rename(sectionId: id, to: "Pre-Chorus")
+        vm.undoManager.undo()
+        XCTAssertEqual(vm.sections[1].label, originalLabel)
+    }
+
+    func testRedoReappliesRename() {
+        let vm = makeVM()
+        let id = vm.sections[1].stableId
+        vm.rename(sectionId: id, to: "Pre-Chorus")
+        vm.undoManager.undo()
+        vm.undoManager.redo()
+        XCTAssertEqual(vm.sections[1].label, "Pre-Chorus")
+    }
+
+    func testUndoRevertsDelete() {
+        let vm = makeVM()
+        let id = vm.sections[2].stableId
+        vm.delete(sectionId: id)
+        XCTAssertEqual(vm.sections.count, 2)
+        vm.undoManager.undo()
+        XCTAssertEqual(vm.sections.count, 3)
+        XCTAssertEqual(vm.sections[2].label, "Chorus")
+    }
+
+    func testOnChangeFiresAfterMutationAndUndo() {
+        let vm = makeVM()
+        var fireCount = 0
+        vm.onChange = { _ in fireCount += 1 }
+        vm.rename(sectionId: vm.sections[0].stableId, to: "X")
+        vm.undoManager.undo()
+        XCTAssertEqual(fireCount, 2)
+    }
 }
