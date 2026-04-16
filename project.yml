@@ -39,6 +39,8 @@ targets:
     platform: macOS
     sources:
       - ThePlayerTests
+    resources:
+      - Resources/test-audio.wav
     dependencies:
       - target: ThePlayer
     settings:
