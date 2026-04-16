@@ -192,7 +192,6 @@ struct LibrarySidebar: View {
             }
         }
         .listStyle(.sidebar)
-        .frame(minWidth: 160, idealWidth: 180, maxWidth: 350)
     }
 
     private func submitNewSetlist() {

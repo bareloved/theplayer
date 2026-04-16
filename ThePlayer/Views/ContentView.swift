@@ -17,6 +17,8 @@ struct ContentView: View {
     @State private var keyMonitor: Any?
     @State private var showLibrarySidebar = true
     @State private var showSectionsSidebar = true
+    @State private var librarySidebarWidth: CGFloat = 180
+    @State private var sectionsSidebarWidth: CGFloat = 220
 
     var body: some View {
         HStack(spacing: 0) {
@@ -31,7 +33,9 @@ struct ContentView: View {
                         loadSongFromLibrary(song)
                     }
                 )
-                Divider()
+                .frame(width: librarySidebarWidth)
+
+                ResizableDivider(dimension: $librarySidebarWidth, minSize: 140, maxSize: 400)
             }
 
             // Center: Player
@@ -46,7 +50,8 @@ struct ContentView: View {
 
             // Right: Sections sidebar
             if showSectionsSidebar && audioEngine.state != .empty {
-                Divider()
+                ResizableDivider(dimension: $sectionsSidebarWidth, minSize: 160, maxSize: 400, isLeading: false)
+
                 SidebarView(
                     sections: analysisService.lastAnalysis?.sections ?? [],
                     bpm: analysisService.lastAnalysis?.bpm,
@@ -61,7 +66,7 @@ struct ContentView: View {
                     },
                     selectedSection: $selectedSection
                 )
-                .frame(minWidth: 220, idealWidth: 220)
+                .frame(width: sectionsSidebarWidth)
             }
         }
         .frame(minWidth: 800, minHeight: 500)
