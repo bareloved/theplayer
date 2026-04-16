@@ -62,4 +62,21 @@ final class TrackAnalysisTests: XCTestCase {
         XCTAssertEqual(decoded.label, "Verse")
         XCTAssertNotNil(decoded.stableId)
     }
+
+    func testTrackAnalysisWithSectionsReplacesSectionsOnly() {
+        let original = TrackAnalysis(
+            bpm: 120,
+            beats: [0, 0.5, 1.0],
+            sections: [AudioSection(label: "A", startTime: 0, endTime: 1, startBeat: 0, endBeat: 4, colorIndex: 0)],
+            waveformPeaks: [0.1, 0.2]
+        )
+        let newSections = [
+            AudioSection(label: "B", startTime: 0, endTime: 1, startBeat: 0, endBeat: 4, colorIndex: 1)
+        ]
+        let updated = original.with(sections: newSections)
+        XCTAssertEqual(updated.bpm, 120)
+        XCTAssertEqual(updated.beats, [0, 0.5, 1.0])
+        XCTAssertEqual(updated.waveformPeaks, [0.1, 0.2])
+        XCTAssertEqual(updated.sections.first?.label, "B")
+    }
 }
