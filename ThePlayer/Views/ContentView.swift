@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var isSettingLoop = false
     @State private var pendingLoopStart: Float?
     @State private var snapToGrid = true
+    @State private var snapDivision: SnapDivision = .fourBeats
     @State private var loadError: String?
     @State private var showErrorAlert = false
     @State private var keyMonitor: Any?
@@ -101,6 +102,7 @@ struct ContentView: View {
                     sections: analysisService.lastAnalysis?.sections ?? [],
                     beats: analysisService.lastAnalysis?.beats ?? [],
                     bpm: analysisService.lastAnalysis?.bpm ?? 0,
+                    snapDivision: snapDivision,
                     duration: audioEngine.duration,
                     currentTime: audioEngine.currentTime,
                     loopRegion: loopRegion,
@@ -134,7 +136,8 @@ struct ContentView: View {
                 audioEngine: audioEngine,
                 loopRegion: $loopRegion,
                 isSettingLoop: $isSettingLoop,
-                snapToGrid: $snapToGrid
+                snapToGrid: $snapToGrid,
+                snapDivision: $snapDivision
             )
         }
     }
@@ -210,9 +213,9 @@ struct ContentView: View {
             return true
         case 123: // Left arrow
             if snapToGrid {
-                let barPositions = getBarPositions()
-                if !barPositions.isEmpty {
-                    let prev = barPositions.last(where: { $0 < audioEngine.currentTime - 0.1 })
+                let positions = getSnapPositions()
+                if !positions.isEmpty {
+                    let prev = positions.last(where: { $0 < audioEngine.currentTime - 0.05 })
                     audioEngine.seek(to: max(prev ?? 0, 0))
                 } else {
                     audioEngine.skipBackward()
@@ -223,9 +226,9 @@ struct ContentView: View {
             return true
         case 124: // Right arrow
             if snapToGrid {
-                let barPositions2 = getBarPositions()
-                if !barPositions2.isEmpty {
-                    let next = barPositions2.first(where: { $0 > audioEngine.currentTime + 0.1 })
+                let positions = getSnapPositions()
+                if !positions.isEmpty {
+                    let next = positions.first(where: { $0 > audioEngine.currentTime + 0.05 })
                     audioEngine.seek(to: min(next ?? audioEngine.duration, audioEngine.duration))
                 } else {
                     audioEngine.skipForward()
@@ -270,10 +273,10 @@ struct ContentView: View {
         return false
     }
 
-    private func getBarPositions() -> [Float] {
+    private func getSnapPositions() -> [Float] {
         let beats = analysisService.lastAnalysis?.beats ?? []
-        guard beats.count >= 4 else { return [] }
-        return stride(from: 0, to: beats.count, by: 4).map { beats[$0] }
+        let bpm = analysisService.lastAnalysis?.bpm ?? 0
+        return snapDivision.snapPositions(beats: beats, bpm: bpm, duration: audioEngine.duration)
     }
 
     private func jumpToSection(_ index: Int) {

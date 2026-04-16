@@ -5,6 +5,7 @@ struct TransportBar: View {
     @Binding var loopRegion: LoopRegion?
     @Binding var isSettingLoop: Bool
     @Binding var snapToGrid: Bool
+    @Binding var snapDivision: SnapDivision
 
     var body: some View {
         HStack {
@@ -55,6 +56,16 @@ struct TransportBar: View {
                 }
                 .buttonStyle(.bordered)
                 .tint(snapToGrid ? .purple : .secondary)
+
+                if snapToGrid {
+                    Picker("", selection: $snapDivision) {
+                        ForEach(SnapDivision.allCases) { div in
+                            Text(div.label).tag(div)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 200)
+                }
             }
 
             Spacer()
