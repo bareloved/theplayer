@@ -6,6 +6,8 @@ struct TransportBar: View {
     @Binding var isSettingLoop: Bool
     @Binding var snapToGrid: Bool
     @Binding var snapDivision: SnapDivision
+    let isInSetlist: Bool
+    let onNextInSetlist: () -> Void
 
     var body: some View {
         VStack(spacing: 8) {
@@ -48,6 +50,15 @@ struct TransportBar: View {
             .opacity(snapToGrid ? 1 : 0)
             .disabled(!snapToGrid)
             .allowsHitTesting(snapToGrid)
+
+            if isInSetlist {
+                Button(action: onNextInSetlist) {
+                    Label("Next", systemImage: "forward.end.fill")
+                        .font(.caption)
+                }
+                .buttonStyle(.bordered)
+                .tint(.blue)
+            }
         }
     }
 
