@@ -25,7 +25,7 @@ targets:
       - ThePlayer
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.theplayer.app
-      PRODUCT_NAME: The Player
+      PRODUCT_NAME: ThePlayer
       PRODUCT_MODULE_NAME: ThePlayer
       GENERATE_INFOPLIST_FILE: YES
       INFOPLIST_VALUES:
@@ -46,5 +46,5 @@ targets:
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.theplayer.tests
       GENERATE_INFOPLIST_FILE: YES
-      TEST_HOST: "$(BUILT_PRODUCTS_DIR)/The Player.app/Contents/MacOS/The Player"
+      TEST_HOST: "$(BUILT_PRODUCTS_DIR)/ThePlayer.app/Contents/MacOS/ThePlayer"
       BUNDLE_LOADER: "$(TEST_HOST)"

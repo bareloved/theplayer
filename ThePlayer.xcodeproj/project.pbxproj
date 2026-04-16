@@ -282,14 +282,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_VALUES = "[\"CFBundleShortVersionString\": \"1.0\", \"CFBundleVersion\": \"1\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\"]";
+				INFOPLIST_VALUES = "[\"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"1\", \"CFBundleShortVersionString\": \"1.0\", \"LSMinimumSystemVersion\": \"14.0\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.theplayer.app;
 				PRODUCT_MODULE_NAME = ThePlayer;
-				PRODUCT_NAME = "The Player";
+				PRODUCT_NAME = ThePlayer;
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "ThePlayer/ThePlayer-Bridging-Header.h";
 			};
@@ -357,14 +357,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_VALUES = "[\"CFBundleShortVersionString\": \"1.0\", \"CFBundleVersion\": \"1\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\"]";
+				INFOPLIST_VALUES = "[\"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"1\", \"CFBundleShortVersionString\": \"1.0\", \"LSMinimumSystemVersion\": \"14.0\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.theplayer.app;
 				PRODUCT_MODULE_NAME = ThePlayer;
-				PRODUCT_NAME = "The Player";
+				PRODUCT_NAME = ThePlayer;
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "ThePlayer/ThePlayer-Bridging-Header.h";
 			};
@@ -446,7 +446,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.theplayer.tests;
 				SDKROOT = macosx;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/The Player.app/Contents/MacOS/The Player";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ThePlayer.app/Contents/MacOS/ThePlayer";
 			};
 			name = Release;
 		};
@@ -463,7 +463,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.theplayer.tests;
 				SDKROOT = macosx;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/The Player.app/Contents/MacOS/The Player";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ThePlayer.app/Contents/MacOS/ThePlayer";
 			};
 			name = Debug;
 		};
