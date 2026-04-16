@@ -61,12 +61,24 @@ final class AudioEngine {
 
     private func loadMetadata(url: URL) {
         let asset = AVURLAsset(url: url)
-        let metadata = asset.commonMetadata
-
-        title = AVMetadataItem.metadataItems(from: metadata, filteredByIdentifier: .commonIdentifierTitle)
-            .first?.stringValue ?? url.deletingPathExtension().lastPathComponent
-        artist = AVMetadataItem.metadataItems(from: metadata, filteredByIdentifier: .commonIdentifierArtist)
-            .first?.stringValue ?? ""
+        Task {
+            let metadata = try? await asset.load(.commonMetadata)
+            guard let metadata else {
+                await MainActor.run {
+                    title = url.deletingPathExtension().lastPathComponent
+                    artist = ""
+                }
+                return
+            }
+            let loadedTitle = try? await AVMetadataItem.metadataItems(from: metadata, filteredByIdentifier: .commonIdentifierTitle)
+                .first?.load(.stringValue)
+            let loadedArtist = try? await AVMetadataItem.metadataItems(from: metadata, filteredByIdentifier: .commonIdentifierArtist)
+                .first?.load(.stringValue)
+            await MainActor.run {
+                title = loadedTitle ?? url.deletingPathExtension().lastPathComponent
+                artist = loadedArtist ?? ""
+            }
+        }
     }
 
     func play() {
