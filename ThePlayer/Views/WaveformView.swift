@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct WaveformView: View {
     let peaks: [Float]
@@ -13,6 +14,9 @@ struct WaveformView: View {
     let pendingLoopStart: Float?
     let onSeek: (Float) -> Void
     let onLoopPointSet: (Float) -> Void
+    let editorViewModel: SectionEditorViewModel?
+    let selectedSectionId: UUID?
+    let onSelectSection: ((UUID?) -> Void)?
 
     @State private var zoomLevel: CGFloat = 1.0
     @State private var scrollOffset: CGFloat = 0
@@ -36,6 +40,10 @@ struct WaveformView: View {
 
                     playhead(width: totalWidth, height: height)
 
+                    if let vm = editorViewModel {
+                        boundaryHandles(viewModel: vm, width: totalWidth, height: height)
+                    }
+
                     if let start = pendingLoopStart {
                         pendingLoopMarker(start: start, width: totalWidth, height: height)
                     }
@@ -49,6 +57,11 @@ struct WaveformView: View {
                 .onTapGesture { location in
                     let fraction = Float(location.x / totalWidth)
                     let time = fraction * duration
+                    if let onSelectSection = onSelectSection, editorViewModel != nil {
+                        let hit = sections.first(where: { time >= $0.startTime && time < $0.endTime })
+                        onSelectSection(hit?.stableId)
+                        return
+                    }
                     if isSettingLoop {
                         onLoopPointSet(time)
                     } else {
@@ -162,9 +175,35 @@ struct WaveformView: View {
         HStack(spacing: 0) {
             ForEach(sections) { section in
                 let sectionWidth = CGFloat((section.endTime - section.startTime) / duration) * width
+                let isSelected = section.stableId == selectedSectionId
                 Rectangle()
-                    .fill(section.color.opacity(0.1))
+                    .fill(section.color.opacity(isSelected ? 0.25 : 0.1))
+                    .overlay(
+                        Rectangle()
+                            .strokeBorder(section.color, lineWidth: isSelected ? 2 : 0)
+                    )
                     .frame(width: sectionWidth, height: height)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func boundaryHandles(viewModel vm: SectionEditorViewModel, width: CGFloat, height: CGFloat) -> some View {
+        ForEach(Array(vm.sections.enumerated()), id: \.element.stableId) { idx, section in
+            if idx > 0 {
+                let x = CGFloat(section.startTime / duration) * width
+                SectionBoundaryHandle(
+                    xPosition: x,
+                    height: height,
+                    isHovered: false,
+                    onDragChanged: { delta in
+                        let timeDelta = Float(delta / width) * duration
+                        let newTime = section.startTime + timeDelta
+                        let snap = !NSEvent.modifierFlags.contains(.option)
+                        vm.moveBoundary(beforeSectionId: section.stableId, toTime: newTime, snapToBeat: snap)
+                    },
+                    onDragEnded: { /* persistence handled via vm.onChange */ }
+                )
             }
         }
     }

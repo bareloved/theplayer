@@ -154,7 +154,10 @@ struct ContentView: View {
                     isSettingLoop: isSettingLoop,
                     pendingLoopStart: pendingLoopStart,
                     onSeek: { time in audioEngine.seek(to: time) },
-                    onLoopPointSet: { time in handleLoopPoint(time) }
+                    onLoopPointSet: { time in handleLoopPoint(time) },
+                    editorViewModel: nil,
+                    selectedSectionId: nil,
+                    onSelectSection: nil
                 )
 
                 if analysisService.isAnalyzing {
