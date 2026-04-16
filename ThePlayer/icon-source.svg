@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#1a6af5"/>
-      <stop offset="100%" stop-color="#0d3b8f"/>
+      <stop offset="0%" stop-color="#0f4fc2"/>
+      <stop offset="100%" stop-color="#082a6a"/>
     </linearGradient>
     <linearGradient id="waveGlow" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
@@ -21,7 +21,7 @@
     </filter>
     <!-- Bar shadow for depth -->
     <filter id="barShadow">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0d3b8f" flood-opacity="0.3"/>
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#082a6a" flood-opacity="0.3"/>
     </filter>
   </defs>
 
