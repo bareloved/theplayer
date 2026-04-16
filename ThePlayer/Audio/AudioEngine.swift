@@ -43,6 +43,8 @@ final class AudioEngine {
     private var timePitchNode = AVAudioUnitTimePitch()
     private var audioFile: AVAudioFile?
     private var displayLink: Timer?
+    private var isSeeking = false
+    private var seekGeneration: Int = 0
 
     init() {
         setupAudioChain()
@@ -93,23 +95,13 @@ final class AudioEngine {
 
     func play() {
         guard let file = audioFile else { return }
-        guard state == .loaded || state == .paused else { return }
+        guard state != .playing else { return }
 
         if !engine.isRunning {
             try? engine.start()
         }
 
-        let startFrame = AVAudioFramePosition(Double(currentTime) * file.fileFormat.sampleRate)
-        let framesRemaining = AVAudioFrameCount(file.length - startFrame)
-        guard framesRemaining > 0 else { return }
-
-        file.framePosition = startFrame
-        playerNode.scheduleSegment(
-            file,
-            startingFrame: startFrame,
-            frameCount: framesRemaining,
-            at: nil
-        )
+        schedulePlayback(from: currentTime, file: file)
         playerNode.play()
         state = .playing
         startTimeTracking()
@@ -117,6 +109,7 @@ final class AudioEngine {
 
     func pause() {
         guard state == .playing else { return }
+        updateCurrentTimeNow()
         playerNode.pause()
         state = .paused
         stopTimeTracking()
@@ -127,6 +120,7 @@ final class AudioEngine {
     }
 
     func stop() {
+        seekGeneration += 1
         playerNode.stop()
         engine.stop()
         stopTimeTracking()
@@ -137,10 +131,16 @@ final class AudioEngine {
     }
 
     func seek(to time: Float) {
+        guard audioFile != nil else { return }
         let wasPlaying = isPlaying
-        let clampedTime = min(max(time, 0), duration)
+
+        seekGeneration += 1
         playerNode.stop()
-        currentTime = clampedTime
+        stopTimeTracking()
+
+        currentTime = min(max(time, 0), duration)
+        state = wasPlaying ? .loaded : (state == .empty ? .empty : .loaded)
+
         if wasPlaying {
             play()
         }
@@ -166,10 +166,14 @@ final class AudioEngine {
     func playLoop() {
         guard let loop = activeLoop, let file = audioFile else { return }
 
+        let gen = seekGeneration
+
         if !engine.isRunning {
             try? engine.start()
         }
 
+        seekGeneration += 1
+        let loopGen = seekGeneration
         playerNode.stop()
 
         let startFrame = AVAudioFramePosition(Double(loop.startTime) * file.fileFormat.sampleRate)
@@ -177,7 +181,8 @@ final class AudioEngine {
         let frameCount = AVAudioFrameCount(endFrame - startFrame)
         guard frameCount > 0 else { return }
 
-        file.framePosition = startFrame
+        currentTime = loop.startTime
+
         playerNode.scheduleSegment(
             file,
             startingFrame: startFrame,
@@ -185,8 +190,9 @@ final class AudioEngine {
             at: nil
         ) { [weak self] in
             Task { @MainActor in
-                if self?.activeLoop != nil {
-                    self?.playLoop()
+                guard let self, self.seekGeneration == loopGen else { return }
+                if self.activeLoop != nil {
+                    self.playLoop()
                 }
             }
         }
@@ -195,14 +201,28 @@ final class AudioEngine {
         startTimeTracking()
     }
 
+    private func schedulePlayback(from time: Float, file: AVAudioFile) {
+        let startFrame = AVAudioFramePosition(Double(time) * file.fileFormat.sampleRate)
+        let totalFrames = file.length
+        guard startFrame < totalFrames else { return }
+        let framesRemaining = AVAudioFrameCount(totalFrames - startFrame)
+
+        playerNode.scheduleSegment(
+            file,
+            startingFrame: startFrame,
+            frameCount: framesRemaining,
+            at: nil
+        )
+    }
+
     private func applyTimePitch() {
         timePitchNode.rate = speed
-        timePitchNode.pitch = pitch * 100 // AVAudioUnitTimePitch uses cents (100 cents = 1 semitone)
+        timePitchNode.pitch = pitch * 100
     }
 
     private func startTimeTracking() {
         stopTimeTracking()
-        displayLink = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
+        displayLink = Timer.scheduledTimer(withTimeInterval: 1.0 / 15.0, repeats: true) { [weak self] _ in
             self?.updateCurrentTime()
         }
     }
@@ -213,7 +233,19 @@ final class AudioEngine {
     }
 
     private func updateCurrentTime() {
+        guard state == .playing else { return }
         guard let nodeTime = playerNode.lastRenderTime,
+              nodeTime.isSampleTimeValid,
+              let playerTime = playerNode.playerTime(forNodeTime: nodeTime) else { return }
+        let time = Float(playerTime.sampleTime) / Float(playerTime.sampleRate)
+        if time >= 0 && time <= duration {
+            currentTime = time
+        }
+    }
+
+    private func updateCurrentTimeNow() {
+        guard let nodeTime = playerNode.lastRenderTime,
+              nodeTime.isSampleTimeValid,
               let playerTime = playerNode.playerTime(forNodeTime: nodeTime) else { return }
         let time = Float(playerTime.sampleTime) / Float(playerTime.sampleRate)
         if time >= 0 && time <= duration {
