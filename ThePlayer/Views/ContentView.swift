@@ -143,6 +143,22 @@ struct ContentView: View {
             .padding(.horizontal, 16)
             .padding(.top, 16)
 
+            if analysisService.hasUserEditsForCurrent && sectionEditor == nil {
+                HStack {
+                    Image(systemName: "pencil.circle")
+                    Text("Manual section edits applied")
+                        .font(.caption)
+                    Spacer()
+                    Button("Discard Edits") {
+                        Task { await analysisService.discardUserEdits() }
+                    }
+                    .controlSize(.small)
+                }
+                .padding(8)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
+                .padding(.horizontal, 12)
+            }
+
             // Waveform
             ZStack {
                 WaveformView(
