@@ -37,6 +37,7 @@
 		A44ABC5715449232881FEF2A /* LoopRegionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB55C97EE8D9174F2C168E60 /* LoopRegionTests.swift */; };
 		B9F24165A95CEDA996213188 /* icon-source.svg in Resources */ = {isa = PBXBuildFile; fileRef = 06CC75C68AC33420992162FC /* icon-source.svg */; };
 		BC92147DB6AE77C3B00EBCE1 /* UserEditsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A29D01F8B31978173A6853 /* UserEditsStore.swift */; };
+		C101B804AC3D8771DB30DA84 /* SectionLabelPresets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DD1849C48D0FB2C04509BC8 /* SectionLabelPresets.swift */; };
 		C339330ACCB11423558D7164 /* TrackAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5D5329004D98673486A598 /* TrackAnalysis.swift */; };
 		C4974526D99B1B285A028313 /* ResizableDivider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593AB2B4DACBC6FD4D8B2392 /* ResizableDivider.swift */; };
 		C6356943CA5A3561E3A3B7D7 /* UserEdits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65A31A0CA84FC217AAF08758 /* UserEdits.swift */; };
@@ -73,6 +74,7 @@
 		26BF9246DAC36B848385421B /* UserEditsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserEditsStoreTests.swift; sourceTree = "<group>"; };
 		2ADD12242074A22EC6EB1E5A /* SongEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongEntry.swift; sourceTree = "<group>"; };
 		3536351E8625D9CB1C72D8D5 /* WaveformExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformExtractor.swift; sourceTree = "<group>"; };
+		3DD1849C48D0FB2C04509BC8 /* SectionLabelPresets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionLabelPresets.swift; sourceTree = "<group>"; };
 		3F97DBB529000EB77AB53A26 /* LibraryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryService.swift; sourceTree = "<group>"; };
 		4BBB560288245846FECACB7B /* LibraryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryServiceTests.swift; sourceTree = "<group>"; };
 		4F1524C5706C8153F2068B56 /* TrackAnalysisTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackAnalysisTests.swift; sourceTree = "<group>"; };
@@ -192,6 +194,7 @@
 				743EBB1DA28F3FD0555C76F6 /* SpeedPitchControl.swift */,
 				6E87A69A0986B002C10713F7 /* TransportBar.swift */,
 				15F32C86DE7BF5020059DDBD /* WaveformView.swift */,
+				E37A0FCF33C578CA1FF319F8 /* SectionEditor */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -203,6 +206,14 @@
 				539E47E41B42256E98F163B1 /* ThePlayerTests */,
 				32FBA92579DEB11E6CBE5453 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		E37A0FCF33C578CA1FF319F8 /* SectionEditor */ = {
+			isa = PBXGroup;
+			children = (
+				3DD1849C48D0FB2C04509BC8 /* SectionLabelPresets.swift */,
+			);
+			path = SectionEditor;
 			sourceTree = "<group>";
 		};
 		E3E7F07F61DED932AF0088BC /* ThePlayer */ = {
@@ -339,6 +350,7 @@
 				6DC4215F33F35BA2B290157B /* PlayerLibrary.swift in Sources */,
 				022C36FCB67CD59CD64513A4 /* Playlist.swift in Sources */,
 				C4974526D99B1B285A028313 /* ResizableDivider.swift in Sources */,
+				C101B804AC3D8771DB30DA84 /* SectionLabelPresets.swift in Sources */,
 				A3617ECD46F2CFFC5E82B380 /* Setlist.swift in Sources */,
 				7861515EFBEFE53E2F5D6A96 /* SettingsView.swift in Sources */,
 				3B3606F64ACDF745EBCA9F0B /* SidebarView.swift in Sources */,
@@ -378,7 +390,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"1\", \"CFBundleShortVersionString\": \"1.0\", \"LSMinimumSystemVersion\": \"14.0\"]";
+				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"1\", \"CFBundleShortVersionString\": \"1.0\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleDisplayName\": \"The Player\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -485,7 +497,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"1\", \"CFBundleShortVersionString\": \"1.0\", \"LSMinimumSystemVersion\": \"14.0\"]";
+				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"1\", \"CFBundleShortVersionString\": \"1.0\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleDisplayName\": \"The Player\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
