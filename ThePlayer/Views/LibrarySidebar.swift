@@ -10,6 +10,9 @@ struct LibrarySidebar: View {
     @State private var isAddingSetlist = false
     @State private var newPlaylistName = ""
     @State private var isAddingPlaylist = false
+    @State private var renamingSetlistId: UUID?
+    @State private var renamingPlaylistId: UUID?
+    @State private var renameText = ""
 
     var body: some View {
         NavigationStack {
@@ -32,16 +35,36 @@ struct LibrarySidebar: View {
                 // Setlists
                 Section {
                     ForEach(libraryService.library.setlists) { setlist in
-                        NavigationLink(value: SetlistDestination.setlist(setlist)) {
-                            HStack {
-                                Image(systemName: "music.note.list")
-                                    .foregroundStyle(.blue)
-                                    .frame(width: 24)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(setlist.name)
-                                    Text("\(setlist.songIds.count) Items")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                        if renamingSetlistId == setlist.id {
+                            TextField("Setlist name", text: $renameText)
+                                .textFieldStyle(.roundedBorder)
+                                .onSubmit {
+                                    let trimmed = renameText.trimmingCharacters(in: .whitespaces)
+                                    if !trimmed.isEmpty { libraryService.renameSetlist(id: setlist.id, name: trimmed) }
+                                    renamingSetlistId = nil
+                                }
+                                .onExitCommand { renamingSetlistId = nil }
+                        } else {
+                            NavigationLink(value: SetlistDestination.setlist(setlist)) {
+                                HStack {
+                                    Image(systemName: "music.note.list")
+                                        .foregroundStyle(.blue)
+                                        .frame(width: 24)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(setlist.name)
+                                        Text("\(setlist.songIds.count) Items")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                            .contextMenu {
+                                Button("Rename...") {
+                                    renameText = setlist.name
+                                    renamingSetlistId = setlist.id
+                                }
+                                Button("Delete", role: .destructive) {
+                                    libraryService.deleteSetlist(id: setlist.id)
                                 }
                             }
                         }
@@ -72,16 +95,36 @@ struct LibrarySidebar: View {
                 // Playlists
                 Section {
                     ForEach(libraryService.library.playlists) { playlist in
-                        NavigationLink(value: SetlistDestination.playlist(playlist)) {
-                            HStack {
-                                Image(systemName: "music.note")
-                                    .foregroundStyle(.purple)
-                                    .frame(width: 24)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(playlist.name)
-                                    Text("\(playlist.songIds.count) Items")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                        if renamingPlaylistId == playlist.id {
+                            TextField("Playlist name", text: $renameText)
+                                .textFieldStyle(.roundedBorder)
+                                .onSubmit {
+                                    let trimmed = renameText.trimmingCharacters(in: .whitespaces)
+                                    if !trimmed.isEmpty { libraryService.renamePlaylist(id: playlist.id, name: trimmed) }
+                                    renamingPlaylistId = nil
+                                }
+                                .onExitCommand { renamingPlaylistId = nil }
+                        } else {
+                            NavigationLink(value: SetlistDestination.playlist(playlist)) {
+                                HStack {
+                                    Image(systemName: "music.note")
+                                        .foregroundStyle(.purple)
+                                        .frame(width: 24)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(playlist.name)
+                                        Text("\(playlist.songIds.count) Items")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                            .contextMenu {
+                                Button("Rename...") {
+                                    renameText = playlist.name
+                                    renamingPlaylistId = playlist.id
+                                }
+                                Button("Delete", role: .destructive) {
+                                    libraryService.deletePlaylist(id: playlist.id)
                                 }
                             }
                         }

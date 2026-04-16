@@ -97,6 +97,13 @@ final class LibraryService {
         return setlist
     }
 
+    func renameSetlist(id: UUID, name: String) {
+        guard let index = library.setlists.firstIndex(where: { $0.id == id }) else { return }
+        library.setlists[index].name = name
+        library.setlists[index].updatedAt = Date()
+        save()
+    }
+
     func deleteSetlist(id: UUID) {
         library.setlists.removeAll(where: { $0.id == id })
         if activeSetlistId == id { activeSetlistId = nil }
@@ -134,6 +141,13 @@ final class LibraryService {
         library.playlists.append(playlist)
         save()
         return playlist
+    }
+
+    func renamePlaylist(id: UUID, name: String) {
+        guard let index = library.playlists.firstIndex(where: { $0.id == id }) else { return }
+        library.playlists[index].name = name
+        library.playlists[index].updatedAt = Date()
+        save()
     }
 
     func deletePlaylist(id: UUID) {
