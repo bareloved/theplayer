@@ -10,7 +10,7 @@ struct ContentView: View {
     @State private var isSettingLoop = false
     @State private var pendingLoopStart: Float?
     @State private var snapToGrid = true
-    @State private var snapDivision: SnapDivision = .fourBeats
+    @State private var snapDivision: SnapDivision = .oneBar
     @State private var loadError: String?
     @State private var showErrorAlert = false
     @State private var keyMonitor: Any?

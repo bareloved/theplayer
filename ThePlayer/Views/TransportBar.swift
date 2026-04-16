@@ -58,13 +58,18 @@ struct TransportBar: View {
                 .tint(snapToGrid ? .purple : .secondary)
 
                 if snapToGrid {
-                    Picker("", selection: $snapDivision) {
-                        ForEach(SnapDivision.allCases) { div in
-                            Text(div.label).tag(div)
+                    HStack(spacing: 4) {
+                        Text("Bars")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Picker("", selection: $snapDivision) {
+                            ForEach(SnapDivision.allCases) { div in
+                                Text(div.shortLabel).tag(div)
+                            }
                         }
+                        .pickerStyle(.segmented)
+                        .frame(width: 200)
                     }
-                    .pickerStyle(.segmented)
-                    .frame(width: 200)
                 }
             }
 
