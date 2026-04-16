@@ -31,7 +31,8 @@ struct ContentView: View {
                     },
                     onSetlistSongSelect: { song, setlistId, index in
                         loadSongFromLibrary(song)
-                    }
+                    },
+                    currentSongPath: audioEngine.fileURL?.path
                 )
                 .frame(width: librarySidebarWidth)
 

@@ -4,6 +4,7 @@ struct LibrarySidebar: View {
     @Bindable var libraryService: LibraryService
     let onSongSelect: (SongEntry) -> Void
     let onSetlistSongSelect: (SongEntry, UUID, Int) -> Void
+    let currentSongPath: String?  // file path of currently loaded song
 
     @State private var newSetlistName = ""
     @State private var isAddingSetlist = false
@@ -21,7 +22,7 @@ struct LibrarySidebar: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(recent) { song in
-                            SongRow(song: song, onSelect: { onSongSelect(song) })
+                            SongRow(song: song, libraryService: libraryService, onSelect: { onSongSelect(song) })
                         }
                     }
                 } header: {
@@ -137,13 +138,15 @@ struct LibrarySidebar: View {
             SetlistDetailView(
                 setlist: setlist,
                 libraryService: libraryService,
-                onSongSelect: onSetlistSongSelect
+                onSongSelect: onSetlistSongSelect,
+                currentSongPath: currentSongPath
             )
         case .playlist(let playlist):
             PlaylistDetailView(
                 playlist: playlist,
                 libraryService: libraryService,
-                onSongSelect: onSongSelect
+                onSongSelect: onSongSelect,
+                currentSongPath: currentSongPath
             )
         case .smart(let kind):
             SmartPlaylistView(
@@ -190,6 +193,7 @@ private enum SetlistDestination: Hashable {
 
 private struct SongRow: View {
     let song: SongEntry
+    let libraryService: LibraryService
     let onSelect: () -> Void
 
     var body: some View {
@@ -209,6 +213,26 @@ private struct SongRow: View {
             }
         }
         .buttonStyle(.plain)
+        .contextMenu {
+            if !libraryService.library.setlists.isEmpty {
+                Menu("Add to Setlist...") {
+                    ForEach(libraryService.library.setlists) { setlist in
+                        Button(setlist.name) {
+                            libraryService.addSongToSetlist(songId: song.id, setlistId: setlist.id)
+                        }
+                    }
+                }
+            }
+            if !libraryService.library.playlists.isEmpty {
+                Menu("Add to Playlist...") {
+                    ForEach(libraryService.library.playlists) { playlist in
+                        Button(playlist.name) {
+                            libraryService.addSongToPlaylist(songId: song.id, playlistId: playlist.id)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -218,9 +242,23 @@ private struct SetlistDetailView: View {
     let setlist: Setlist
     @Bindable var libraryService: LibraryService
     let onSongSelect: (SongEntry, UUID, Int) -> Void
+    var currentSongPath: String?
 
     var body: some View {
         List {
+            // Add current song button
+            if let path = currentSongPath, let song = libraryService.library.songByPath(path) {
+                if !setlist.songIds.contains(song.id) {
+                    Button(action: {
+                        libraryService.addSongToSetlist(songId: song.id, setlistId: setlist.id)
+                    }) {
+                        Label("Add \"\(song.title)\"", systemImage: "plus.circle.fill")
+                            .foregroundStyle(.blue)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
             let songs = setlist.songIds.enumerated().compactMap { index, id -> (Int, SongEntry)? in
                 guard let song = libraryService.library.song(byId: id) else { return nil }
                 return (index, song)
@@ -265,12 +303,25 @@ private struct PlaylistDetailView: View {
     let playlist: Playlist
     @Bindable var libraryService: LibraryService
     let onSongSelect: (SongEntry) -> Void
+    var currentSongPath: String?
 
     var body: some View {
         List {
+            if let path = currentSongPath, let song = libraryService.library.songByPath(path) {
+                if !playlist.songIds.contains(song.id) {
+                    Button(action: {
+                        libraryService.addSongToPlaylist(songId: song.id, playlistId: playlist.id)
+                    }) {
+                        Label("Add \"\(song.title)\"", systemImage: "plus.circle.fill")
+                            .foregroundStyle(.purple)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
             let songs = playlist.songIds.compactMap { libraryService.library.song(byId: $0) }
             ForEach(songs) { song in
-                SongRow(song: song, onSelect: { onSongSelect(song) })
+                SongRow(song: song, libraryService: libraryService, onSelect: { onSongSelect(song) })
             }
         }
         .listStyle(.sidebar)
@@ -297,7 +348,7 @@ private struct SmartPlaylistView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(songs) { song in
-                    SongRow(song: song, onSelect: { onSongSelect(song) })
+                    SongRow(song: song, libraryService: libraryService, onSelect: { onSongSelect(song) })
                 }
             }
         }
