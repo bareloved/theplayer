@@ -1,6 +1,7 @@
 #import "EssentiaAnalyzer.h"
 #include <essentia/algorithmfactory.h>
 #include <essentia/essentiamath.h>
+#include <essentia/utils/tnt/tnt2essentiautils.h>
 
 using namespace essentia;
 using namespace essentia::standard;
@@ -100,6 +101,16 @@ using namespace essentia::standard;
         std::vector<Real> segmentation;
 
         if (allMfccs.size() > 10) {
+            // Convert vector<vector<Real>> to TNT::Array2D<Real> for SBic
+            int rows = (int)allMfccs.size();
+            int cols = (int)allMfccs[0].size();
+            TNT::Array2D<Real> features(rows, cols);
+            for (int r = 0; r < rows; r++) {
+                for (int c = 0; c < cols; c++) {
+                    features[r][c] = allMfccs[r][c];
+                }
+            }
+
             Algorithm* sbic = factory.create("SBic",
                 "minLength", 10,
                 "size1", 300,
@@ -108,7 +119,7 @@ using namespace essentia::standard;
                 "inc2", 20,
                 "cpw", 1.5);
 
-            sbic->input("features").set(allMfccs);
+            sbic->input("features").set(features);
             sbic->output("segmentation").set(segmentation);
             sbic->compute();
             delete sbic;
