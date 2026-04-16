@@ -8,6 +8,8 @@ struct ContentView: View {
     @State private var loopRegion: LoopRegion?
     @State private var isTargeted = false
     @State private var isSettingLoop = false
+    @State private var loadError: String?
+    @State private var showErrorAlert = false
 
     var body: some View {
         NavigationSplitView {
@@ -123,6 +125,11 @@ struct ContentView: View {
                 openFile(url: url)
             }
         }
+        .alert("Error", isPresented: $showErrorAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(loadError ?? "An unknown error occurred")
+        }
     }
 
     private var emptyState: some View {
@@ -208,12 +215,14 @@ struct ContentView: View {
             try audioEngine.loadFile(url: url)
             selectedSection = nil
             loopRegion = nil
+            loadError = nil
             NSDocumentController.shared.noteNewRecentDocumentURL(url)
             Task {
                 await analysisService.analyze(fileURL: url)
             }
         } catch {
-            // Error handling added in Task 13
+            loadError = "Could not open file: \(error.localizedDescription)"
+            showErrorAlert = true
         }
     }
 
