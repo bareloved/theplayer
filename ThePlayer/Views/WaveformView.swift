@@ -71,9 +71,34 @@ struct WaveformView: View {
                     .padding(8)
             }
             .overlay(alignment: .bottomTrailing) {
-                timeLabel(formatTime(duration))
-                    .foregroundStyle(.secondary)
-                    .padding(8)
+                HStack(spacing: 12) {
+                    timeLabel(formatTime(duration))
+                        .foregroundStyle(.secondary)
+
+                    HStack(spacing: 4) {
+                        Button(action: { zoomLevel = max(1.0, zoomLevel / 1.5) }) {
+                            Image(systemName: "minus.magnifyingglass")
+                                .font(.caption)
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(zoomLevel > 1.0 ? .primary : .tertiary)
+                        .disabled(zoomLevel <= 1.0)
+
+                        Text("\(Int(zoomLevel * 100))%")
+                            .font(.caption2.monospaced())
+                            .foregroundStyle(.secondary)
+                            .frame(width: 36)
+
+                        Button(action: { zoomLevel = min(20.0, zoomLevel * 1.5) }) {
+                            Image(systemName: "plus.magnifyingglass")
+                                .font(.caption)
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(zoomLevel < 20.0 ? .primary : .tertiary)
+                        .disabled(zoomLevel >= 20.0)
+                    }
+                }
+                .padding(8)
             }
         }
         .background(.quaternary)
