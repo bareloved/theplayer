@@ -51,6 +51,78 @@ struct ContentView: View {
                 audioEngine.playLoop()
             }
         }
+        .onKeyPress(.space) {
+            audioEngine.togglePlayPause()
+            return .handled
+        }
+        .onKeyPress(.leftArrow) {
+            let beats = analysisService.lastAnalysis?.beats ?? []
+            if !beats.isEmpty {
+                let target = LoopRegion.snapToNearestBeat(
+                    time: audioEngine.currentTime - 0.1,
+                    beats: beats.filter { $0 < audioEngine.currentTime - 0.1 }
+                )
+                audioEngine.seek(to: max(target, 0))
+            } else {
+                audioEngine.skipBackward()
+            }
+            return .handled
+        }
+        .onKeyPress(.rightArrow) {
+            let beats = analysisService.lastAnalysis?.beats ?? []
+            if !beats.isEmpty {
+                let target = LoopRegion.snapToNearestBeat(
+                    time: audioEngine.currentTime + 0.1,
+                    beats: beats.filter { $0 > audioEngine.currentTime + 0.1 }
+                )
+                audioEngine.seek(to: min(target, audioEngine.duration))
+            } else {
+                audioEngine.skipForward()
+            }
+            return .handled
+        }
+        .onKeyPress(.upArrow) {
+            audioEngine.speed += 0.05
+            return .handled
+        }
+        .onKeyPress(.downArrow) {
+            audioEngine.speed -= 0.05
+            return .handled
+        }
+        .onKeyPress(KeyEquivalent("[")) {
+            audioEngine.pitch -= 1
+            return .handled
+        }
+        .onKeyPress(KeyEquivalent("]")) {
+            audioEngine.pitch += 1
+            return .handled
+        }
+        .onKeyPress(KeyEquivalent("l")) {
+            if loopRegion != nil {
+                loopRegion = nil
+            }
+            return .handled
+        }
+        .onKeyPress(KeyEquivalent("1")) { jumpToSection(1) }
+        .onKeyPress(KeyEquivalent("2")) { jumpToSection(2) }
+        .onKeyPress(KeyEquivalent("3")) { jumpToSection(3) }
+        .onKeyPress(KeyEquivalent("4")) { jumpToSection(4) }
+        .onKeyPress(KeyEquivalent("5")) { jumpToSection(5) }
+        .onKeyPress(KeyEquivalent("6")) { jumpToSection(6) }
+        .onKeyPress(KeyEquivalent("7")) { jumpToSection(7) }
+        .onKeyPress(KeyEquivalent("8")) { jumpToSection(8) }
+        .onKeyPress(KeyEquivalent("9")) { jumpToSection(9) }
+        .onKeyPress(.escape) {
+            loopRegion = nil
+            selectedSection = nil
+            return .handled
+        }
+        .focusable()
+        .onReceive(NotificationCenter.default.publisher(for: .openAudioFile)) { notification in
+            if let url = notification.object as? URL {
+                openFile(url: url)
+            }
+        }
     }
 
     private var emptyState: some View {
@@ -142,5 +214,17 @@ struct ContentView: View {
         } catch {
             // Error handling added in Task 13
         }
+    }
+
+    private func jumpToSection(_ index: Int) -> KeyPress.Result {
+        guard let sections = analysisService.lastAnalysis?.sections,
+              index <= sections.count else { return .ignored }
+        let section = sections[index - 1]
+        selectedSection = section
+        let loop = LoopRegion.from(section: section)
+        loopRegion = loop
+        audioEngine.setLoop(loop)
+        audioEngine.playLoop()
+        return .handled
     }
 }
