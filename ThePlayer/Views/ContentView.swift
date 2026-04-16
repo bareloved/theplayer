@@ -208,6 +208,7 @@ struct ContentView: View {
             try audioEngine.loadFile(url: url)
             selectedSection = nil
             loopRegion = nil
+            NSDocumentController.shared.noteNewRecentDocumentURL(url)
             Task {
                 await analysisService.analyze(fileURL: url)
             }
