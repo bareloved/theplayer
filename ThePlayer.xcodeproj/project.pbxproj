@@ -15,6 +15,7 @@
 		2061A62B29D9D56719A55B78 /* AnalysisCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5977AA4444DB7CCED9E19ED /* AnalysisCacheTests.swift */; };
 		2791E14F3AC460B2BEE28B85 /* AudioEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 521777D67BC2502BC0D6E99F /* AudioEngineTests.swift */; };
 		2C6D74E899222C88A40C98D5 /* TrackAnalyzerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBAFA19FD76857DF511CB74A /* TrackAnalyzerProtocol.swift */; };
+		31D284C63708762005B721BF /* SectionInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798A28AB6F497AC3430DFC2F /* SectionInspector.swift */; };
 		33FB5D51EA02965FB20F0B81 /* SectionEditorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE7A9AEF57B44BAC317C1109 /* SectionEditorViewModel.swift */; };
 		34FF45C280143157A0857F52 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2186B684F94740C4334F974F /* ContentView.swift */; };
 		3A4562BC8654BD495DE7A77C /* LoopRegion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AB80366F01A6405A511CD73 /* LoopRegion.swift */; };
@@ -90,6 +91,7 @@
 		6AB8B7EC78716DFB858C2274 /* AudioSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSection.swift; sourceTree = "<group>"; };
 		6E87A69A0986B002C10713F7 /* TransportBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransportBar.swift; sourceTree = "<group>"; };
 		743EBB1DA28F3FD0555C76F6 /* SpeedPitchControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedPitchControl.swift; sourceTree = "<group>"; };
+		798A28AB6F497AC3430DFC2F /* SectionInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionInspector.swift; sourceTree = "<group>"; };
 		7A5D5329004D98673486A598 /* TrackAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackAnalysis.swift; sourceTree = "<group>"; };
 		80465283817407589D4C9CAE /* EssentiaAnalyzer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = EssentiaAnalyzer.mm; sourceTree = "<group>"; };
 		8982BCF190C14AE590C2261C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -217,6 +219,7 @@
 			isa = PBXGroup;
 			children = (
 				FE7A9AEF57B44BAC317C1109 /* SectionEditorViewModel.swift */,
+				798A28AB6F497AC3430DFC2F /* SectionInspector.swift */,
 				3DD1849C48D0FB2C04509BC8 /* SectionLabelPresets.swift */,
 			);
 			path = SectionEditor;
@@ -358,6 +361,7 @@
 				022C36FCB67CD59CD64513A4 /* Playlist.swift in Sources */,
 				C4974526D99B1B285A028313 /* ResizableDivider.swift in Sources */,
 				33FB5D51EA02965FB20F0B81 /* SectionEditorViewModel.swift in Sources */,
+				31D284C63708762005B721BF /* SectionInspector.swift in Sources */,
 				C101B804AC3D8771DB30DA84 /* SectionLabelPresets.swift in Sources */,
 				A3617ECD46F2CFFC5E82B380 /* Setlist.swift in Sources */,
 				7861515EFBEFE53E2F5D6A96 /* SettingsView.swift in Sources */,
@@ -398,7 +402,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleShortVersionString\": \"1.0\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleVersion\": \"1\", \"CFBundleDisplayName\": \"The Player\"]";
+				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"1\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"1.0\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -505,7 +509,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleShortVersionString\": \"1.0\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleVersion\": \"1\", \"CFBundleDisplayName\": \"The Player\"]";
+				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"1\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"1.0\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
