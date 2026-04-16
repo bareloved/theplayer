@@ -6,8 +6,10 @@ struct WaveformView: View {
     let duration: Float
     let currentTime: Float
     let loopRegion: LoopRegion?
+    let isSettingLoop: Bool
+    let pendingLoopStart: Float?
     let onSeek: (Float) -> Void
-    let onLoopDrag: (Float, Float) -> Void
+    let onLoopPointSet: (Float) -> Void
 
     @State private var zoomLevel: CGFloat = 1.0
     @State private var scrollOffset: CGFloat = 0
@@ -30,6 +32,10 @@ struct WaveformView: View {
 
                     playhead(width: totalWidth, height: height)
 
+                    if let start = pendingLoopStart {
+                        pendingLoopMarker(start: start, width: totalWidth, height: height)
+                    }
+
                     if let time = hoverTime, let loc = hoverLocation {
                         hoverTooltip(time: time, location: loc)
                     }
@@ -38,7 +44,12 @@ struct WaveformView: View {
                 .contentShape(Rectangle())
                 .onTapGesture { location in
                     let fraction = Float(location.x / totalWidth)
-                    onSeek(fraction * duration)
+                    let time = fraction * duration
+                    if isSettingLoop {
+                        onLoopPointSet(time)
+                    } else {
+                        onSeek(time)
+                    }
                 }
                 .onContinuousHover { phase in
                     switch phase {
@@ -146,6 +157,20 @@ struct WaveformView: View {
                 .padding(4)
         }
         .offset(x: startX)
+        .allowsHitTesting(false)
+    }
+
+    private func pendingLoopMarker(start: Float, width: CGFloat, height: CGFloat) -> some View {
+        let x = duration > 0 ? CGFloat(start / duration) * width : 0
+        return VStack(spacing: 2) {
+            Text("A")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.orange)
+            Rectangle()
+                .fill(.orange)
+                .frame(width: 2, height: height)
+        }
+        .offset(x: x)
         .allowsHitTesting(false)
     }
 

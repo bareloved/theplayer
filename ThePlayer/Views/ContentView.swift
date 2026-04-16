@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var loopRegion: LoopRegion?
     @State private var isTargeted = false
     @State private var isSettingLoop = false
+    @State private var pendingLoopStart: Float?
     @State private var loadError: String?
     @State private var showErrorAlert = false
 
@@ -117,6 +118,8 @@ struct ContentView: View {
         .onKeyPress(.escape) {
             loopRegion = nil
             selectedSection = nil
+            pendingLoopStart = nil
+            isSettingLoop = false
             return .handled
         }
         .focusable()
@@ -164,10 +167,10 @@ struct ContentView: View {
                     duration: audioEngine.duration,
                     currentTime: audioEngine.currentTime,
                     loopRegion: loopRegion,
+                    isSettingLoop: isSettingLoop,
+                    pendingLoopStart: pendingLoopStart,
                     onSeek: { time in audioEngine.seek(to: time) },
-                    onLoopDrag: { start, end in
-                        loopRegion = LoopRegion(startTime: start, endTime: end)
-                    }
+                    onLoopPointSet: { time in handleLoopPoint(time) }
                 )
 
                 if analysisService.isAnalyzing {
@@ -223,6 +226,22 @@ struct ContentView: View {
         } catch {
             loadError = "Could not open file: \(error.localizedDescription)"
             showErrorAlert = true
+        }
+    }
+
+    private func handleLoopPoint(_ time: Float) {
+        if let start = pendingLoopStart {
+            let loopStart = min(start, time)
+            let loopEnd = max(start, time)
+            guard loopEnd - loopStart > 0.1 else { return } // minimum loop length
+            let loop = LoopRegion(startTime: loopStart, endTime: loopEnd)
+            loopRegion = loop
+            pendingLoopStart = nil
+            isSettingLoop = false
+            audioEngine.setLoop(loop)
+            audioEngine.playLoop()
+        } else {
+            pendingLoopStart = time
         }
     }
 

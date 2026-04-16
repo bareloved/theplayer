@@ -17,6 +17,10 @@ struct ThePlayerApp: App {
                 .keyboardShortcut("o")
             }
         }
+
+        Settings {
+            SettingsView()
+        }
     }
 
     private func openFilePanel() {
