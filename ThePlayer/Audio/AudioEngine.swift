@@ -269,13 +269,20 @@ final class AudioEngine {
         displayLink = nil
     }
 
+    /// How far ahead of the "last rendered sample" to draw the visual playhead.
+    /// Compensates for the SwiftUI render-pipeline latency (one display frame ≈ 16 ms)
+    /// plus a small safety margin. Without this, the playhead visibly lags the audio.
+    private let visualLookAheadSeconds: Float = 0.030
+
     private func updateCurrentTime() {
         guard state == .playing else { return }
         guard let nodeTime = playerNode.lastRenderTime,
               nodeTime.isSampleTimeValid,
               let playerTime = playerNode.playerTime(forNodeTime: nodeTime) else { return }
         let elapsed = Float(playerTime.sampleTime) / Float(playerTime.sampleRate)
-        let time = playbackOrigin + elapsed
+        // Visual-only look-ahead: keeps playhead aligned with what the user hears.
+        // Does NOT affect click scheduling (which uses `preciseNow` and host-time math).
+        let time = playbackOrigin + elapsed + visualLookAheadSeconds * speed
         if time >= 0 && time <= duration {
             currentTime = time
         }
