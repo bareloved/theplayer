@@ -203,6 +203,30 @@ using namespace essentia::standard;
             }
         }
 
+        // Build a clustering feature: HPCP (weight 1.0) + z-normalized MFCC[1:] (weight 0.3)
+        // beatFeaturesCombined is already z-normalized and is [MFCC[1:], HPCP] concatenated.
+        // We extract the MFCC[1:] portion from beatFeaturesCombined and downweight it, then
+        // concatenate with the L2-normalized HPCP from beatFeaturesChroma.
+        std::vector<std::vector<Real>> beatFeaturesClustering;
+        if (!beatFeaturesCombined.empty() && !beatFeaturesChroma.empty()
+            && beatFeaturesCombined.size() == beatFeaturesChroma.size()) {
+            size_t mfccPart = beatFeaturesCombined[0].size() - beatFeaturesChroma[0].size();
+            const Real mfccWeight = 0.3;
+            const Real chromaWeight = 1.0;
+            beatFeaturesClustering.reserve(beatFeaturesCombined.size());
+            for (size_t b = 0; b < beatFeaturesCombined.size(); b++) {
+                std::vector<Real> v;
+                v.reserve(beatFeaturesCombined[b].size());
+                for (size_t k = 0; k < mfccPart; k++) {
+                    v.push_back(mfccWeight * beatFeaturesCombined[b][k]);
+                }
+                for (size_t k = 0; k < beatFeaturesChroma[b].size(); k++) {
+                    v.push_back(chromaWeight * beatFeaturesChroma[b][k]);
+                }
+                beatFeaturesClustering.push_back(v);
+            }
+        }
+
         // --- Self-similarity matrix (cosine similarity between beat features) ---
         auto cosineSim = [](const std::vector<Real>& a, const std::vector<Real>& b) -> float {
             Real dot = 0, na = 0, nb = 0;
@@ -339,16 +363,16 @@ using namespace essentia::standard;
         // --- Per-segment mean feature vectors ---
         size_t segCount = boundaries.size() - 1;
         std::vector<std::vector<Real>> segMeans(segCount);
-        if (!beatFeaturesChroma.empty()) {
+        if (!beatFeaturesClustering.empty()) {
             for (size_t s = 0; s < segCount; s++) {
                 float t0 = boundaries[s];
                 float t1 = boundaries[s + 1];
-                std::vector<Real> sum(beatFeaturesChroma[0].size(), 0.0);
+                std::vector<Real> sum(beatFeaturesClustering[0].size(), 0.0);
                 int count = 0;
-                for (size_t b = 0; b + 1 < ticks.size() && b < beatFeaturesChroma.size(); b++) {
+                for (size_t b = 0; b + 1 < ticks.size() && b < beatFeaturesClustering.size(); b++) {
                     float bt = (float)ticks[b];
                     if (bt >= t0 && bt < t1) {
-                        for (size_t k = 0; k < sum.size(); k++) sum[k] += beatFeaturesChroma[b][k];
+                        for (size_t k = 0; k < sum.size(); k++) sum[k] += beatFeaturesClustering[b][k];
                         count++;
                     }
                 }
@@ -382,38 +406,59 @@ using namespace essentia::standard;
         // --- Heuristic mapping cluster → human label ---
         std::map<int, int> clusterCounts;
         for (int c : cluster) clusterCounts[c]++;
-        int chorusCluster = -1;
-        int maxCount = 1;
-        for (auto& kv : clusterCounts) {
-            if (kv.second > maxCount) { maxCount = kv.second; chorusCluster = kv.first; }
-        }
 
-        int verseCluster = -1;
-        int verseCount = 1;
-        for (auto& kv : clusterCounts) {
-            if (kv.first == chorusCluster) continue;
-            if (kv.second > verseCount) { verseCount = kv.second; verseCluster = kv.first; }
+        // Degenerate-cluster detection: clustering failed to separate segments meaningfully.
+        // Fall back to neutral "Section N" labels so the user knows to edit manually.
+        bool degenerate = false;
+        if (clusterCounts.size() <= 1) {
+            degenerate = true;
+        } else if (segCount > 0) {
+            int maxC = 0;
+            for (auto& kv : clusterCounts) if (kv.second > maxC) maxC = kv.second;
+            if ((float)maxC / (float)segCount > 0.6f) {
+                degenerate = true;
+            }
         }
 
         NSMutableArray<NSString*>* heuristicLabels = [NSMutableArray arrayWithCapacity:segCount];
-        for (size_t i = 0; i < segCount; i++) {
-            NSString* label;
-            int c = cluster[i];
-            bool unique = (clusterCounts[c] == 1);
-            if (c == chorusCluster && chorusCluster >= 0) {
-                label = @"Chorus";
-            } else if (c == verseCluster && verseCluster >= 0) {
-                label = @"Verse";
-            } else if (i == 0 && unique) {
-                label = @"Intro";
-            } else if (i == segCount - 1 && unique) {
-                label = @"Outro";
-            } else if (unique) {
-                label = @"Bridge";
-            } else {
-                label = [NSString stringWithFormat:@"Section %zu", i + 1];
+
+        if (degenerate) {
+            for (size_t i = 0; i < segCount; i++) {
+                [heuristicLabels addObject:[NSString stringWithFormat:@"Section %zu", i + 1]];
             }
-            [heuristicLabels addObject:label];
+        } else {
+            int chorusCluster = -1;
+            int maxCount = 1;
+            for (auto& kv : clusterCounts) {
+                if (kv.second > maxCount) { maxCount = kv.second; chorusCluster = kv.first; }
+            }
+
+            int verseCluster = -1;
+            int verseCount = 1;
+            for (auto& kv : clusterCounts) {
+                if (kv.first == chorusCluster) continue;
+                if (kv.second > verseCount) { verseCount = kv.second; verseCluster = kv.first; }
+            }
+
+            for (size_t i = 0; i < segCount; i++) {
+                NSString* label;
+                int c = cluster[i];
+                bool unique = (clusterCounts[c] == 1);
+                if (c == chorusCluster && chorusCluster >= 0) {
+                    label = @"Chorus";
+                } else if (c == verseCluster && verseCluster >= 0) {
+                    label = @"Verse";
+                } else if (i == 0 && unique) {
+                    label = @"Intro";
+                } else if (i == segCount - 1 && unique) {
+                    label = @"Outro";
+                } else if (unique) {
+                    label = @"Bridge";
+                } else {
+                    label = [NSString stringWithFormat:@"Section %zu", i + 1];
+                }
+                [heuristicLabels addObject:label];
+            }
         }
 
         for (size_t i = 0; i < boundaries.size() - 1; i++) {
