@@ -74,13 +74,17 @@ final class AnalysisService {
     static func mergeCachedAnalysis(_ analysis: TrackAnalysis, userEdits: UserEdits?) -> TrackAnalysis {
         guard let edits = userEdits else { return analysis }
         let mergedSections = edits.sections.isEmpty ? analysis.sections : edits.sections
+        let mergedBpm = edits.bpmOverride ?? analysis.bpm
+        let mergedTimeSig = edits.timeSignatureOverride ?? analysis.timeSignature
+        let mergedFirstDb = edits.downbeatTimeOverride ?? analysis.firstDownbeatTime
         return TrackAnalysis(
-            bpm: edits.bpmOverride ?? analysis.bpm,
+            bpm: mergedBpm,
             beats: analysis.beats,
             sections: mergedSections,
             waveformPeaks: analysis.waveformPeaks,
-            downbeatOffset: edits.downbeatOffsetOverride ?? analysis.downbeatOffset,
-            timeSignature: edits.timeSignatureOverride ?? analysis.timeSignature
+            downbeatOffset: analysis.downbeatOffset,
+            firstDownbeatTime: mergedFirstDb,
+            timeSignature: mergedTimeSig
         )
     }
 
@@ -146,12 +150,12 @@ final class AnalysisService {
     }
 
     /// Patch only the timing-override fields on the current sidecar, preserving sections.
-    func saveTimingOverrides(bpm: Float?, downbeatOffset: Int?, timeSignature: TimeSignature?) throws {
+    func saveTimingOverrides(bpm: Float?, downbeatTime: Float?, timeSignature: TimeSignature?) throws {
         guard let key = lastAnalysisKey else { return }
         let existing = try userEdits.retrieve(forKey: key) ?? UserEdits(sections: [])
         var updated = existing
         updated.bpmOverride = bpm
-        updated.downbeatOffsetOverride = downbeatOffset
+        updated.downbeatTimeOverride = downbeatTime
         updated.timeSignatureOverride = timeSignature
         updated.modifiedAt = Date()
         try userEdits.store(updated, forKey: key)

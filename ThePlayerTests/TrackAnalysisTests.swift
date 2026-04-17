@@ -106,6 +106,31 @@ final class TrackAnalysisTests: XCTestCase {
         XCTAssertEqual(decoded.timeSignature, .fourFour)
     }
 
+    func testFirstDownbeatTimeDefaultsFromBeatsAndOffset() {
+        let ta = TrackAnalysis(
+            bpm: 120, beats: [0.1, 0.6, 1.1, 1.6], sections: [], waveformPeaks: [],
+            downbeatOffset: 2, timeSignature: .fourFour
+        )
+        XCTAssertEqual(ta.firstDownbeatTime, 1.1, accuracy: 0.0001)
+    }
+
+    func testFirstDownbeatTimeExplicitOverride() {
+        let ta = TrackAnalysis(
+            bpm: 120, beats: [0.1, 0.6, 1.1, 1.6], sections: [], waveformPeaks: [],
+            downbeatOffset: 0, firstDownbeatTime: 0.25, timeSignature: .fourFour
+        )
+        XCTAssertEqual(ta.firstDownbeatTime, 0.25, accuracy: 0.0001)
+    }
+
+    func testLegacyJSONInfersFirstDownbeatTimeFromBeats() throws {
+        // Old JSON has no firstDownbeatTime key.
+        let json = """
+        {"bpm":120,"beats":[0.1,0.6,1.1,1.6],"sections":[],"waveformPeaks":[],"downbeatOffset":1}
+        """.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(TrackAnalysis.self, from: json)
+        XCTAssertEqual(decoded.firstDownbeatTime, 0.6, accuracy: 0.0001)
+    }
+
     func testWithSectionsPreservesTimingFields() {
         let original = TrackAnalysis(
             bpm: 120, beats: [0, 0.5], sections: [], waveformPeaks: [],

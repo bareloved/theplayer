@@ -90,15 +90,15 @@ extension AnalysisServiceMergeTests {
         XCTAssertEqual(merged.bpm, 90)
     }
 
-    func testMergeAppliesDownbeatOffsetOverride() {
+    func testMergeAppliesDownbeatTimeOverride() {
         let analyzed = TrackAnalysis(
-            bpm: 120, beats: [], sections: [], waveformPeaks: [],
+            bpm: 120, beats: [0.0, 0.5, 1.0, 1.5], sections: [], waveformPeaks: [],
             downbeatOffset: 0, timeSignature: .fourFour
         )
         var edits = UserEdits(sections: [])
-        edits.downbeatOffsetOverride = 3
+        edits.downbeatTimeOverride = 0.75
         let merged = AnalysisService.mergeCachedAnalysis(analyzed, userEdits: edits)
-        XCTAssertEqual(merged.downbeatOffset, 3)
+        XCTAssertEqual(merged.firstDownbeatTime, 0.75, accuracy: 0.0001)
     }
 
     func testMergeAppliesTimeSignatureOverride() {
@@ -129,11 +129,11 @@ extension AnalysisServiceMergeTests {
         )
         try await service.reanalyze(key: key, fileURL: URL(fileURLWithPath: "/dev/null"))
 
-        try service.saveTimingOverrides(bpm: 90, downbeatOffset: 2, timeSignature: .threeFour)
+        try service.saveTimingOverrides(bpm: 90, downbeatTime: 1.5, timeSignature: .threeFour)
 
         let loaded = try userEdits.retrieve(forKey: key)
         XCTAssertEqual(loaded?.bpmOverride, 90)
-        XCTAssertEqual(loaded?.downbeatOffsetOverride, 2)
+        XCTAssertEqual(loaded?.downbeatTimeOverride, 1.5)
         XCTAssertEqual(loaded?.timeSignatureOverride, .threeFour)
         XCTAssertEqual(loaded?.sections.first?.label, "Mine", "sections must not be clobbered")
     }

@@ -3,7 +3,6 @@ import SwiftUI
 struct TimingControls: View {
     let bpm: Float
     let timeSignature: TimeSignature
-    let downbeatOffset: Int
     let isSettingDownbeat: Bool
     let hasBpmOverride: Bool
     let hasTimeSigOverride: Bool
@@ -13,7 +12,8 @@ struct TimingControls: View {
     let onResetBpm: () -> Void
     let onSetTimeSignature: (TimeSignature) -> Void
     let onResetTimeSignature: () -> Void
-    let onShiftDownbeat: (Int) -> Void  // ±1
+    let onShiftDownbeat: (Float) -> Void   // seconds delta (±1 beat = 60/bpm)
+    let onFineNudge: (Float) -> Void       // seconds delta (±0.010)
     let onResetDownbeat: () -> Void
     let onToggleSetDownbeat: () -> Void
 
@@ -61,18 +61,24 @@ struct TimingControls: View {
 
             Divider().frame(height: 14)
 
-            Button(action: { onShiftDownbeat(-1) }) { Image(systemName: "chevron.left") }
+            Button(action: { onFineNudge(-0.010) }) { Image(systemName: "gobackward.10") }
                 .buttonStyle(.bordered).controlSize(.mini)
-                .help("Shift downbeat earlier")
-            Button(action: { onShiftDownbeat(1) }) { Image(systemName: "chevron.right") }
+                .help("Shift downbeat 10 ms earlier")
+            Button(action: { onShiftDownbeat(-60.0 / max(bpm, 1)) }) { Image(systemName: "chevron.left") }
                 .buttonStyle(.bordered).controlSize(.mini)
-                .help("Shift downbeat later")
+                .help("Shift downbeat one beat earlier")
+            Button(action: { onShiftDownbeat(60.0 / max(bpm, 1)) }) { Image(systemName: "chevron.right") }
+                .buttonStyle(.bordered).controlSize(.mini)
+                .help("Shift downbeat one beat later")
+            Button(action: { onFineNudge(0.010) }) { Image(systemName: "goforward.10") }
+                .buttonStyle(.bordered).controlSize(.mini)
+                .help("Shift downbeat 10 ms later")
             Button(action: onToggleSetDownbeat) {
                 Image(systemName: "scope")
             }
             .buttonStyle(.bordered).controlSize(.mini)
             .tint(isSettingDownbeat ? .cyan : nil)
-            .help(isSettingDownbeat ? "Click a beat on the waveform" : "Set downbeat by clicking a beat")
+            .help(isSettingDownbeat ? "Click a beat on the waveform" : "Set downbeat by clicking a point")
             .contextMenu {
                 Button("Reset to auto-detected", action: onResetDownbeat).disabled(!hasDownbeatOverride)
             }

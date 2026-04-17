@@ -28,7 +28,7 @@ final class UserEditsStoreTests: XCTestCase {
         try store.store(edits, forKey: "abc")
         let loaded = try store.retrieve(forKey: "abc")
         XCTAssertEqual(loaded?.sections.first?.label, "Verse")
-        XCTAssertEqual(loaded?.schemaVersion, 2)
+        XCTAssertEqual(loaded?.schemaVersion, 3)
     }
 
     func testRetrieveNonexistentReturnsNil() throws {
@@ -60,15 +60,15 @@ final class UserEditsStoreTests: XCTestCase {
     func testUserEditsEncodesTimingOverrides() throws {
         var edits = UserEdits(sections: [])
         edits.bpmOverride = 90
-        edits.downbeatOffsetOverride = 2
+        edits.downbeatTimeOverride = 1.25
         edits.timeSignatureOverride = .threeFour
 
         try store.store(edits, forKey: "timing-1")
         let loaded = try store.retrieve(forKey: "timing-1")
         XCTAssertEqual(loaded?.bpmOverride, 90)
-        XCTAssertEqual(loaded?.downbeatOffsetOverride, 2)
+        XCTAssertEqual(loaded?.downbeatTimeOverride, 1.25)
         XCTAssertEqual(loaded?.timeSignatureOverride, .threeFour)
-        XCTAssertEqual(loaded?.schemaVersion, 2)
+        XCTAssertEqual(loaded?.schemaVersion, 3)
     }
 
     func testUserEditsLegacyV1JSONDecodesOverridesAsNil() throws {
@@ -80,7 +80,7 @@ final class UserEditsStoreTests: XCTestCase {
         let loaded = try store.retrieve(forKey: "legacy")
         XCTAssertNotNil(loaded)
         XCTAssertNil(loaded?.bpmOverride)
-        XCTAssertNil(loaded?.downbeatOffsetOverride)
+        XCTAssertNil(loaded?.downbeatTimeOverride)
         XCTAssertNil(loaded?.timeSignatureOverride)
     }
 }

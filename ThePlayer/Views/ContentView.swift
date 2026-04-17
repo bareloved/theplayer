@@ -131,7 +131,7 @@ struct ContentView: View {
             clickTrackPlayer?.volume = Float(newValue)
         }
         .onChange(of: analysisService.lastAnalysis?.bpm) { _, _ in rescheduleClicks() }
-        .onChange(of: analysisService.lastAnalysis?.downbeatOffset) { _, _ in rescheduleClicks() }
+        .onChange(of: analysisService.lastAnalysis?.firstDownbeatTime) { _, _ in rescheduleClicks() }
         .onChange(of: analysisService.lastAnalysis?.timeSignature) { _, _ in rescheduleClicks() }
         .onReceive(NotificationCenter.default.publisher(for: .openAudioFile)) { notification in
             if let url = notification.object as? URL {
@@ -201,13 +201,11 @@ struct ContentView: View {
                     pendingLoopStart: pendingLoopStart,
                     onSeek: { time in audioEngine.seek(to: time) },
                     onLoopPointSet: { time in handleLoopPoint(time) },
-                    downbeatOffset: analysisService.lastAnalysis?.downbeatOffset ?? 0,
+                    firstDownbeatTime: analysisService.lastAnalysis?.firstDownbeatTime ?? 0,
                     timeSignature: analysisService.lastAnalysis?.timeSignature ?? .fourFour,
                     isSettingDownbeat: isSettingDownbeat,
-                    onSetDownbeat: { beatIdx in
-                        let bpb = analysisService.lastAnalysis?.timeSignature.beatsPerBar ?? 4
-                        let offset = beatIdx % bpb
-                        setDownbeatOverride(offset)
+                    onSetDownbeat: { time in
+                        setDownbeatOverride(time)
                         isSettingDownbeat = false
                     },
                     editorViewModel: sectionEditor,
@@ -299,20 +297,21 @@ struct ContentView: View {
                     TimingControls(
                         bpm: analysisService.lastAnalysis?.bpm ?? 0,
                         timeSignature: analysisService.lastAnalysis?.timeSignature ?? .fourFour,
-                        downbeatOffset: analysisService.lastAnalysis?.downbeatOffset ?? 0,
                         isSettingDownbeat: isSettingDownbeat,
                         hasBpmOverride: analysisService.baseAnalysis?.bpm != analysisService.lastAnalysis?.bpm,
                         hasTimeSigOverride: analysisService.baseAnalysis?.timeSignature != analysisService.lastAnalysis?.timeSignature,
-                        hasDownbeatOverride: analysisService.baseAnalysis?.downbeatOffset != analysisService.lastAnalysis?.downbeatOffset,
+                        hasDownbeatOverride: analysisService.baseAnalysis?.firstDownbeatTime != analysisService.lastAnalysis?.firstDownbeatTime,
                         onSetBpm: { v in setBpmOverride(v) },
                         onResetBpm: { setBpmOverride(nil) },
                         onSetTimeSignature: { ts in setTimeSignatureOverride(ts) },
                         onResetTimeSignature: { setTimeSignatureOverride(nil) },
-                        onShiftDownbeat: { delta in
-                            let current = analysisService.lastAnalysis?.downbeatOffset ?? 0
-                            let bpb = analysisService.lastAnalysis?.timeSignature.beatsPerBar ?? 4
-                            let next = ((current + delta) % bpb + bpb) % bpb
-                            setDownbeatOverride(next)
+                        onShiftDownbeat: { deltaSeconds in
+                            let current = analysisService.lastAnalysis?.firstDownbeatTime ?? 0
+                            setDownbeatOverride(current + deltaSeconds)
+                        },
+                        onFineNudge: { deltaSeconds in
+                            let current = analysisService.lastAnalysis?.firstDownbeatTime ?? 0
+                            setDownbeatOverride(current + deltaSeconds)
                         },
                         onResetDownbeat: { setDownbeatOverride(nil) },
                         onToggleSetDownbeat: { isSettingDownbeat.toggle() },
@@ -334,8 +333,7 @@ struct ContentView: View {
             player.stop()
             return
         }
-        let offset = max(0, min(analysis.downbeatOffset, analysis.beats.count - 1))
-        let firstDownbeat = analysis.beats[offset]
+        let firstDownbeat = analysis.firstDownbeatTime
         player.reschedule(
             bpm: analysis.bpm,
             firstDownbeatTime: firstDownbeat,
@@ -352,10 +350,10 @@ struct ContentView: View {
         try? analysisService.applyUserEditsPatch(next)
     }
 
-    private func setDownbeatOverride(_ value: Int?) {
+    private func setDownbeatOverride(_ value: Float?) {
         guard let key = analysisService.lastAnalysisKey else { return }
         var next = (try? analysisService.userEdits.retrieve(forKey: key)) ?? UserEdits(sections: [])
-        next.downbeatOffsetOverride = value
+        next.downbeatTimeOverride = value
         next.modifiedAt = Date()
         try? analysisService.applyUserEditsPatch(next)
     }
@@ -570,8 +568,7 @@ struct ContentView: View {
         let analysis = analysisService.lastAnalysis
         let bpb = analysis?.timeSignature.beatsPerBar ?? 4
         let beats = analysis?.beats ?? []
-        let offset = analysis?.downbeatOffset ?? 0
-        let firstBeatTime: Float? = (offset >= 0 && offset < beats.count) ? beats[offset] : beats.first
+        let firstBeatTime: Float? = analysis?.firstDownbeatTime
         return snapDivision.snapPositions(
             beats: beats,
             bpm: analysis?.bpm ?? 0,

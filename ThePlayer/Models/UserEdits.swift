@@ -1,11 +1,11 @@
 import Foundation
 
 struct UserEdits: Codable, Equatable {
-    static let currentSchemaVersion: Int = 2
+    static let currentSchemaVersion: Int = 3
 
     var sections: [AudioSection]
     var bpmOverride: Float?
-    var downbeatOffsetOverride: Int?
+    var downbeatTimeOverride: Float?    // seconds; replaces the old Int beat-offset override
     var timeSignatureOverride: TimeSignature?
     var modifiedAt: Date
     var schemaVersion: Int
@@ -13,14 +13,14 @@ struct UserEdits: Codable, Equatable {
     init(
         sections: [AudioSection],
         bpmOverride: Float? = nil,
-        downbeatOffsetOverride: Int? = nil,
+        downbeatTimeOverride: Float? = nil,
         timeSignatureOverride: TimeSignature? = nil,
         modifiedAt: Date = Date(),
         schemaVersion: Int = UserEdits.currentSchemaVersion
     ) {
         self.sections = sections
         self.bpmOverride = bpmOverride
-        self.downbeatOffsetOverride = downbeatOffsetOverride
+        self.downbeatTimeOverride = downbeatTimeOverride
         self.timeSignatureOverride = timeSignatureOverride
         self.modifiedAt = modifiedAt
         self.schemaVersion = schemaVersion

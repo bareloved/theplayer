@@ -15,10 +15,10 @@ struct WaveformView: View {
     let pendingLoopStart: Float?
     let onSeek: (Float) -> Void
     let onLoopPointSet: (Float) -> Void
-    let downbeatOffset: Int
+    let firstDownbeatTime: Float
     let timeSignature: TimeSignature
     let isSettingDownbeat: Bool
-    let onSetDownbeat: ((Int) -> Void)?
+    let onSetDownbeat: ((Float) -> Void)?
     let editorViewModel: SectionEditorViewModel?
     let selectedSectionId: UUID?
     let onSelectSection: ((UUID?) -> Void)?
@@ -65,13 +65,7 @@ struct WaveformView: View {
                     let fraction = Float(location.x / totalWidth)
                     let time = fraction * duration
                     if isSettingDownbeat, let onSetDownbeat {
-                        var bestIdx = 0
-                        var bestDist: Float = .infinity
-                        for (i, t) in beats.enumerated() {
-                            let d = abs(t - time)
-                            if d < bestDist { bestDist = d; bestIdx = i }
-                        }
-                        onSetDownbeat(bestIdx)
+                        onSetDownbeat(time)
                         return
                     }
                     if let onSelectSection = onSelectSection, editorViewModel != nil {
@@ -160,32 +154,30 @@ struct WaveformView: View {
 
     /// Grid positions based on current snap division
     private var gridPositions: [Float] {
-        let bpb = timeSignature.beatsPerBar
-        let startIdx = max(0, min(downbeatOffset, max(0, beats.count - 1)))
-        let first: Float? = beats.isEmpty ? nil : beats[startIdx]
-        return snapDivision.snapPositions(
+        snapDivision.snapPositions(
             beats: beats, bpm: bpm, duration: duration,
-            beatsPerBar: bpb, firstBeatTime: first
+            beatsPerBar: timeSignature.beatsPerBar,
+            firstBeatTime: firstDownbeatTime
         )
     }
 
-    /// Bar positions (every `beatsPerBar` beats, starting at `downbeatOffset`) for strong lines
+    /// Bar positions (every `beatsPerBar` beats, starting at `firstDownbeatTime`) for strong lines
     private var barPositions: Set<Float> {
         let bpb = timeSignature.beatsPerBar
         guard bpm > 0, bpb > 0, duration > 0 else { return [] }
-        let startIdx = max(0, min(downbeatOffset, max(0, beats.count - 1)))
-        let firstDownbeat: Float = beats.isEmpty ? 0 : beats[startIdx]
         let barDuration: Float = Float(60.0) / bpm * Float(bpb)
         guard barDuration > 0 else { return [] }
         var positions: Set<Float> = []
-        var t = firstDownbeat
+        var t = firstDownbeatTime
         // Walk forward
         while t < duration {
-            positions.insert((t * 100).rounded() / 100)
+            if t >= 0 {
+                positions.insert((t * 100).rounded() / 100)
+            }
             t += barDuration
         }
         // Walk backward from the first downbeat so bars cover the intro as well
-        var tBack = firstDownbeat - barDuration
+        var tBack = firstDownbeatTime - barDuration
         while tBack >= 0 {
             positions.insert((tBack * 100).rounded() / 100)
             tBack -= barDuration
