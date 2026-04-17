@@ -51,6 +51,7 @@ final class AnalysisService {
     private(set) var isAnalyzing = false
     private(set) var progress: Float = 0
     private(set) var lastAnalysis: TrackAnalysis?
+    private(set) var baseAnalysis: TrackAnalysis?
     private(set) var lastAnalysisKey: String?
     private(set) var lastFileURL: URL?
     private(set) var hasUserEditsForCurrent = false
@@ -96,6 +97,7 @@ final class AnalysisService {
             if let cached = try cache.retrieve(forKey: key) {
                 let edits = try userEdits.retrieve(forKey: key)
                 hasUserEditsForCurrent = edits != nil
+                baseAnalysis = cached
                 lastAnalysis = Self.mergeCachedAnalysis(cached, userEdits: edits)
                 progress = 1.0
                 isAnalyzing = false
@@ -111,6 +113,7 @@ final class AnalysisService {
             try cache.store(result, forKey: key)
             let edits = try userEdits.retrieve(forKey: key)
             hasUserEditsForCurrent = edits != nil
+            baseAnalysis = result
             lastAnalysis = Self.mergeCachedAnalysis(result, userEdits: edits)
         } catch {
             analysisError = error.localizedDescription
@@ -137,6 +140,7 @@ final class AnalysisService {
         try cache.store(result, forKey: key)
         let edits = try userEdits.retrieve(forKey: key)
         hasUserEditsForCurrent = edits != nil
+        baseAnalysis = result
         lastAnalysis = Self.mergeCachedAnalysis(result, userEdits: edits)
         isAnalyzing = false
     }
@@ -166,6 +170,17 @@ final class AnalysisService {
         guard let key = lastAnalysisKey, let cached = try? cache.retrieve(forKey: key) else { return }
         try? userEdits.delete(forKey: key)
         hasUserEditsForCurrent = false
+        baseAnalysis = cached
         lastAnalysis = cached
+    }
+
+    /// Apply a patched sidecar and re-merge lastAnalysis. Used by timing-controls UI.
+    func applyUserEditsPatch(_ edits: UserEdits) throws {
+        guard let key = lastAnalysisKey else { return }
+        try userEdits.store(edits, forKey: key)
+        if let base = baseAnalysis {
+            lastAnalysis = Self.mergeCachedAnalysis(base, userEdits: edits)
+            hasUserEditsForCurrent = true
+        }
     }
 }

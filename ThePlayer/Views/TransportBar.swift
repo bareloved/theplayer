@@ -10,6 +10,7 @@ struct TransportBar: View {
     let onNextInSetlist: () -> Void
     let onToggleSectionEditor: () -> Void
     let isSectionEditing: Bool
+    let timingControls: AnyView?
 
     var body: some View {
         VStack(spacing: 8) {
@@ -67,6 +68,8 @@ struct TransportBar: View {
             }
             .buttonStyle(.plain)
             .help(isSectionEditing ? "Exit section editor" : "Edit sections")
+
+            if let timingControls { timingControls }
         }
     }
 

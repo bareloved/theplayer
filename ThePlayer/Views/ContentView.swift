@@ -22,6 +22,7 @@ struct ContentView: View {
     @State private var sectionEditor: SectionEditorViewModel?
     @State private var selectedSectionForEdit: UUID?
     @State private var showResetConfirm = false
+    @State private var isSettingDownbeat: Bool = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -175,10 +176,15 @@ struct ContentView: View {
                     pendingLoopStart: pendingLoopStart,
                     onSeek: { time in audioEngine.seek(to: time) },
                     onLoopPointSet: { time in handleLoopPoint(time) },
-                    downbeatOffset: 0,
-                    timeSignature: .fourFour,
-                    isSettingDownbeat: false,
-                    onSetDownbeat: nil,
+                    downbeatOffset: analysisService.lastAnalysis?.downbeatOffset ?? 0,
+                    timeSignature: analysisService.lastAnalysis?.timeSignature ?? .fourFour,
+                    isSettingDownbeat: isSettingDownbeat,
+                    onSetDownbeat: { beatIdx in
+                        let bpb = analysisService.lastAnalysis?.timeSignature.beatsPerBar ?? 4
+                        let offset = beatIdx % bpb
+                        setDownbeatOverride(offset)
+                        isSettingDownbeat = false
+                    },
                     editorViewModel: sectionEditor,
                     selectedSectionId: selectedSectionForEdit,
                     onSelectSection: { selectedSectionForEdit = $0 }
@@ -263,9 +269,56 @@ struct ContentView: View {
                 onToggleSectionEditor: {
                     if sectionEditor == nil { enterSectionEditor() } else { exitSectionEditor() }
                 },
-                isSectionEditing: sectionEditor != nil
+                isSectionEditing: sectionEditor != nil,
+                timingControls: AnyView(
+                    TimingControls(
+                        bpm: analysisService.lastAnalysis?.bpm ?? 0,
+                        timeSignature: analysisService.lastAnalysis?.timeSignature ?? .fourFour,
+                        downbeatOffset: analysisService.lastAnalysis?.downbeatOffset ?? 0,
+                        isSettingDownbeat: isSettingDownbeat,
+                        hasBpmOverride: analysisService.baseAnalysis?.bpm != analysisService.lastAnalysis?.bpm,
+                        hasTimeSigOverride: analysisService.baseAnalysis?.timeSignature != analysisService.lastAnalysis?.timeSignature,
+                        hasDownbeatOverride: analysisService.baseAnalysis?.downbeatOffset != analysisService.lastAnalysis?.downbeatOffset,
+                        onSetBpm: { v in setBpmOverride(v) },
+                        onResetBpm: { setBpmOverride(nil) },
+                        onSetTimeSignature: { ts in setTimeSignatureOverride(ts) },
+                        onResetTimeSignature: { setTimeSignatureOverride(nil) },
+                        onShiftDownbeat: { delta in
+                            let current = analysisService.lastAnalysis?.downbeatOffset ?? 0
+                            let bpb = analysisService.lastAnalysis?.timeSignature.beatsPerBar ?? 4
+                            let next = ((current + delta) % bpb + bpb) % bpb
+                            setDownbeatOverride(next)
+                        },
+                        onResetDownbeat: { setDownbeatOverride(nil) },
+                        onToggleSetDownbeat: { isSettingDownbeat.toggle() }
+                    )
+                )
             )
         }
+    }
+
+    private func setBpmOverride(_ value: Float?) {
+        guard let key = analysisService.lastAnalysisKey else { return }
+        var next = (try? analysisService.userEdits.retrieve(forKey: key)) ?? UserEdits(sections: [])
+        next.bpmOverride = value
+        next.modifiedAt = Date()
+        try? analysisService.applyUserEditsPatch(next)
+    }
+
+    private func setDownbeatOverride(_ value: Int?) {
+        guard let key = analysisService.lastAnalysisKey else { return }
+        var next = (try? analysisService.userEdits.retrieve(forKey: key)) ?? UserEdits(sections: [])
+        next.downbeatOffsetOverride = value
+        next.modifiedAt = Date()
+        try? analysisService.applyUserEditsPatch(next)
+    }
+
+    private func setTimeSignatureOverride(_ value: TimeSignature?) {
+        guard let key = analysisService.lastAnalysisKey else { return }
+        var next = (try? analysisService.userEdits.retrieve(forKey: key)) ?? UserEdits(sections: [])
+        next.timeSignatureOverride = value
+        next.modifiedAt = Date()
+        try? analysisService.applyUserEditsPatch(next)
     }
 
     private func enterSectionEditor() {
@@ -469,7 +522,7 @@ struct ContentView: View {
     private func getSnapPositions() -> [Float] {
         let beats = analysisService.lastAnalysis?.beats ?? []
         let bpm = analysisService.lastAnalysis?.bpm ?? 0
-        return snapDivision.snapPositions(beats: beats, bpm: bpm, duration: audioEngine.duration, beatsPerBar: 4)
+        return snapDivision.snapPositions(beats: beats, bpm: bpm, duration: audioEngine.duration, beatsPerBar: analysisService.lastAnalysis?.timeSignature.beatsPerBar ?? 4)
     }
 
     private func jumpToSection(_ index: Int) {
