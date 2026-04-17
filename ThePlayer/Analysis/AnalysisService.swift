@@ -69,8 +69,16 @@ final class AnalysisService {
     }
 
     static func mergeCachedAnalysis(_ analysis: TrackAnalysis, userEdits: UserEdits?) -> TrackAnalysis {
-        guard let edits = userEdits, !edits.sections.isEmpty else { return analysis }
-        return analysis.with(sections: edits.sections)
+        guard let edits = userEdits else { return analysis }
+        let mergedSections = edits.sections.isEmpty ? analysis.sections : edits.sections
+        return TrackAnalysis(
+            bpm: edits.bpmOverride ?? analysis.bpm,
+            beats: analysis.beats,
+            sections: mergedSections,
+            waveformPeaks: analysis.waveformPeaks,
+            downbeatOffset: edits.downbeatOffsetOverride ?? analysis.downbeatOffset,
+            timeSignature: edits.timeSignatureOverride ?? analysis.timeSignature
+        )
     }
 
     func analyze(fileURL: URL) async {
@@ -129,6 +137,19 @@ final class AnalysisService {
         hasUserEditsForCurrent = edits != nil
         lastAnalysis = Self.mergeCachedAnalysis(result, userEdits: edits)
         isAnalyzing = false
+    }
+
+    /// Patch only the timing-override fields on the current sidecar, preserving sections.
+    func saveTimingOverrides(bpm: Float?, downbeatOffset: Int?, timeSignature: TimeSignature?) throws {
+        guard let key = lastAnalysisKey else { return }
+        let existing = try userEdits.retrieve(forKey: key) ?? UserEdits(sections: [])
+        var updated = existing
+        updated.bpmOverride = bpm
+        updated.downbeatOffsetOverride = downbeatOffset
+        updated.timeSignatureOverride = timeSignature
+        updated.modifiedAt = Date()
+        try userEdits.store(updated, forKey: key)
+        hasUserEditsForCurrent = true
     }
 
     /// Persist edited sections for the currently loaded track.

@@ -80,3 +80,61 @@ extension AnalysisServiceMergeTests {
         XCTAssertTrue(service.hasUserEditsForCurrent)
     }
 }
+
+extension AnalysisServiceMergeTests {
+    func testMergeAppliesBpmOverride() {
+        let analyzed = TrackAnalysis(bpm: 180, beats: [], sections: [], waveformPeaks: [])
+        var edits = UserEdits(sections: [])
+        edits.bpmOverride = 90
+        let merged = AnalysisService.mergeCachedAnalysis(analyzed, userEdits: edits)
+        XCTAssertEqual(merged.bpm, 90)
+    }
+
+    func testMergeAppliesDownbeatOffsetOverride() {
+        let analyzed = TrackAnalysis(
+            bpm: 120, beats: [], sections: [], waveformPeaks: [],
+            downbeatOffset: 0, timeSignature: .fourFour
+        )
+        var edits = UserEdits(sections: [])
+        edits.downbeatOffsetOverride = 3
+        let merged = AnalysisService.mergeCachedAnalysis(analyzed, userEdits: edits)
+        XCTAssertEqual(merged.downbeatOffset, 3)
+    }
+
+    func testMergeAppliesTimeSignatureOverride() {
+        let analyzed = TrackAnalysis(bpm: 120, beats: [], sections: [], waveformPeaks: [])
+        var edits = UserEdits(sections: [])
+        edits.timeSignatureOverride = .threeFour
+        let merged = AnalysisService.mergeCachedAnalysis(analyzed, userEdits: edits)
+        XCTAssertEqual(merged.timeSignature, .threeFour)
+    }
+
+    func testSaveTimingOverridesPatchesWithoutClobberingSections() async throws {
+        let key = "timing-patch"
+        let analyzed = TrackAnalysis(
+            bpm: 120,
+            beats: [],
+            sections: [AudioSection(label: "A", startTime: 0, endTime: 1, startBeat: 0, endBeat: 4, colorIndex: 0)],
+            waveformPeaks: []
+        )
+        try cache.store(analyzed, forKey: key)
+        try userEdits.store(UserEdits(sections: [
+            AudioSection(label: "Mine", startTime: 0, endTime: 1, startBeat: 0, endBeat: 4, colorIndex: 2)
+        ]), forKey: key)
+
+        let service = AnalysisService(
+            analyzer: FakeAnalyzer(nextResult: analyzed),
+            cache: cache,
+            userEdits: userEdits
+        )
+        try await service.reanalyze(key: key, fileURL: URL(fileURLWithPath: "/dev/null"))
+
+        try service.saveTimingOverrides(bpm: 90, downbeatOffset: 2, timeSignature: .threeFour)
+
+        let loaded = try userEdits.retrieve(forKey: key)
+        XCTAssertEqual(loaded?.bpmOverride, 90)
+        XCTAssertEqual(loaded?.downbeatOffsetOverride, 2)
+        XCTAssertEqual(loaded?.timeSignatureOverride, .threeFour)
+        XCTAssertEqual(loaded?.sections.first?.label, "Mine", "sections must not be clobbered")
+    }
+}
