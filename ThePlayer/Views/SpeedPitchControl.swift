@@ -66,17 +66,46 @@ private struct CustomSlider: View {
 
     @State private var isDragging = false
 
+    // Non-linear mapping: defaultValue sits at 50% of the track.
+    // Left half maps [range.lower .. default], right half maps [default .. range.upper].
+    // Falls back to linear if default is at the midpoint already.
+
+    private var useNonLinear: Bool {
+        let mid = (range.lowerBound + range.upperBound) / 2
+        return abs(defaultValue - mid) > step
+    }
+
     private var fraction: CGFloat {
-        CGFloat((value - range.lowerBound) / (range.upperBound - range.lowerBound))
+        fractionFor(value)
     }
 
     private func fractionFor(_ val: Float) -> CGFloat {
-        CGFloat((val - range.lowerBound) / (range.upperBound - range.lowerBound))
+        if useNonLinear {
+            if val <= defaultValue {
+                let f = (val - range.lowerBound) / (defaultValue - range.lowerBound)
+                return CGFloat(f * 0.5)
+            } else {
+                let f = (val - defaultValue) / (range.upperBound - defaultValue)
+                return CGFloat(0.5 + f * 0.5)
+            }
+        } else {
+            return CGFloat((val - range.lowerBound) / (range.upperBound - range.lowerBound))
+        }
     }
 
-    private func valueFor(fraction: CGFloat) -> Float {
-        let raw = range.lowerBound + Float(fraction) * (range.upperBound - range.lowerBound)
-        // Round to step
+    private func valueFor(fraction frac: CGFloat) -> Float {
+        let raw: Float
+        if useNonLinear {
+            if frac <= 0.5 {
+                let f = Float(frac) / 0.5
+                raw = range.lowerBound + f * (defaultValue - range.lowerBound)
+            } else {
+                let f = (Float(frac) - 0.5) / 0.5
+                raw = defaultValue + f * (range.upperBound - defaultValue)
+            }
+        } else {
+            raw = range.lowerBound + Float(frac) * (range.upperBound - range.lowerBound)
+        }
         let stepped = (raw / step).rounded() * step
         return min(max(stepped, range.lowerBound), range.upperBound)
     }
