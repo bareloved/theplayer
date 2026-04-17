@@ -32,14 +32,27 @@ struct TimingControls: View {
                     .frame(width: 60)
                     .font(.caption)
             } else {
-                Text("\(Int(bpm.rounded())) BPM")
-                    .font(.caption.monospaced())
-                    .foregroundStyle(hasBpmOverride ? .blue : .primary)
-                    .onTapGesture { beginEditingBpm() }
-                    .contextMenu {
-                        Button("Reset to auto-detected", action: onResetBpm).disabled(!hasBpmOverride)
-                    }
+                Button(action: { beginEditingBpm() }) {
+                    Text("\(Int(bpm.rounded())) BPM")
+                        .font(.caption.monospaced())
+                        .foregroundStyle(hasBpmOverride ? .blue : .primary)
+                        .underline(true, color: .secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Click to type a BPM value")
+                .contextMenu {
+                    Button("Reset to auto-detected", action: onResetBpm).disabled(!hasBpmOverride)
+                }
+                .onHover { hovering in
+                    if hovering { NSCursor.iBeam.set() } else { NSCursor.arrow.set() }
+                }
             }
+            Button("−1") { onSetBpm(bpm - 1) }
+                .buttonStyle(.bordered).controlSize(.mini)
+                .help("Decrease BPM by 1")
+            Button("+1") { onSetBpm(bpm + 1) }
+                .buttonStyle(.bordered).controlSize(.mini)
+                .help("Increase BPM by 1")
             Button("÷2") { onSetBpm(bpm / 2) }
                 .buttonStyle(.bordered).controlSize(.mini)
             Button("×2") { onSetBpm(bpm * 2) }
