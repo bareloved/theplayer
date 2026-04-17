@@ -79,8 +79,28 @@ private struct CustomSlider: View {
         fractionFor(value)
     }
 
+    // Use log scale when all bounds positive (speed slider). Log scale makes
+    // equal ratios take equal space: 0.5 sits halfway between 0.25 and 1.0.
+    private var useLogScale: Bool {
+        useNonLinear && range.lowerBound > 0 && defaultValue > 0
+    }
+
     private func fractionFor(_ val: Float) -> CGFloat {
-        if useNonLinear {
+        guard useNonLinear else {
+            return CGFloat((val - range.lowerBound) / (range.upperBound - range.lowerBound))
+        }
+
+        if useLogScale {
+            let v = max(val, range.lowerBound)
+            if v <= defaultValue {
+                let f = log(v / range.lowerBound) / log(defaultValue / range.lowerBound)
+                return CGFloat(f * 0.5)
+            } else {
+                let f = log(v / defaultValue) / log(range.upperBound / defaultValue)
+                return CGFloat(0.5 + f * 0.5)
+            }
+        } else {
+            // Linear within each half (for non-positive ranges)
             if val <= defaultValue {
                 let f = (val - range.lowerBound) / (defaultValue - range.lowerBound)
                 return CGFloat(f * 0.5)
@@ -88,14 +108,23 @@ private struct CustomSlider: View {
                 let f = (val - defaultValue) / (range.upperBound - defaultValue)
                 return CGFloat(0.5 + f * 0.5)
             }
-        } else {
-            return CGFloat((val - range.lowerBound) / (range.upperBound - range.lowerBound))
         }
     }
 
     private func valueFor(fraction frac: CGFloat) -> Float {
         let raw: Float
-        if useNonLinear {
+
+        if !useNonLinear {
+            raw = range.lowerBound + Float(frac) * (range.upperBound - range.lowerBound)
+        } else if useLogScale {
+            if frac <= 0.5 {
+                let f = Float(frac) / 0.5
+                raw = range.lowerBound * pow(defaultValue / range.lowerBound, f)
+            } else {
+                let f = (Float(frac) - 0.5) / 0.5
+                raw = defaultValue * pow(range.upperBound / defaultValue, f)
+            }
+        } else {
             if frac <= 0.5 {
                 let f = Float(frac) / 0.5
                 raw = range.lowerBound + f * (defaultValue - range.lowerBound)
@@ -103,9 +132,8 @@ private struct CustomSlider: View {
                 let f = (Float(frac) - 0.5) / 0.5
                 raw = defaultValue + f * (range.upperBound - defaultValue)
             }
-        } else {
-            raw = range.lowerBound + Float(frac) * (range.upperBound - range.lowerBound)
         }
+
         let stepped = (raw / step).rounded() * step
         return min(max(stepped, range.lowerBound), range.upperBound)
     }
