@@ -46,9 +46,7 @@ struct SpeedPitchControl: View {
                 .font(.system(.callout, design: .monospaced, weight: .semibold))
                 .foregroundStyle(color)
                 .onTapGesture(count: 2) {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        value = defaultValue
-                    }
+                    value = defaultValue
                 }
         }
     }
@@ -172,9 +170,7 @@ private struct CustomSlider: View {
                     .frame(width: 16, height: 16)
                     .position(x: thumbX, y: geo.size.height / 2)
                     .onTapGesture(count: 2) {
-                        withAnimation(.easeInOut(duration: 0.15)) {
-                            value = defaultValue
-                        }
+                        value = defaultValue
                     }
                     .gesture(
                         DragGesture(minimumDistance: 3)
@@ -207,9 +203,7 @@ private struct CustomSlider: View {
                         break
                     }
                 }
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    value = newVal
-                }
+                value = newVal
             }
         }
     }
