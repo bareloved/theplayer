@@ -160,16 +160,37 @@ struct WaveformView: View {
 
     /// Grid positions based on current snap division
     private var gridPositions: [Float] {
-        snapDivision.snapPositions(beats: beats, bpm: bpm, duration: duration, beatsPerBar: timeSignature.beatsPerBar)
+        let bpb = timeSignature.beatsPerBar
+        let startIdx = max(0, min(downbeatOffset, max(0, beats.count - 1)))
+        let first: Float? = beats.isEmpty ? nil : beats[startIdx]
+        return snapDivision.snapPositions(
+            beats: beats, bpm: bpm, duration: duration,
+            beatsPerBar: bpb, firstBeatTime: first
+        )
     }
 
     /// Bar positions (every `beatsPerBar` beats, starting at `downbeatOffset`) for strong lines
     private var barPositions: Set<Float> {
         let bpb = timeSignature.beatsPerBar
-        guard beats.count >= bpb, bpb > 0 else { return [] }
-        let startIdx = max(0, min(downbeatOffset, beats.count - 1))
-        let bars = stride(from: startIdx, to: beats.count, by: bpb).map { beats[$0] }
-        return Set(bars.map { ($0 * 100).rounded() / 100 })
+        guard bpm > 0, bpb > 0, duration > 0 else { return [] }
+        let startIdx = max(0, min(downbeatOffset, max(0, beats.count - 1)))
+        let firstDownbeat: Float = beats.isEmpty ? 0 : beats[startIdx]
+        let barDuration: Float = Float(60.0) / bpm * Float(bpb)
+        guard barDuration > 0 else { return [] }
+        var positions: Set<Float> = []
+        var t = firstDownbeat
+        // Walk forward
+        while t < duration {
+            positions.insert((t * 100).rounded() / 100)
+            t += barDuration
+        }
+        // Walk backward from the first downbeat so bars cover the intro as well
+        var tBack = firstDownbeat - barDuration
+        while tBack >= 0 {
+            positions.insert((tBack * 100).rounded() / 100)
+            tBack -= barDuration
+        }
+        return positions
     }
 
     private func barLines(width: CGFloat, height: CGFloat) -> some View {
