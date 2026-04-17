@@ -158,8 +158,8 @@ struct WaveformView: View {
                 let x = CGFloat(gridTime / duration) * size.width
                 let rounded = (gridTime * 100).rounded() / 100
                 let isBar = barPositions.contains(rounded)
-                let opacity: CGFloat = isBar ? 0.2 : 0.07
-                let lw: CGFloat = isBar ? 1.0 : 0.5
+                let opacity: CGFloat = isBar ? 0.45 : 0.2
+                let lw: CGFloat = isBar ? 1.5 : 0.75
 
                 var path = Path()
                 path.move(to: CGPoint(x: x, y: 0))
