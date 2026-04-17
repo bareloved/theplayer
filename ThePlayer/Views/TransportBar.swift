@@ -81,7 +81,10 @@ struct TransportBar: View {
                     step: 0.05,
                     unit: "%",
                     color: .blue,
-                    formatter: { "\(Int($0 * 100))" }
+                    formatter: { "\(Int($0 * 100))" },
+                    defaultValue: 1.0,
+                    snapPoints: [0.5, 1.0, 1.5],
+                    sliderWidth: 160
                 )
 
                 Spacer()
@@ -93,7 +96,8 @@ struct TransportBar: View {
                     step: 1.0,
                     unit: " st",
                     color: .green,
-                    formatter: { v in v >= 0 ? "+\(Int(v))" : "\(Int(v))" }
+                    formatter: { v in v >= 0 ? "+\(Int(v))" : "\(Int(v))" },
+                    defaultValue: 0
                 )
             }
 

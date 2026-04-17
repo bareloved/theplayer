@@ -8,6 +8,9 @@ struct SpeedPitchControl: View {
     let unit: String
     let color: Color
     let formatter: (Float) -> String
+    var defaultValue: Float = 1.0
+    var snapPoints: [Float] = []
+    var sliderWidth: CGFloat = 100
 
     var body: some View {
         VStack(spacing: 4) {
@@ -25,7 +28,16 @@ struct SpeedPitchControl: View {
 
                 Slider(value: $value, in: range, step: step)
                     .tint(color)
-                    .frame(width: 100)
+                    .frame(width: sliderWidth)
+                    .onChange(of: value) { _, newVal in
+                        // Snap to nearby snap points
+                        for snap in snapPoints {
+                            if abs(newVal - snap) < step * 0.6 {
+                                value = snap
+                                return
+                            }
+                        }
+                    }
 
                 Text(formatter(range.upperBound))
                     .font(.caption2)
@@ -36,6 +48,11 @@ struct SpeedPitchControl: View {
             Text(formatter(value) + unit)
                 .font(.system(.callout, design: .monospaced, weight: .semibold))
                 .foregroundStyle(color)
+                .onTapGesture(count: 2) {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        value = defaultValue
+                    }
+                }
         }
     }
 }
