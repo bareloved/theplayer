@@ -35,6 +35,22 @@ final class ClickTrackPlayer {
         guard let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat,
                                             frameCapacity: AVAudioFrameCount(file.length)) else { return nil }
         try? file.read(into: buffer)
+
+        // Pre-amplify: the source WAVs are quiet relative to typical song material,
+        // so we bake in a fixed gain at load time. ~3x (~9.5 dB) with hard-clipping
+        // at ±1.0. User's volume slider then attenuates from there.
+        let gain: Float = 3.0
+        if let chData = buffer.floatChannelData {
+            let frameCount = Int(buffer.frameLength)
+            let channels = Int(buffer.format.channelCount)
+            for ch in 0..<channels {
+                let samples = chData[ch]
+                for i in 0..<frameCount {
+                    let v = samples[i] * gain
+                    samples[i] = max(-1.0, min(1.0, v))
+                }
+            }
+        }
         return buffer
     }
 
