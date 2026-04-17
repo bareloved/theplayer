@@ -169,14 +169,14 @@ struct ContentView: View {
             .padding(.horizontal, 16)
             .padding(.top, 16)
 
-            if analysisService.hasUserEditsForCurrent && sectionEditor == nil {
+            if analysisService.hasUserSectionEdits && sectionEditor == nil {
                 HStack {
                     Image(systemName: "pencil.circle")
                     Text("Manual section edits applied")
                         .font(.caption)
                     Spacer()
                     Button("Discard Edits") {
-                        Task { await analysisService.discardUserEdits() }
+                        Task { await analysisService.discardSectionEdits() }
                     }
                     .controlSize(.small)
                 }

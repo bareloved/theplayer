@@ -162,14 +162,42 @@ final class AnalysisService {
         hasUserEditsForCurrent = true
     }
 
-    /// Persist edited sections for the currently loaded track.
+    /// True if the user has edited sections (vs. timing overrides only).
+    /// Separate from `hasUserEditsForCurrent` so the "Manual section edits applied" banner
+    /// doesn't fire for silent timing tweaks (BPM / downbeat / time signature).
+    var hasUserSectionEdits: Bool {
+        guard let base = baseAnalysis, let last = lastAnalysis else { return false }
+        return last.sections != base.sections
+    }
+
+    /// Persist edited sections for the currently loaded track. Preserves any timing overrides
+    /// already in the sidecar (bpm / downbeat / time signature).
     func saveUserEdits(_ sections: [AudioSection]) throws {
         guard let key = lastAnalysisKey else { return }
-        try userEdits.store(UserEdits(sections: sections), forKey: key)
+        var next = (try? userEdits.retrieve(forKey: key)) ?? UserEdits(sections: [])
+        next.sections = sections
+        next.modifiedAt = Date()
+        try userEdits.store(next, forKey: key)
         hasUserEditsForCurrent = true
     }
 
-    /// Discard sidecar and reload analyzer output for the currently loaded track.
+    /// Discard SECTION edits only. Timing overrides (bpm / downbeat / time signature) remain.
+    /// Used by the "Discard Edits" banner.
+    func discardSectionEdits() async {
+        guard let key = lastAnalysisKey, let base = baseAnalysis else { return }
+        var next = (try? userEdits.retrieve(forKey: key)) ?? UserEdits(sections: [])
+        next.sections = []
+        next.modifiedAt = Date()
+        try? userEdits.store(next, forKey: key)
+        lastAnalysis = Self.mergeCachedAnalysis(base, userEdits: next)
+        let hasAny = next.bpmOverride != nil ||
+                     next.downbeatTimeOverride != nil ||
+                     next.timeSignatureOverride != nil ||
+                     !next.sections.isEmpty
+        hasUserEditsForCurrent = hasAny
+    }
+
+    /// Nuke the entire sidecar (sections + timing). Kept in case a caller needs a full reset.
     func discardUserEdits() async {
         guard let key = lastAnalysisKey, let cached = try? cache.retrieve(forKey: key) else { return }
         try? userEdits.delete(forKey: key)
