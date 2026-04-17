@@ -407,6 +407,27 @@ using namespace essentia::standard;
         std::map<int, int> clusterCounts;
         for (int c : cluster) clusterCounts[c]++;
 
+        // Per-segment RMS energy from raw audio
+        std::vector<float> segmentEnergy(segCount, 0.0f);
+        float totalEnergy = 0.0f;
+        int totalEnergyCount = 0;
+        for (size_t s = 0; s < segCount; s++) {
+            size_t startSample = (size_t)(boundaries[s] * 44100.0f);
+            size_t endSample = (size_t)(boundaries[s + 1] * 44100.0f);
+            if (endSample > audio.size()) endSample = audio.size();
+            if (startSample >= endSample) continue;
+
+            double sumSq = 0.0;
+            for (size_t i = startSample; i < endSample; i++) {
+                sumSq += (double)audio[i] * (double)audio[i];
+            }
+            float rms = (float)std::sqrt(sumSq / (double)(endSample - startSample));
+            segmentEnergy[s] = rms;
+            totalEnergy += rms;
+            totalEnergyCount++;
+        }
+        float meanEnergy = totalEnergyCount > 0 ? totalEnergy / (float)totalEnergyCount : 0.0f;
+
         // Degenerate-cluster detection: clustering failed to separate segments meaningfully.
         // Fall back to neutral "Section N" labels so the user knows to edit manually.
         bool degenerate = false;
@@ -427,37 +448,96 @@ using namespace essentia::standard;
                 [heuristicLabels addObject:[NSString stringWithFormat:@"Section %zu", i + 1]];
             }
         } else {
-            int chorusCluster = -1;
-            int maxCount = 1;
+            // --- Energy-weighted chorus/verse pick among repeated clusters ---
+            std::vector<int> repeatedClusters;
             for (auto& kv : clusterCounts) {
-                if (kv.second > maxCount) { maxCount = kv.second; chorusCluster = kv.first; }
+                if (kv.second >= 2) repeatedClusters.push_back(kv.first);
             }
 
-            int verseCluster = -1;
-            int verseCount = 1;
-            for (auto& kv : clusterCounts) {
-                if (kv.first == chorusCluster) continue;
-                if (kv.second > verseCount) { verseCount = kv.second; verseCluster = kv.first; }
-            }
-
-            for (size_t i = 0; i < segCount; i++) {
-                NSString* label;
-                int c = cluster[i];
-                bool unique = (clusterCounts[c] == 1);
-                if (c == chorusCluster && chorusCluster >= 0) {
-                    label = @"Chorus";
-                } else if (c == verseCluster && verseCluster >= 0) {
-                    label = @"Verse";
-                } else if (i == 0 && unique) {
-                    label = @"Intro";
-                } else if (i == segCount - 1 && unique) {
-                    label = @"Outro";
-                } else if (unique) {
-                    label = @"Bridge";
-                } else {
-                    label = [NSString stringWithFormat:@"Section %zu", i + 1];
+            // Compute mean energy per cluster
+            std::map<int, float> clusterMeanEnergy;
+            for (int c : repeatedClusters) {
+                float sum = 0.0f; int n = 0;
+                for (size_t s = 0; s < segCount; s++) {
+                    if (cluster[s] == c) { sum += segmentEnergy[s]; n++; }
                 }
-                [heuristicLabels addObject:label];
+                clusterMeanEnergy[c] = n > 0 ? sum / (float)n : 0.0f;
+            }
+
+            int chorusCluster = -1;
+            int verseCluster = -1;
+            if (!repeatedClusters.empty()) {
+                // Chorus = highest-energy repeated cluster
+                chorusCluster = repeatedClusters[0];
+                for (int c : repeatedClusters) {
+                    if (clusterMeanEnergy[c] > clusterMeanEnergy[chorusCluster]) chorusCluster = c;
+                }
+                // Verse = most-repeated non-chorus cluster (tiebreak: lower energy)
+                int bestCount = 0;
+                for (int c : repeatedClusters) {
+                    if (c == chorusCluster) continue;
+                    int cnt = clusterCounts[c];
+                    if (cnt > bestCount ||
+                        (cnt == bestCount && verseCluster >= 0 && clusterMeanEnergy[c] < clusterMeanEnergy[verseCluster])) {
+                        bestCount = cnt;
+                        verseCluster = c;
+                    }
+                }
+            }
+
+            // --- Initial pass: Chorus / Verse from clusters; leave others as nil ---
+            std::vector<NSString*> initial(segCount, nil);
+            for (size_t s = 0; s < segCount; s++) {
+                int c = cluster[s];
+                if (c == chorusCluster) initial[s] = @"Chorus";
+                else if (c == verseCluster) initial[s] = @"Verse";
+            }
+
+            // --- Positional priors: Intro / Outro ---
+            auto sectionBarCount = [&](size_t s) -> int {
+                // Approximate bar count from duration and BPM (4-beat bars)
+                float dur = boundaries[s + 1] - boundaries[s];
+                if (bpm <= 0) return 0;
+                float beatsPerSec = bpm / 60.0f;
+                return (int)std::round(dur * beatsPerSec / 4.0f);
+            };
+
+            if (segCount > 0) {
+                // First segment → Intro if unassigned OR (short AND low-energy)
+                int firstBars = sectionBarCount(0);
+                bool firstIsShort = firstBars > 0 && firstBars < 16;
+                bool firstIsLowEnergy = meanEnergy > 0 && segmentEnergy[0] < meanEnergy * 0.85f;
+                if (initial[0] == nil || (firstIsShort && firstIsLowEnergy)) {
+                    initial[0] = @"Intro";
+                }
+            }
+
+            if (segCount > 1) {
+                // Last segment → Outro if unassigned OR low-energy
+                size_t last = segCount - 1;
+                bool lastLowEnergy = meanEnergy > 0 && segmentEnergy[last] < meanEnergy * 0.8f;
+                if (initial[last] == nil || lastLowEnergy) {
+                    initial[last] = @"Outro";
+                }
+            }
+
+            // --- Bridge: at most one, the longest unassigned mid-song segment ---
+            int bridgeIdx = -1;
+            int bridgeBars = -1;
+            for (size_t s = 1; s + 1 < segCount; s++) {
+                if (initial[s] != nil) continue;
+                int bars = sectionBarCount(s);
+                if (bars > bridgeBars) { bridgeBars = bars; bridgeIdx = (int)s; }
+            }
+            if (bridgeIdx >= 0) initial[bridgeIdx] = @"Bridge";
+
+            // --- Anything still unassigned → "Section N" ---
+            for (size_t s = 0; s < segCount; s++) {
+                if (initial[s] == nil) {
+                    [heuristicLabels addObject:[NSString stringWithFormat:@"Section %zu", s + 1]];
+                } else {
+                    [heuristicLabels addObject:initial[s]];
+                }
             }
         }
 
