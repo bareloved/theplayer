@@ -97,7 +97,9 @@ struct TransportBar: View {
                     unit: " st",
                     color: .green,
                     formatter: { v in v >= 0 ? "+\(Int(v))" : "\(Int(v))" },
-                    defaultValue: 0
+                    defaultValue: 0,
+                    snapPoints: [0],
+                    sliderWidth: 160
                 )
             }
 
