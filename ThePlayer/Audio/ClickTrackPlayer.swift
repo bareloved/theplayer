@@ -16,9 +16,12 @@ final class ClickTrackPlayer {
 
     init(audioEngine: AudioEngine) {
         self.audioEngine = audioEngine
-        audioEngine.attachSecondaryPlayer(playerNode)
-        playerNode.volume = volume
         loadBuffers()
+        // Connect using the buffer's format so the mixer's expected channel
+        // count / sample rate match the WAV exactly.
+        let format = downbeatBuffer?.format
+        audioEngine.attachSecondaryPlayer(playerNode, format: format)
+        playerNode.volume = volume
     }
 
     private func loadBuffers() {

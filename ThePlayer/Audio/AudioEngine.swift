@@ -61,11 +61,11 @@ final class AudioEngine {
         engine.connect(timePitchNode, to: engine.mainMixerNode, format: nil)
     }
 
-    func attachSecondaryPlayer(_ node: AVAudioNode) {
+    func attachSecondaryPlayer(_ node: AVAudioNode, format: AVAudioFormat? = nil) {
         if node.engine !== engine {
             engine.attach(node)
         }
-        engine.connect(node, to: engine.mainMixerNode, format: nil)
+        engine.connect(node, to: engine.mainMixerNode, format: format)
     }
 
     private func notifyTimingChanged() {
