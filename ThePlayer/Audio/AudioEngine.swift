@@ -41,6 +41,16 @@ final class AudioEngine {
 
     var onTimingChanged: (() -> Void)?
 
+    /// Atomically sample the current song position and its host time from the audio graph.
+    /// Used by the click scheduler to avoid drift from the 15 Hz currentTime timer.
+    var preciseNow: (songTime: Float, hostTime: UInt64)? {
+        guard let nodeTime = playerNode.lastRenderTime,
+              nodeTime.isSampleTimeValid,
+              let playerTime = playerNode.playerTime(forNodeTime: nodeTime) else { return nil }
+        let elapsed = Float(playerTime.sampleTime) / Float(playerTime.sampleRate)
+        return (playbackOrigin + elapsed, nodeTime.hostTime)
+    }
+
     private var engine = AVAudioEngine()
     private var playerNode = AVAudioPlayerNode()
     private var timePitchNode = AVAudioUnitTimePitch()

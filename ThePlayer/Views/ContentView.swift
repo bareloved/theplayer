@@ -130,6 +130,9 @@ struct ContentView: View {
         .onChange(of: clickVolume) { _, newValue in
             clickTrackPlayer?.volume = Float(newValue)
         }
+        .onChange(of: analysisService.lastAnalysis?.bpm) { _, _ in rescheduleClicks() }
+        .onChange(of: analysisService.lastAnalysis?.downbeatOffset) { _, _ in rescheduleClicks() }
+        .onChange(of: analysisService.lastAnalysis?.timeSignature) { _, _ in rescheduleClicks() }
         .onReceive(NotificationCenter.default.publisher(for: .openAudioFile)) { notification in
             if let url = notification.object as? URL {
                 openFile(url: url)
@@ -337,7 +340,6 @@ struct ContentView: View {
             bpm: analysis.bpm,
             firstDownbeatTime: firstDownbeat,
             beatsPerBar: analysis.timeSignature.beatsPerBar,
-            currentSongTime: audioEngine.currentTime,
             speed: audioEngine.speed
         )
     }

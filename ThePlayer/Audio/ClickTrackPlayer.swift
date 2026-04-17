@@ -38,7 +38,7 @@ final class ClickTrackPlayer {
         return buffer
     }
 
-    func reschedule(bpm: Float, firstDownbeatTime: Float, beatsPerBar: Int, currentSongTime: Float, speed: Float) {
+    func reschedule(bpm: Float, firstDownbeatTime: Float, beatsPerBar: Int, speed: Float) {
         guard isEnabled, bpm > 0, beatsPerBar > 0, speed > 0,
               let down = downbeatBuffer, let beat = beatBuffer else {
             stop()
@@ -47,10 +47,10 @@ final class ClickTrackPlayer {
 
         playerNode.stop()
 
-        guard let lastRender = playerNode.lastRenderTime else {
-            return
-        }
-        let currentHostTime = lastRender.hostTime
+        // Pull fresh song-time + host-time atomically from the song player.
+        guard let now = audioEngine.preciseNow else { return }
+        let currentSongTime = now.songTime
+        let currentHostTime = now.hostTime
 
         var timebase = mach_timebase_info_data_t()
         mach_timebase_info(&timebase)
@@ -64,7 +64,6 @@ final class ClickTrackPlayer {
         for i in 0..<beatsToSchedule {
             let k = kStart + i
             let beatTimeInSong = firstDownbeatTime + Float(k) * beatDurationSong
-            if beatTimeInSong < currentSongTime - 0.01 { continue }
             let offsetSeconds = Double((beatTimeInSong - currentSongTime) / speed)
             if offsetSeconds < 0 { continue }
             let offsetNanos = UInt64(offsetSeconds * 1_000_000_000)
