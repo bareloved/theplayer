@@ -23,6 +23,7 @@ final class AudioEngine {
             let clamped = min(max(speed, 0.25), 2.0)
             if clamped != speed { speed = clamped; return }
             applyTimePitch()
+            notifyTimingChanged()
         }
     }
 
@@ -37,6 +38,8 @@ final class AudioEngine {
     var isPlaying: Bool { state == .playing }
 
     var activeLoop: LoopRegion?
+
+    var onTimingChanged: (() -> Void)?
 
     private var engine = AVAudioEngine()
     private var playerNode = AVAudioPlayerNode()
@@ -56,6 +59,19 @@ final class AudioEngine {
         engine.attach(timePitchNode)
         engine.connect(playerNode, to: timePitchNode, format: nil)
         engine.connect(timePitchNode, to: engine.mainMixerNode, format: nil)
+    }
+
+    func attachSecondaryPlayer(_ node: AVAudioNode) {
+        if node.engine !== engine {
+            engine.attach(node)
+        }
+        engine.connect(node, to: engine.mainMixerNode, format: nil)
+    }
+
+    private func notifyTimingChanged() {
+        DispatchQueue.main.async { [weak self] in
+            self?.onTimingChanged?()
+        }
     }
 
     func loadFile(url: URL) throws {
@@ -106,6 +122,7 @@ final class AudioEngine {
         playerNode.play()
         state = .playing
         startTimeTracking()
+        notifyTimingChanged()
     }
 
     func pause() {
@@ -114,6 +131,7 @@ final class AudioEngine {
         playerNode.pause()
         state = .paused
         stopTimeTracking()
+        notifyTimingChanged()
     }
 
     func togglePlayPause() {
@@ -129,6 +147,7 @@ final class AudioEngine {
             state = .loaded
         }
         currentTime = 0
+        notifyTimingChanged()
     }
 
     func seek(to time: Float) {
@@ -144,6 +163,8 @@ final class AudioEngine {
 
         if wasPlaying {
             play()
+        } else {
+            notifyTimingChanged()
         }
     }
 
@@ -201,6 +222,7 @@ final class AudioEngine {
         playerNode.play()
         state = .playing
         startTimeTracking()
+        notifyTimingChanged()
     }
 
     private func schedulePlayback(from time: Float, file: AVAudioFile) {
