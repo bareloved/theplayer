@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface EssentiaResult : NSObject
 @property (nonatomic) float bpm;
+@property (nonatomic) NSInteger downbeatOffset;
 @property (nonatomic, strong) NSArray<NSNumber *> *beats;
 @property (nonatomic, strong) NSArray<EssentiaSection *> *sections;
 @end

@@ -102,12 +102,22 @@ using namespace essentia::standard;
         hpcp->output("hpcp").set(hpcpVec);
 
         std::vector<std::vector<Real>> allHpcps;
+        std::vector<Real> frameLowEnergy;
 
         while (true) {
             frameCutter->compute();
             if (frame.empty()) break;
             windowing->compute();
             spectrum->compute();
+            // Sum magnitude in the 20-200 Hz band (captures kick-drum downbeats).
+            {
+                int lowStartBin = (int)std::floor(20.0 * 2048.0 / 44100.0);
+                int lowEndBin = (int)std::ceil(200.0 * 2048.0 / 44100.0);
+                if (lowEndBin > (int)spectrumVec.size()) lowEndBin = (int)spectrumVec.size();
+                Real lowE = 0;
+                for (int bn = lowStartBin; bn < lowEndBin; bn++) lowE += spectrumVec[bn];
+                frameLowEnergy.push_back(lowE);
+            }
             mfcc->compute();
             allMfccs.push_back(mfccCoeffs);
             spectralPeaks->compute();
@@ -121,6 +131,47 @@ using namespace essentia::standard;
         delete mfcc;
         delete spectralPeaks;
         delete hpcp;
+
+        // Per-beat low-frequency energy for downbeat heuristic
+        auto frameToTimeDB = [](size_t i) -> float {
+            return (float)(i * 1024) / 44100.0f;
+        };
+
+        std::vector<Real> beatLowEnergy;
+        if (!ticks.empty() && !frameLowEnergy.empty()) {
+            size_t fi = 0;
+            for (size_t b = 0; b + 1 < ticks.size(); b++) {
+                float t0 = (float)ticks[b];
+                float t1 = (float)ticks[b + 1];
+                Real sum = 0;
+                int count = 0;
+                while (fi < frameLowEnergy.size() && frameToTimeDB(fi) < t1) {
+                    if (frameToTimeDB(fi) >= t0) {
+                        sum += frameLowEnergy[fi];
+                        count++;
+                    }
+                    fi++;
+                }
+                beatLowEnergy.push_back(count > 0 ? sum / (Real)count : 0);
+            }
+        }
+
+        // Downbeat heuristic: for each offset 0..3, sum low-freq energy at beats matching that offset.
+        // Pick offset with highest total score.
+        int chosenDownbeatOffset = 0;
+        if (beatLowEnergy.size() >= 4) {
+            Real bestScore = -1;
+            for (int offset = 0; offset < 4; offset++) {
+                Real score = 0;
+                for (size_t b = offset; b < beatLowEnergy.size(); b += 4) {
+                    score += beatLowEnergy[b];
+                }
+                if (score > bestScore) {
+                    bestScore = score;
+                    chosenDownbeatOffset = offset;
+                }
+            }
+        }
 
         // Build beat-synchronous features: one combined (for novelty) and one chroma-only (for clustering)
         auto frameToTime = [&](size_t i) -> float {
@@ -306,6 +357,7 @@ using namespace essentia::standard;
         // --- Build result ---
         EssentiaResult *result = [[EssentiaResult alloc] init];
         result.bpm = bpm;
+        result.downbeatOffset = chosenDownbeatOffset;
 
         // Beats
         NSMutableArray<NSNumber *> *beatArray = [NSMutableArray arrayWithCapacity:ticks.size()];
