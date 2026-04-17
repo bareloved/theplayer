@@ -298,6 +298,10 @@ private struct SongRow: View {
                             }
                         }
                     }
+            Divider()
+            Button("Remove from Library", role: .destructive) {
+                libraryService.deleteSong(songId: song.id)
+            }
         }
     }
 }

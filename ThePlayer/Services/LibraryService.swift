@@ -81,6 +81,18 @@ final class LibraryService {
         save()
     }
 
+    func deleteSong(songId: UUID) {
+        library.songs.removeAll(where: { $0.id == songId })
+        // Clean from all setlists and playlists
+        for i in library.setlists.indices {
+            library.setlists[i].songIds.removeAll(where: { $0 == songId })
+        }
+        for i in library.playlists.indices {
+            library.playlists[i].songIds.removeAll(where: { $0 == songId })
+        }
+        save()
+    }
+
     func relocateSong(songId: UUID, newPath: String) {
         guard let index = library.songIndex(byId: songId) else { return }
         library.songs[index].filePath = newPath
