@@ -257,7 +257,9 @@ final class AudioEngine {
 
     private func startTimeTracking() {
         stopTimeTracking()
-        displayLink = Timer.scheduledTimer(withTimeInterval: 1.0 / 15.0, repeats: true) { [weak self] _ in
+        // 60 Hz so the visual playhead stays within one frame (~16 ms) of the
+        // audio. 15 Hz caused an audible "hear before see" lag.
+        displayLink = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
             self?.updateCurrentTime()
         }
     }
