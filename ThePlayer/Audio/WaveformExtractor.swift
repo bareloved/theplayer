@@ -2,7 +2,7 @@ import AVFoundation
 
 enum WaveformExtractor {
 
-    static func extractPeaks(from url: URL, targetCount: Int = 500) throws -> [Float] {
+    static func extractPeaks(from url: URL, targetCount: Int = 4000) throws -> [Float] {
         let file = try AVAudioFile(forReading: url)
         let format = file.processingFormat
         let frameCount = AVAudioFrameCount(file.length)

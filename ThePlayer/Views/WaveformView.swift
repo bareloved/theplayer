@@ -55,6 +55,8 @@ struct WaveformView: View {
                         pendingLoopMarker(start: start, width: totalWidth, height: height)
                     }
 
+                    downbeatArrows(width: totalWidth, height: height)
+
                     if let time = hoverTime, let loc = hoverLocation {
                         hoverTooltip(time: time, location: loc)
                     }
@@ -247,29 +249,73 @@ struct WaveformView: View {
     private func waveformBars(width: CGFloat, height: CGFloat) -> some View {
         Canvas { context, size in
             guard !peaks.isEmpty else { return }
-            let barWidth = size.width / CGFloat(peaks.count)
             let midY = size.height / 2
+            let n = peaks.count
+            let pxPerPeak = size.width / CGFloat(n)
 
-            for (i, peak) in peaks.enumerated() {
-                let x = CGFloat(i) * barWidth
-                let barHeight = CGFloat(peak) * size.height * 0.8
-                let fraction = Float(i) / Float(peaks.count)
-                let time = fraction * duration
+            // Determine how many visual segments to draw: one per pixel for max detail
+            let segments = max(Int(size.width), n)
+            let peakPerSegment = CGFloat(n) / CGFloat(segments)
 
-                let isPlayed = time <= currentTime
-                let color: Color = isPlayed ? .blue : .gray.opacity(0.5)
+            // Played vs unplayed split based on currentTime
+            let playedX = duration > 0 ? CGFloat(currentTime / duration) * size.width : 0
 
+            // Build two rectangles per x: one played, one unplayed (split at playhead)
+            for s in 0..<segments {
+                let x = CGFloat(s) * (size.width / CGFloat(segments))
+                let nextX = CGFloat(s + 1) * (size.width / CGFloat(segments))
+                // Average peaks in this x window
+                let fromIdx = Int(CGFloat(s) * peakPerSegment)
+                let toIdx = min(n, Int(CGFloat(s + 1) * peakPerSegment) + 1)
+                guard fromIdx < toIdx else { continue }
+                var pk: Float = 0
+                for i in fromIdx..<toIdx { pk = max(pk, peaks[i]) }
+                let halfBar = CGFloat(pk) * size.height * 0.48
                 let rect = CGRect(
                     x: x,
-                    y: midY - barHeight / 2,
-                    width: max(barWidth - 1, 1),
-                    height: barHeight
+                    y: midY - halfBar,
+                    width: max(nextX - x, 0.5),
+                    height: halfBar * 2
                 )
-                context.fill(Path(roundedRect: rect, cornerRadius: 1), with: .color(color))
+                let color: Color = (x < playedX) ? .blue : .gray.opacity(0.5)
+                context.fill(Path(rect), with: .color(color))
             }
+            _ = pxPerPeak  // silence unused warning
         }
         .frame(width: width, height: height)
         .allowsHitTesting(false)
+    }
+
+    @ViewBuilder
+    private func downbeatArrows(width: CGFloat, height: CGFloat) -> some View {
+        let bpb = timeSignature.beatsPerBar
+        if bpm > 0, bpb > 0, duration > 0 {
+            let barDuration: Float = Float(60.0) / bpm * Float(bpb)
+            if barDuration > 0 {
+                Canvas { context, size in
+                    var t = firstDownbeatTime
+                    // Walk backward first
+                    while t - barDuration >= 0 {
+                        t -= barDuration
+                    }
+                    while t < duration {
+                        if t >= 0 {
+                            let x = CGFloat(t / duration) * size.width
+                            var path = Path()
+                            // Downward triangle, tip at y=8, base at y=0
+                            path.move(to: CGPoint(x: x - 5, y: 0))
+                            path.addLine(to: CGPoint(x: x + 5, y: 0))
+                            path.addLine(to: CGPoint(x: x, y: 8))
+                            path.closeSubpath()
+                            context.fill(path, with: .color(.red))
+                        }
+                        t += barDuration
+                    }
+                }
+                .frame(width: width, height: height)
+                .allowsHitTesting(false)
+            }
+        }
     }
 
     private func playhead(width: CGFloat, height: CGFloat) -> some View {
