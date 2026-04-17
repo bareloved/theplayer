@@ -498,6 +498,11 @@ struct ContentView: View {
             return false
         }
 
+        // Don't intercept while the user is typing in a text field (BPM editor, etc.)
+        if let responder = NSApp.keyWindow?.firstResponder, responder is NSText {
+            return false
+        }
+
         switch event.keyCode {
         case 49: // Space
             audioEngine.togglePlayPause()

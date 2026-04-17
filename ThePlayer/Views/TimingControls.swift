@@ -31,6 +31,11 @@ struct TimingControls: View {
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 60)
                     .font(.caption)
+                    .onChange(of: bpmText) { _, newValue in
+                        // Digits only (allow up to 3 characters → max 999 BPM).
+                        let filtered = String(newValue.filter { $0.isNumber }.prefix(3))
+                        if filtered != newValue { bpmText = filtered }
+                    }
             } else {
                 Button(action: { beginEditingBpm() }) {
                     Text("\(Int(bpm.rounded())) BPM")
