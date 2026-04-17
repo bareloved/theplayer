@@ -191,18 +191,27 @@ struct WaveformView: View {
         Canvas { context, size in
             guard duration > 0 else { return }
 
+            let downbeatRounded = (firstDownbeatTime * 100).rounded() / 100
+
             // Draw grid lines at snap positions
             for gridTime in gridPositions {
                 let x = CGFloat(gridTime / duration) * size.width
                 let rounded = (gridTime * 100).rounded() / 100
                 let isBar = barPositions.contains(rounded)
-                let opacity: CGFloat = isBar ? 0.45 : 0.2
-                let lw: CGFloat = isBar ? 1.5 : 0.75
+                let isDownbeatAnchor = abs(rounded - downbeatRounded) < 0.001
 
                 var path = Path()
                 path.move(to: CGPoint(x: x, y: 0))
                 path.addLine(to: CGPoint(x: x, y: size.height))
-                context.stroke(path, with: .color(.white.opacity(opacity)), lineWidth: lw)
+
+                if isDownbeatAnchor {
+                    // Red line co-located with the draggable downbeat arrow.
+                    context.stroke(path, with: .color(.red.opacity(0.7)), lineWidth: 1.5)
+                } else {
+                    let opacity: CGFloat = isBar ? 0.45 : 0.2
+                    let lw: CGFloat = isBar ? 1.5 : 0.75
+                    context.stroke(path, with: .color(.white.opacity(opacity)), lineWidth: lw)
+                }
             }
         }
         .frame(width: width, height: height)
@@ -419,8 +428,14 @@ private struct DownbeatArrowHandle: View {
     var body: some View {
         let x = duration > 0 ? CGFloat(firstDownbeatTime / duration) * parentWidth : 0
 
-        ZStack(alignment: .top) {
-            // Visible triangle
+        ZStack(alignment: .topLeading) {
+            // Invisible hit target — extends -5..17 (width 22) around the 0..12 triangle.
+            Rectangle()
+                .fill(Color.clear)
+                .frame(width: 22, height: 24)
+                .contentShape(Rectangle())
+                .offset(x: -5, y: 0)
+            // Visible triangle — tip at local x = 6.
             Path { p in
                 p.move(to: CGPoint(x: 0, y: 0))
                 p.addLine(to: CGPoint(x: 12, y: 0))
@@ -429,15 +444,9 @@ private struct DownbeatArrowHandle: View {
             }
             .fill(Color.red)
             .frame(width: 12, height: 10)
-
-            // Taller invisible hit target so the arrow is easy to grab
-            Rectangle()
-                .fill(Color.clear)
-                .frame(width: 22, height: 24)
-                .contentShape(Rectangle())
-                .offset(x: -5)
         }
-        .frame(width: 22, height: 24, alignment: .top)
+        // Anchor frame to the triangle's geometry so `offset(x: x - 6)` lands the tip at `x`.
+        .frame(width: 12, height: 24, alignment: .topLeading)
         .offset(x: x - 6, y: 0)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onHover { hovering in
