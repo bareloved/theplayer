@@ -289,18 +289,15 @@ struct WaveformView: View {
     @ViewBuilder
     private func downbeatArrows(width: CGFloat, height: CGFloat) -> some View {
         // Single red arrow anchoring the grid to the first downbeat.
+        // Draggable: moves the downbeat time continuously.
         if duration > 0, firstDownbeatTime >= 0, firstDownbeatTime < duration {
-            Canvas { context, size in
-                let x = CGFloat(firstDownbeatTime / duration) * size.width
-                var path = Path()
-                path.move(to: CGPoint(x: x - 6, y: 0))
-                path.addLine(to: CGPoint(x: x + 6, y: 0))
-                path.addLine(to: CGPoint(x: x, y: 10))
-                path.closeSubpath()
-                context.fill(path, with: .color(.red))
-            }
-            .frame(width: width, height: height)
-            .allowsHitTesting(false)
+            DownbeatArrowHandle(
+                firstDownbeatTime: firstDownbeatTime,
+                duration: duration,
+                parentWidth: width,
+                parentHeight: height,
+                onSetDownbeat: onSetDownbeat
+            )
         }
     }
 
@@ -404,5 +401,60 @@ private class ScrollWheelNSView: NSView {
         } else {
             super.scrollWheel(with: event)
         }
+    }
+}
+
+/// Single red downbeat arrow that sits on top of the waveform and can be dragged to move
+/// the first-downbeat time continuously. Uses `DragGesture.Value.translation` so movement
+/// is stable even as the handle reflows during the drag.
+private struct DownbeatArrowHandle: View {
+    let firstDownbeatTime: Float
+    let duration: Float
+    let parentWidth: CGFloat
+    let parentHeight: CGFloat
+    let onSetDownbeat: ((Float) -> Void)?
+
+    @State private var dragStartTime: Float?
+
+    var body: some View {
+        let x = duration > 0 ? CGFloat(firstDownbeatTime / duration) * parentWidth : 0
+
+        ZStack(alignment: .top) {
+            // Visible triangle
+            Path { p in
+                p.move(to: CGPoint(x: 0, y: 0))
+                p.addLine(to: CGPoint(x: 12, y: 0))
+                p.addLine(to: CGPoint(x: 6, y: 10))
+                p.closeSubpath()
+            }
+            .fill(Color.red)
+            .frame(width: 12, height: 10)
+
+            // Taller invisible hit target so the arrow is easy to grab
+            Rectangle()
+                .fill(Color.clear)
+                .frame(width: 22, height: 24)
+                .contentShape(Rectangle())
+                .offset(x: -5)
+        }
+        .frame(width: 22, height: 24, alignment: .top)
+        .offset(x: x - 6, y: 0)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .onHover { hovering in
+            if hovering { NSCursor.resizeLeftRight.set() } else { NSCursor.arrow.set() }
+        }
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    if dragStartTime == nil { dragStartTime = firstDownbeatTime }
+                    guard parentWidth > 0, duration > 0 else { return }
+                    let deltaTime = Float(value.translation.width / parentWidth) * duration
+                    let newTime = (dragStartTime ?? firstDownbeatTime) + deltaTime
+                    onSetDownbeat?(max(0, min(duration, newTime)))
+                }
+                .onEnded { _ in
+                    dragStartTime = nil
+                }
+        )
     }
 }
