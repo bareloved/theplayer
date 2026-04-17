@@ -33,7 +33,9 @@ struct EssentiaAnalyzerSwift: TrackAnalyzerProtocol {
                         bpm: result.bpm,
                         beats: beats,
                         sections: sections,
-                        waveformPeaks: peaks
+                        waveformPeaks: peaks,
+                        downbeatOffset: Int(result.downbeatOffset),
+                        timeSignature: .fourFour
                     )
                     continuation.resume(returning: analysis)
                 } catch {
