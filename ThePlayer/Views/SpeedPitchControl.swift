@@ -65,6 +65,7 @@ private struct CustomSlider: View {
     let snapPoints: [Float]
 
     @State private var isDragging = false
+    @State private var dragStartX: CGFloat = 0
 
     // Non-linear mapping: defaultValue sits at 50% of the track.
     // Left half maps [range.lower .. default], right half maps [default .. range.upper].
@@ -170,13 +171,20 @@ private struct CustomSlider: View {
                     .shadow(color: .black.opacity(0.2), radius: 2, y: 1)
                     .frame(width: 16, height: 16)
                     .position(x: thumbX, y: geo.size.height / 2)
+                    .onTapGesture(count: 2) {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            value = defaultValue
+                        }
+                    }
                     .gesture(
-                        DragGesture(minimumDistance: 0)
+                        DragGesture(minimumDistance: 3)
                             .onChanged { drag in
-                                isDragging = true
-                                let frac = max(0, min(1, drag.location.x / width))
+                                if !isDragging {
+                                    isDragging = true
+                                    dragStartX = thumbX
+                                }
+                                let frac = max(0, min(1, (dragStartX + drag.translation.width) / width))
                                 var newVal = valueFor(fraction: frac)
-                                // Snap
                                 for snap in snapPoints {
                                     if abs(newVal - snap) < step * 1.2 {
                                         newVal = snap
@@ -187,11 +195,6 @@ private struct CustomSlider: View {
                             }
                             .onEnded { _ in isDragging = false }
                     )
-                    .onTapGesture(count: 2) {
-                        withAnimation(.easeInOut(duration: 0.15)) {
-                            value = defaultValue
-                        }
-                    }
             }
             // Click anywhere on track to jump
             .contentShape(Rectangle())
