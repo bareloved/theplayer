@@ -13,6 +13,11 @@ struct AudioSection: Identifiable, Equatable {
     var duration: Float { endTime - startTime }
     var barCount: Int { (endBeat - startBeat) / 4 }
 
+    func barCount(beatsPerBar: Int) -> Int {
+        guard beatsPerBar > 0 else { return 0 }
+        return (endBeat - startBeat) / beatsPerBar
+    }
+
     init(
         stableId: UUID = UUID(),
         label: String,

@@ -60,6 +60,7 @@ struct ContentView: View {
                 SidebarView(
                     sections: analysisService.lastAnalysis?.sections ?? [],
                     bpm: analysisService.lastAnalysis?.bpm,
+                    timeSignature: analysisService.lastAnalysis?.timeSignature ?? .fourFour,
                     duration: audioEngine.duration,
                     sampleRate: audioEngine.sampleRate,
                     onSectionTap: { section in

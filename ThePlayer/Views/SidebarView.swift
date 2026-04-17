@@ -3,6 +3,7 @@ import SwiftUI
 struct SidebarView: View {
     let sections: [AudioSection]
     let bpm: Float?
+    let timeSignature: TimeSignature
     let duration: Float
     let sampleRate: Double
     let onSectionTap: (AudioSection) -> Void
@@ -32,6 +33,7 @@ struct SidebarView: View {
                             SectionRow(
                                 section: section,
                                 index: index + 1,
+                                beatsPerBar: timeSignature.beatsPerBar,
                                 isSelected: selectedSection == section,
                                 onTap: { onSectionTap(section) }
                             )
@@ -82,6 +84,7 @@ struct SidebarView: View {
 private struct SectionRow: View {
     let section: AudioSection
     let index: Int
+    let beatsPerBar: Int
     let isSelected: Bool
     let onTap: () -> Void
 
@@ -97,7 +100,7 @@ private struct SectionRow: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
 
-                    Text("\(formatTime(section.startTime)) – \(formatTime(section.endTime)) · \(section.barCount) bars")
+                    Text("\(formatTime(section.startTime)) – \(formatTime(section.endTime)) · \(section.barCount(beatsPerBar: beatsPerBar)) bars")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
