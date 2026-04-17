@@ -175,6 +175,10 @@ struct ContentView: View {
                     pendingLoopStart: pendingLoopStart,
                     onSeek: { time in audioEngine.seek(to: time) },
                     onLoopPointSet: { time in handleLoopPoint(time) },
+                    downbeatOffset: 0,
+                    timeSignature: .fourFour,
+                    isSettingDownbeat: false,
+                    onSetDownbeat: nil,
                     editorViewModel: sectionEditor,
                     selectedSectionId: selectedSectionForEdit,
                     onSelectSection: { selectedSectionForEdit = $0 }

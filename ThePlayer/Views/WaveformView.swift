@@ -15,6 +15,10 @@ struct WaveformView: View {
     let pendingLoopStart: Float?
     let onSeek: (Float) -> Void
     let onLoopPointSet: (Float) -> Void
+    let downbeatOffset: Int
+    let timeSignature: TimeSignature
+    let isSettingDownbeat: Bool
+    let onSetDownbeat: ((Int) -> Void)?
     let editorViewModel: SectionEditorViewModel?
     let selectedSectionId: UUID?
     let onSelectSection: ((UUID?) -> Void)?
@@ -60,6 +64,16 @@ struct WaveformView: View {
                 .onTapGesture { location in
                     let fraction = Float(location.x / totalWidth)
                     let time = fraction * duration
+                    if isSettingDownbeat, let onSetDownbeat {
+                        var bestIdx = 0
+                        var bestDist: Float = .infinity
+                        for (i, t) in beats.enumerated() {
+                            let d = abs(t - time)
+                            if d < bestDist { bestDist = d; bestIdx = i }
+                        }
+                        onSetDownbeat(bestIdx)
+                        return
+                    }
                     if let onSelectSection = onSelectSection, editorViewModel != nil {
                         let hit = sections.first(where: { time >= $0.startTime && time < $0.endTime })
                         onSelectSection(hit?.stableId)
@@ -136,20 +150,26 @@ struct WaveformView: View {
                 RoundedRectangle(cornerRadius: 8)
                     .strokeBorder(.orange, lineWidth: 2)
                     .allowsHitTesting(false)
+            } else if isSettingDownbeat {
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(.cyan, lineWidth: 2)
+                    .allowsHitTesting(false)
             }
         }
     }
 
     /// Grid positions based on current snap division
     private var gridPositions: [Float] {
-        snapDivision.snapPositions(beats: beats, bpm: bpm, duration: duration, beatsPerBar: 4)
+        snapDivision.snapPositions(beats: beats, bpm: bpm, duration: duration, beatsPerBar: timeSignature.beatsPerBar)
     }
 
-    /// Bar positions (always every 4 beats) for strong lines
+    /// Bar positions (every `beatsPerBar` beats, starting at `downbeatOffset`) for strong lines
     private var barPositions: Set<Float> {
-        guard beats.count >= 4 else { return [] }
-        let bars = stride(from: 0, to: beats.count, by: 4).map { beats[$0] }
-        return Set(bars.map { ($0 * 100).rounded() / 100 }) // round for matching
+        let bpb = timeSignature.beatsPerBar
+        guard beats.count >= bpb, bpb > 0 else { return [] }
+        let startIdx = max(0, min(downbeatOffset, beats.count - 1))
+        let bars = stride(from: startIdx, to: beats.count, by: bpb).map { beats[$0] }
+        return Set(bars.map { ($0 * 100).rounded() / 100 })
     }
 
     private func barLines(width: CGFloat, height: CGFloat) -> some View {
