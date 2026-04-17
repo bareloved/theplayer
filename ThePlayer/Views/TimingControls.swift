@@ -17,6 +17,10 @@ struct TimingControls: View {
     let onResetDownbeat: () -> Void
     let onToggleSetDownbeat: () -> Void
 
+    let isClickEnabled: Bool
+    @Binding var clickVolume: Double
+    let onToggleClick: () -> Void
+
     @State private var editingBpm = false
     @State private var bpmText: String = ""
 
@@ -71,6 +75,24 @@ struct TimingControls: View {
             .help(isSettingDownbeat ? "Click a beat on the waveform" : "Set downbeat by clicking a beat")
             .contextMenu {
                 Button("Reset to auto-detected", action: onResetDownbeat).disabled(!hasDownbeatOverride)
+            }
+
+            Divider().frame(height: 14)
+
+            Button(action: onToggleClick) {
+                Image(systemName: isClickEnabled ? "metronome.fill" : "metronome")
+            }
+            .buttonStyle(.bordered).controlSize(.mini)
+            .tint(isClickEnabled ? Color.orange : nil)
+            .help(isClickEnabled ? "Disable click track" : "Enable click track")
+
+            if isClickEnabled {
+                Slider(value: $clickVolume, in: 0...1)
+                    .frame(width: 60)
+                Text("\(Int(clickVolume * 100))%")
+                    .font(.caption2.monospaced())
+                    .foregroundStyle(.secondary)
+                    .frame(width: 30)
             }
         }
     }

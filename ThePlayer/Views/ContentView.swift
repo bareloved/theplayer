@@ -23,6 +23,9 @@ struct ContentView: View {
     @State private var selectedSectionForEdit: UUID?
     @State private var showResetConfirm = false
     @State private var isSettingDownbeat: Bool = false
+    @State private var clickTrackPlayer: ClickTrackPlayer?
+    @AppStorage("clickTrackEnabled") private var clickEnabled: Bool = false
+    @AppStorage("clickTrackVolume") private var clickVolume: Double = 0.5
 
     var body: some View {
         HStack(spacing: 0) {
@@ -107,8 +110,26 @@ struct ContentView: View {
                 audioEngine.playLoop()
             }
         }
-        .onAppear { installKeyMonitor() }
+        .onAppear {
+            installKeyMonitor()
+            if clickTrackPlayer == nil {
+                let ctp = ClickTrackPlayer(audioEngine: audioEngine)
+                ctp.isEnabled = clickEnabled
+                ctp.volume = Float(clickVolume)
+                clickTrackPlayer = ctp
+                audioEngine.onTimingChanged = {
+                    rescheduleClicks()
+                }
+            }
+        }
         .onDisappear { removeKeyMonitor() }
+        .onChange(of: clickEnabled) { _, newValue in
+            clickTrackPlayer?.isEnabled = newValue
+            rescheduleClicks()
+        }
+        .onChange(of: clickVolume) { _, newValue in
+            clickTrackPlayer?.volume = Float(newValue)
+        }
         .onReceive(NotificationCenter.default.publisher(for: .openAudioFile)) { notification in
             if let url = notification.object as? URL {
                 openFile(url: url)
@@ -291,11 +312,34 @@ struct ContentView: View {
                             setDownbeatOverride(next)
                         },
                         onResetDownbeat: { setDownbeatOverride(nil) },
-                        onToggleSetDownbeat: { isSettingDownbeat.toggle() }
+                        onToggleSetDownbeat: { isSettingDownbeat.toggle() },
+                        isClickEnabled: clickEnabled,
+                        clickVolume: $clickVolume,
+                        onToggleClick: { clickEnabled.toggle() }
                     )
                 )
             )
         }
+    }
+
+    private func rescheduleClicks() {
+        guard let player = clickTrackPlayer else { return }
+        guard audioEngine.isPlaying,
+              clickEnabled,
+              let analysis = analysisService.lastAnalysis,
+              !analysis.beats.isEmpty else {
+            player.stop()
+            return
+        }
+        let offset = max(0, min(analysis.downbeatOffset, analysis.beats.count - 1))
+        let firstDownbeat = analysis.beats[offset]
+        player.reschedule(
+            bpm: analysis.bpm,
+            firstDownbeatTime: firstDownbeat,
+            beatsPerBar: analysis.timeSignature.beatsPerBar,
+            currentSongTime: audioEngine.currentTime,
+            speed: audioEngine.speed
+        )
     }
 
     private func setBpmOverride(_ value: Float?) {
