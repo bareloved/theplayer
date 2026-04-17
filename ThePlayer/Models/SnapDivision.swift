@@ -1,6 +1,6 @@
 import Foundation
 
-/// Snap grid size in number of bars (1 bar = 4 beats).
+/// Snap grid size in number of bars.
 enum SnapDivision: Int, CaseIterable, Identifiable {
     case oneBar = 1
     case twoBars = 2
@@ -14,13 +14,12 @@ enum SnapDivision: Int, CaseIterable, Identifiable {
         "\(rawValue) bar\(rawValue == 1 ? "" : "s")"
     }
 
-    /// Compact label for segmented picker
     var shortLabel: String { "\(rawValue)" }
 
-    /// Generate snap positions — every N bars, where 1 bar = 4 beats
-    func snapPositions(beats: [Float], bpm: Float, duration: Float) -> [Float] {
-        guard beats.count >= 4 else { return [] }
-        let beatsPerSnap = rawValue * 4
+    /// Generate snap positions — every N bars, given beats-per-bar from the time signature.
+    func snapPositions(beats: [Float], bpm: Float, duration: Float, beatsPerBar: Int) -> [Float] {
+        guard beats.count >= beatsPerBar, beatsPerBar > 0 else { return [] }
+        let beatsPerSnap = rawValue * beatsPerBar
         return stride(from: 0, to: beats.count, by: beatsPerSnap).map { beats[$0] }
     }
 }

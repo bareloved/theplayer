@@ -142,7 +142,7 @@ struct WaveformView: View {
 
     /// Grid positions based on current snap division
     private var gridPositions: [Float] {
-        snapDivision.snapPositions(beats: beats, bpm: bpm, duration: duration)
+        snapDivision.snapPositions(beats: beats, bpm: bpm, duration: duration, beatsPerBar: 4)
     }
 
     /// Bar positions (always every 4 beats) for strong lines

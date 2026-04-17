@@ -465,7 +465,7 @@ struct ContentView: View {
     private func getSnapPositions() -> [Float] {
         let beats = analysisService.lastAnalysis?.beats ?? []
         let bpm = analysisService.lastAnalysis?.bpm ?? 0
-        return snapDivision.snapPositions(beats: beats, bpm: bpm, duration: audioEngine.duration)
+        return snapDivision.snapPositions(beats: beats, bpm: bpm, duration: audioEngine.duration, beatsPerBar: 4)
     }
 
     private func jumpToSection(_ index: Int) {
