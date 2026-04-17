@@ -166,6 +166,7 @@ struct ContentView: View {
                     sections: analysisService.lastAnalysis?.sections ?? [],
                     beats: analysisService.lastAnalysis?.beats ?? [],
                     bpm: analysisService.lastAnalysis?.bpm ?? 0,
+                    snapToGrid: snapToGrid,
                     snapDivision: snapDivision,
                     duration: audioEngine.duration,
                     currentTime: audioEngine.currentTime,

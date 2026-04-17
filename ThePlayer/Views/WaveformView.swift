@@ -6,6 +6,7 @@ struct WaveformView: View {
     let sections: [AudioSection]
     let beats: [Float]
     let bpm: Float
+    let snapToGrid: Bool
     let snapDivision: SnapDivision
     let duration: Float
     let currentTime: Float
@@ -31,7 +32,9 @@ struct WaveformView: View {
             ScrollView(.horizontal, showsIndicators: true) {
                 ZStack(alignment: .leading) {
                     sectionBands(width: totalWidth, height: height)
-                    barLines(width: totalWidth, height: height)
+                    if snapToGrid {
+                        barLines(width: totalWidth, height: height)
+                    }
                     waveformBars(width: totalWidth, height: height)
 
                     if let loop = loopRegion {
