@@ -79,4 +79,42 @@ final class TrackAnalysisTests: XCTestCase {
         XCTAssertEqual(updated.waveformPeaks, [0.1, 0.2])
         XCTAssertEqual(updated.sections.first?.label, "B")
     }
+
+    func testTrackAnalysisHasDefaultTimingFields() {
+        let ta = TrackAnalysis(bpm: 120, beats: [0, 0.5], sections: [], waveformPeaks: [])
+        XCTAssertEqual(ta.downbeatOffset, 0)
+        XCTAssertEqual(ta.timeSignature, .fourFour)
+    }
+
+    func testTrackAnalysisRoundTripIncludesNewFields() throws {
+        let ta = TrackAnalysis(
+            bpm: 120, beats: [0, 0.5], sections: [], waveformPeaks: [],
+            downbeatOffset: 2, timeSignature: .threeFour
+        )
+        let data = try JSONEncoder().encode(ta)
+        let decoded = try JSONDecoder().decode(TrackAnalysis.self, from: data)
+        XCTAssertEqual(decoded.downbeatOffset, 2)
+        XCTAssertEqual(decoded.timeSignature, .threeFour)
+    }
+
+    func testTrackAnalysisLegacyJSONDecodesWithDefaults() throws {
+        let legacyJSON = """
+        {"bpm":120,"beats":[0,0.5],"sections":[],"waveformPeaks":[]}
+        """.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(TrackAnalysis.self, from: legacyJSON)
+        XCTAssertEqual(decoded.downbeatOffset, 0)
+        XCTAssertEqual(decoded.timeSignature, .fourFour)
+    }
+
+    func testWithSectionsPreservesTimingFields() {
+        let original = TrackAnalysis(
+            bpm: 120, beats: [0, 0.5], sections: [], waveformPeaks: [],
+            downbeatOffset: 2, timeSignature: .threeFour
+        )
+        let updated = original.with(sections: [
+            AudioSection(label: "X", startTime: 0, endTime: 0.5, startBeat: 0, endBeat: 1, colorIndex: 0)
+        ])
+        XCTAssertEqual(updated.downbeatOffset, 2)
+        XCTAssertEqual(updated.timeSignature, .threeFour)
+    }
 }
