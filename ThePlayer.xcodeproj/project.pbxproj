@@ -47,6 +47,8 @@
 		C6356943CA5A3561E3A3B7D7 /* UserEdits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65A31A0CA84FC217AAF08758 /* UserEdits.swift */; };
 		CAD3D2C0E3CD0C4850EFE74C /* ThePlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E6BE5FCB69D04322BDEA0A /* ThePlayerTests.swift */; };
 		D07083A6D6B037EBF0FBFA0F /* SectionEditorViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33D6E4513A8CE2D29BA9839 /* SectionEditorViewModelTests.swift */; };
+		E4E2D630F2F95D928349B515 /* TimeSignatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A5476FE5A910E95D19415E /* TimeSignatureTests.swift */; };
+		E89668FE9E4738CC28475BCE /* TimeSignature.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2CED90042F451C490FE4468 /* TimeSignature.swift */; };
 		E961C393569D82BC0011A993 /* EssentiaAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 80465283817407589D4C9CAE /* EssentiaAnalyzer.mm */; };
 		E9E5CE8A32EC4A4C6BD27FC4 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15F32C86DE7BF5020059DDBD /* WaveformView.swift */; };
 		EE2D1717BDCB33510BC9D140 /* WaveformExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B90B39E3821807779A9F94D /* WaveformExtractorTests.swift */; };
@@ -107,7 +109,9 @@
 		AB55C97EE8D9174F2C168E60 /* LoopRegionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopRegionTests.swift; sourceTree = "<group>"; };
 		B5977AA4444DB7CCED9E19ED /* AnalysisCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisCacheTests.swift; sourceTree = "<group>"; };
 		BCDBF2BE926B571A91E88911 /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
+		C0A5476FE5A910E95D19415E /* TimeSignatureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeSignatureTests.swift; sourceTree = "<group>"; };
 		C2AB0ECA2C744F843C33BCDC /* AnalysisCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisCache.swift; sourceTree = "<group>"; };
+		C2CED90042F451C490FE4468 /* TimeSignature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeSignature.swift; sourceTree = "<group>"; };
 		CF874CC40CAC2840728EE0DD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D176EE181B6CB24E1860C08E /* ThePlayerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ThePlayerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D33D6E4513A8CE2D29BA9839 /* SectionEditorViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionEditorViewModelTests.swift; sourceTree = "<group>"; };
@@ -155,6 +159,7 @@
 				600A5459E47854F1CF8EC9F3 /* Setlist.swift */,
 				1DF3AFF5AC44F19D8405CDA3 /* SnapDivision.swift */,
 				2ADD12242074A22EC6EB1E5A /* SongEntry.swift */,
+				C2CED90042F451C490FE4468 /* TimeSignature.swift */,
 				7A5D5329004D98673486A598 /* TrackAnalysis.swift */,
 				65A31A0CA84FC217AAF08758 /* UserEdits.swift */,
 			);
@@ -187,6 +192,7 @@
 				D33D6E4513A8CE2D29BA9839 /* SectionEditorViewModelTests.swift */,
 				8F8EC3301A0F34525C62628F /* SongEntryTests.swift */,
 				25E6BE5FCB69D04322BDEA0A /* ThePlayerTests.swift */,
+				C0A5476FE5A910E95D19415E /* TimeSignatureTests.swift */,
 				4F1524C5706C8153F2068B56 /* TrackAnalysisTests.swift */,
 				26BF9246DAC36B848385421B /* UserEditsStoreTests.swift */,
 				5B90B39E3821807779A9F94D /* WaveformExtractorTests.swift */,
@@ -343,6 +349,7 @@
 				D07083A6D6B037EBF0FBFA0F /* SectionEditorViewModelTests.swift in Sources */,
 				53B8299CCC6F85F0A5A8DB1E /* SongEntryTests.swift in Sources */,
 				CAD3D2C0E3CD0C4850EFE74C /* ThePlayerTests.swift in Sources */,
+				E4E2D630F2F95D928349B515 /* TimeSignatureTests.swift in Sources */,
 				170566C85314AC4A2FEB46DE /* TrackAnalysisTests.swift in Sources */,
 				4AF6A8E39FBF9E9C4D9054C3 /* UserEditsStoreTests.swift in Sources */,
 				EE2D1717BDCB33510BC9D140 /* WaveformExtractorTests.swift in Sources */,
@@ -378,6 +385,7 @@
 				9CF23F9F27AD41DB0F89BCED /* SongEntry.swift in Sources */,
 				FFBB5B253F983C7B9FA3662B /* SpeedPitchControl.swift in Sources */,
 				FA4E61AC6A7BC183DF97D905 /* ThePlayerApp.swift in Sources */,
+				E89668FE9E4738CC28475BCE /* TimeSignature.swift in Sources */,
 				C339330ACCB11423558D7164 /* TrackAnalysis.swift in Sources */,
 				2C6D74E899222C88A40C98D5 /* TrackAnalyzerProtocol.swift in Sources */,
 				4028603B18FBAA929F339EB0 /* TransportBar.swift in Sources */,
