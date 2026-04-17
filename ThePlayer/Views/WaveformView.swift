@@ -288,33 +288,19 @@ struct WaveformView: View {
 
     @ViewBuilder
     private func downbeatArrows(width: CGFloat, height: CGFloat) -> some View {
-        let bpb = timeSignature.beatsPerBar
-        if bpm > 0, bpb > 0, duration > 0 {
-            let barDuration: Float = Float(60.0) / bpm * Float(bpb)
-            if barDuration > 0 {
-                Canvas { context, size in
-                    var t = firstDownbeatTime
-                    // Walk backward first
-                    while t - barDuration >= 0 {
-                        t -= barDuration
-                    }
-                    while t < duration {
-                        if t >= 0 {
-                            let x = CGFloat(t / duration) * size.width
-                            var path = Path()
-                            // Downward triangle, tip at y=8, base at y=0
-                            path.move(to: CGPoint(x: x - 5, y: 0))
-                            path.addLine(to: CGPoint(x: x + 5, y: 0))
-                            path.addLine(to: CGPoint(x: x, y: 8))
-                            path.closeSubpath()
-                            context.fill(path, with: .color(.red))
-                        }
-                        t += barDuration
-                    }
-                }
-                .frame(width: width, height: height)
-                .allowsHitTesting(false)
+        // Single red arrow anchoring the grid to the first downbeat.
+        if duration > 0, firstDownbeatTime >= 0, firstDownbeatTime < duration {
+            Canvas { context, size in
+                let x = CGFloat(firstDownbeatTime / duration) * size.width
+                var path = Path()
+                path.move(to: CGPoint(x: x - 6, y: 0))
+                path.addLine(to: CGPoint(x: x + 6, y: 0))
+                path.addLine(to: CGPoint(x: x, y: 10))
+                path.closeSubpath()
+                context.fill(path, with: .color(.red))
             }
+            .frame(width: width, height: height)
+            .allowsHitTesting(false)
         }
     }
 
