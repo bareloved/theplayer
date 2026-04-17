@@ -10,6 +10,7 @@
 		022C36FCB67CD59CD64513A4 /* Playlist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EEF1B658EC30565C6B61BE4 /* Playlist.swift */; };
 		170566C85314AC4A2FEB46DE /* TrackAnalysisTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F1524C5706C8153F2068B56 /* TrackAnalysisTests.swift */; };
 		1B6E7AF1AECFA2FC479F6173 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CF874CC40CAC2840728EE0DD /* Assets.xcassets */; };
+		1BF155F60B68A0A65B4FF1DA /* MetronomeUp.wav in Resources */ = {isa = PBXBuildFile; fileRef = CD730D3BA5523CB776870988 /* MetronomeUp.wav */; };
 		1DD288275F6BB9DFFD015A75 /* MockAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1418E829CD79C1526A9FC406 /* MockAnalyzer.swift */; };
 		1E810386C675EE56EAF188E4 /* AnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AC8A6737F3381B560711A8A /* AnalysisService.swift */; };
 		2061A62B29D9D56719A55B78 /* AnalysisCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5977AA4444DB7CCED9E19ED /* AnalysisCacheTests.swift */; };
@@ -54,6 +55,7 @@
 		E961C393569D82BC0011A993 /* EssentiaAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 80465283817407589D4C9CAE /* EssentiaAnalyzer.mm */; };
 		E9E5CE8A32EC4A4C6BD27FC4 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15F32C86DE7BF5020059DDBD /* WaveformView.swift */; };
 		EE2D1717BDCB33510BC9D140 /* WaveformExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B90B39E3821807779A9F94D /* WaveformExtractorTests.swift */; };
+		F8CB917C7FE9FC7B86A0CD55 /* MetronomeDown.wav in Resources */ = {isa = PBXBuildFile; fileRef = 1F0AF6260E51CB39C12AF537 /* MetronomeDown.wav */; };
 		FA4E61AC6A7BC183DF97D905 /* ThePlayerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C79D8D2FE894770473CC4CE /* ThePlayerApp.swift */; };
 		FD2097AFCF4105C1759A8DE7 /* AudioEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCDBF2BE926B571A91E88911 /* AudioEngine.swift */; };
 		FFBB5B253F983C7B9FA3662B /* SpeedPitchControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 743EBB1DA28F3FD0555C76F6 /* SpeedPitchControl.swift */; };
@@ -78,6 +80,7 @@
 		19B55712F4D61219172D2654 /* ThePlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ThePlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1AB80366F01A6405A511CD73 /* LoopRegion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopRegion.swift; sourceTree = "<group>"; };
 		1DF3AFF5AC44F19D8405CDA3 /* SnapDivision.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapDivision.swift; sourceTree = "<group>"; };
+		1F0AF6260E51CB39C12AF537 /* MetronomeDown.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = MetronomeDown.wav; sourceTree = "<group>"; };
 		2186B684F94740C4334F974F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		25E6BE5FCB69D04322BDEA0A /* ThePlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThePlayerTests.swift; sourceTree = "<group>"; };
 		26BF9246DAC36B848385421B /* UserEditsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserEditsStoreTests.swift; sourceTree = "<group>"; };
@@ -114,6 +117,7 @@
 		C0A5476FE5A910E95D19415E /* TimeSignatureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeSignatureTests.swift; sourceTree = "<group>"; };
 		C2AB0ECA2C744F843C33BCDC /* AnalysisCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisCache.swift; sourceTree = "<group>"; };
 		C2CED90042F451C490FE4468 /* TimeSignature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeSignature.swift; sourceTree = "<group>"; };
+		CD730D3BA5523CB776870988 /* MetronomeUp.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = MetronomeUp.wav; sourceTree = "<group>"; };
 		CF874CC40CAC2840728EE0DD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D176EE181B6CB24E1860C08E /* ThePlayerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ThePlayerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D33D6E4513A8CE2D29BA9839 /* SectionEditorViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionEditorViewModelTests.swift; sourceTree = "<group>"; };
@@ -133,6 +137,15 @@
 				3F97DBB529000EB77AB53A26 /* LibraryService.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		1BEAC351360532D5FB2E635F /* Metronome */ = {
+			isa = PBXGroup;
+			children = (
+				1F0AF6260E51CB39C12AF537 /* MetronomeDown.wav */,
+				CD730D3BA5523CB776870988 /* MetronomeUp.wav */,
+			);
+			path = Metronome;
 			sourceTree = "<group>";
 		};
 		25DB8F84A04631400078BFE6 /* Audio */ = {
@@ -205,6 +218,14 @@
 			path = ThePlayerTests;
 			sourceTree = "<group>";
 		};
+		59991C2B90457A39ED91754C /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				1BEAC351360532D5FB2E635F /* Metronome */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		6544C4598EF0BEC802A1AA71 /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -225,6 +246,7 @@
 		E2F7B5263CB51C093428696C = {
 			isa = PBXGroup;
 			children = (
+				59991C2B90457A39ED91754C /* Resources */,
 				E3E7F07F61DED932AF0088BC /* ThePlayer */,
 				539E47E41B42256E98F163B1 /* ThePlayerTests */,
 				32FBA92579DEB11E6CBE5453 /* Products */,
@@ -335,6 +357,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				1B6E7AF1AECFA2FC479F6173 /* Assets.xcassets in Resources */,
+				F8CB917C7FE9FC7B86A0CD55 /* MetronomeDown.wav in Resources */,
+				1BF155F60B68A0A65B4FF1DA /* MetronomeUp.wav in Resources */,
 				B9F24165A95CEDA996213188 /* icon-source.svg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -426,7 +450,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"1\", \"CFBundleShortVersionString\": \"1.0\", \"LSMinimumSystemVersion\": \"14.0\"]";
+				INFOPLIST_VALUES = "[\"LSMinimumSystemVersion\": \"14.0\", \"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"1\", \"CFBundleShortVersionString\": \"1.0\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -533,7 +557,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"1\", \"CFBundleShortVersionString\": \"1.0\", \"LSMinimumSystemVersion\": \"14.0\"]";
+				INFOPLIST_VALUES = "[\"LSMinimumSystemVersion\": \"14.0\", \"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"1\", \"CFBundleShortVersionString\": \"1.0\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

@@ -23,9 +23,10 @@ targets:
     platform: macOS
     sources:
       - ThePlayer
-    resources:
-      - Resources/Metronome/MetronomeUp.wav
-      - Resources/Metronome/MetronomeDown.wav
+      - path: Resources/Metronome/MetronomeUp.wav
+        buildPhase: resources
+      - path: Resources/Metronome/MetronomeDown.wav
+        buildPhase: resources
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.theplayer.app
       PRODUCT_NAME: ThePlayer
