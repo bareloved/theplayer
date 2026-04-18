@@ -135,7 +135,7 @@ struct WaveformView: View {
                         if isSettingLoop {
                             onLoopPointSet(time)
                         } else {
-                            onSeek(time)
+                            onSeek(snapToGrid ? nearestGridTime(to: time) : time)
                         }
                     }
                     .onContinuousHover { phase in
@@ -206,6 +206,22 @@ struct WaveformView: View {
                     .allowsHitTesting(false)
             }
         }
+    }
+
+    /// Nearest grid-snap time to `t`, or `t` itself if no grid is available.
+    private func nearestGridTime(to t: Float) -> Float {
+        let grid = gridPositions
+        guard !grid.isEmpty else { return t }
+        var best = grid[0]
+        var bestDist = abs(best - t)
+        for g in grid.dropFirst() {
+            let d = abs(g - t)
+            if d < bestDist {
+                best = g
+                bestDist = d
+            }
+        }
+        return best
     }
 
     /// Grid positions based on current snap division
