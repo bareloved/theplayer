@@ -35,6 +35,8 @@ struct WaveformView: View {
     /// the grid/ruler static (no tile re-rasterization) while the waveform
     /// slides cheaply via a SwiftUI transform. Committed to fDT + scroll on end.
     @State private var waveformDragOffset: CGFloat = 0
+    @State private var mouseLocation: CGPoint?
+    @State private var highlightedOnset: Float?
 
     var body: some View {
         GeometryReader { geo in
@@ -84,6 +86,15 @@ struct WaveformView: View {
                         playhead(width: totalWidth, height: waveHeight)
                             .offset(x: waveformDragOffset)
                         downbeatIndicator(width: totalWidth, height: waveHeight)
+
+                        if let onset = highlightedOnset, duration > 0 {
+                            let x = CGFloat(onset / duration) * totalWidth
+                            Rectangle()
+                                .fill(Color.accentColor.opacity(0.5))
+                                .frame(width: 1, height: waveHeight)
+                                .offset(x: x)
+                                .allowsHitTesting(false)
+                        }
 
                         if let vm = editorViewModel {
                             boundaryHandles(viewModel: vm, width: totalWidth, height: waveHeight)
@@ -162,15 +173,53 @@ struct WaveformView: View {
                             onSeek(snapToGrid ? nearestGridTime(to: time) : time)
                         }
                     }
+                    .contextMenu {
+                        let pxPerSec = Double(totalWidth) / Double(max(duration, 0.001))
+                        let clickTime: Float = {
+                            guard let loc = mouseLocation, totalWidth > 0 else { return 0 }
+                            return Float(loc.x / totalWidth) * duration
+                        }()
+                        let nearest = OnsetPicker.nearestOnset(
+                            to: clickTime,
+                            in: onsets,
+                            pxPerSec: pxPerSec,
+                            maxPx: 30.0
+                        )
+                        Button(action: {
+                            if let t = nearest {
+                                onSetDownbeat?(t)
+                            }
+                        }) {
+                            Text("Set 1 here")
+                            if nearest == nil { Text("No onset nearby") }
+                        }
+                        .disabled(nearest == nil)
+                    }
+                    .onChange(of: mouseLocation) { _, newLoc in
+                        guard let loc = newLoc, totalWidth > 0, duration > 0 else {
+                            highlightedOnset = nil
+                            return
+                        }
+                        let pxPerSec = Double(totalWidth) / Double(max(duration, 0.001))
+                        let clickTime = Float(loc.x / totalWidth) * duration
+                        highlightedOnset = OnsetPicker.nearestOnset(
+                            to: clickTime,
+                            in: onsets,
+                            pxPerSec: pxPerSec,
+                            maxPx: 30.0
+                        )
+                    }
                     .onContinuousHover { phase in
                         switch phase {
                         case .active(let location):
                             let fraction = Float(location.x / totalWidth)
                             hoverTime = fraction * duration
                             hoverLocation = location
+                            mouseLocation = location
                         case .ended:
                             hoverTime = nil
                             hoverLocation = nil
+                            mouseLocation = nil
                         }
                     }
                 }
