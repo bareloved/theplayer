@@ -17,7 +17,11 @@ struct WaveformRulerBand: View {
     @Binding var zoomLevel: CGFloat
     let scrollController: ScrollController
     let onSetDownbeat: ((Float) -> Void)?
+    let onSeek: (Float) -> Void
 
+    private enum DragMode { case undecided, zoom, scrub }
+
+    @State private var dragMode: DragMode = .undecided
     @State private var dragStartZoom: CGFloat?
     @State private var dragAnchorFraction: CGFloat?
     @State private var dragCursorXInViewport: CGFloat?
@@ -30,7 +34,7 @@ struct WaveformRulerBand: View {
                 .frame(width: totalWidth, height: bandHeight)
                 .contentShape(Rectangle())
                 .onHover { hovering in
-                    if hovering { NSCursor.resizeUpDown.set() } else { NSCursor.arrow.set() }
+                    if hovering { NSCursor.openHand.set() } else { NSCursor.arrow.set() }
                 }
                 .gesture(zoomDrag)
 
@@ -58,37 +62,56 @@ struct WaveformRulerBand: View {
     private var zoomDrag: some Gesture {
         DragGesture(minimumDistance: 2, coordinateSpace: .local)
             .onChanged { value in
-                if dragStartZoom == nil {
-                    dragStartZoom = zoomLevel
-                    let startContentX = value.startLocation.x
-                    let totalAtStart = geoWidth * zoomLevel
-                    dragAnchorFraction = totalAtStart > 0 ? startContentX / totalAtStart : 0
-                    dragCursorXInViewport = startContentX - scrollController.scrollOriginX
+                if dragMode == .undecided {
+                    let dx = abs(value.translation.width)
+                    let dy = abs(value.translation.height)
+                    guard max(dx, dy) >= 3 else { return }
+                    dragMode = dx > dy ? .scrub : .zoom
+
+                    if dragMode == .zoom {
+                        dragStartZoom = zoomLevel
+                        let startContentX = value.startLocation.x
+                        let totalAtStart = geoWidth * zoomLevel
+                        dragAnchorFraction = totalAtStart > 0 ? startContentX / totalAtStart : 0
+                        dragCursorXInViewport = startContentX - scrollController.scrollOriginX
+                    }
                 }
-                guard
-                    let startZoom = dragStartZoom,
-                    let anchor = dragAnchorFraction,
-                    let cursorX = dragCursorXInViewport,
-                    geoWidth > 0
-                else { return }
 
-                let newZoom = WaveformZoomMath.zoomFromDrag(
-                    startZoom: startZoom,
-                    translationY: value.translation.height
-                )
-                zoomLevel = newZoom
+                switch dragMode {
+                case .scrub:
+                    guard totalWidth > 0, duration > 0 else { return }
+                    let fraction = Float(value.location.x / totalWidth)
+                    let time = max(0, min(duration, fraction * duration))
+                    onSeek(time)
+                case .zoom:
+                    guard
+                        let startZoom = dragStartZoom,
+                        let anchor = dragAnchorFraction,
+                        let cursorX = dragCursorXInViewport,
+                        geoWidth > 0
+                    else { return }
 
-                let newOrigin = WaveformZoomMath.scrollOriginForAnchor(
-                    anchorFraction: anchor,
-                    cursorXInViewport: cursorX,
-                    geoWidth: geoWidth,
-                    newZoom: newZoom
-                )
-                DispatchQueue.main.async {
-                    scrollController.setScrollOriginX(newOrigin)
+                    let newZoom = WaveformZoomMath.zoomFromDrag(
+                        startZoom: startZoom,
+                        translationY: value.translation.height
+                    )
+                    zoomLevel = newZoom
+
+                    let newOrigin = WaveformZoomMath.scrollOriginForAnchor(
+                        anchorFraction: anchor,
+                        cursorXInViewport: cursorX,
+                        geoWidth: geoWidth,
+                        newZoom: newZoom
+                    )
+                    DispatchQueue.main.async {
+                        scrollController.setScrollOriginX(newOrigin)
+                    }
+                case .undecided:
+                    break
                 }
             }
             .onEnded { _ in
+                dragMode = .undecided
                 dragStartZoom = nil
                 dragAnchorFraction = nil
                 dragCursorXInViewport = nil
