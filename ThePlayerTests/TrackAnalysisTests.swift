@@ -142,4 +142,25 @@ final class TrackAnalysisTests: XCTestCase {
         XCTAssertEqual(updated.downbeatOffset, 2)
         XCTAssertEqual(updated.timeSignature, .threeFour)
     }
+
+    func testTrackAnalysisRoundTripIncludesOnsets() throws {
+        let ta = TrackAnalysis(
+            bpm: 120,
+            beats: [0, 0.5, 1.0],
+            sections: [],
+            waveformPeaks: [],
+            onsets: [0.123, 0.612, 1.104]
+        )
+        let data = try JSONEncoder().encode(ta)
+        let decoded = try JSONDecoder().decode(TrackAnalysis.self, from: data)
+        XCTAssertEqual(decoded.onsets, [0.123, 0.612, 1.104])
+    }
+
+    func testTrackAnalysisLegacyJSONWithoutOnsetsDecodesToEmptyArray() throws {
+        let legacyJSON = """
+        {"bpm":120,"beats":[0,0.5],"sections":[],"waveformPeaks":[]}
+        """.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(TrackAnalysis.self, from: legacyJSON)
+        XCTAssertEqual(decoded.onsets, [])
+    }
 }

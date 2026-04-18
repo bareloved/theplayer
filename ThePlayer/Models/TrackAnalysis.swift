@@ -8,6 +8,7 @@ struct TrackAnalysis: Codable, Equatable {
     let downbeatOffset: Int
     let firstDownbeatTime: Float
     let timeSignature: TimeSignature
+    let onsets: [Float]
 
     init(
         bpm: Float,
@@ -16,7 +17,8 @@ struct TrackAnalysis: Codable, Equatable {
         waveformPeaks: [Float],
         downbeatOffset: Int = 0,
         firstDownbeatTime: Float? = nil,
-        timeSignature: TimeSignature = .fourFour
+        timeSignature: TimeSignature = .fourFour,
+        onsets: [Float] = []
     ) {
         self.bpm = bpm
         self.beats = beats
@@ -32,13 +34,14 @@ struct TrackAnalysis: Codable, Equatable {
             self.firstDownbeatTime = 0
         }
         self.timeSignature = timeSignature
+        self.onsets = onsets
     }
 
     func with(sections: [AudioSection]) -> TrackAnalysis {
         TrackAnalysis(
             bpm: bpm, beats: beats, sections: sections, waveformPeaks: waveformPeaks,
             downbeatOffset: downbeatOffset, firstDownbeatTime: firstDownbeatTime,
-            timeSignature: timeSignature
+            timeSignature: timeSignature, onsets: onsets
         )
     }
 
@@ -47,12 +50,12 @@ struct TrackAnalysis: Codable, Equatable {
         TrackAnalysis(
             bpm: bpm, beats: beats, sections: sections, waveformPeaks: waveformPeaks,
             downbeatOffset: downbeatOffset, firstDownbeatTime: firstDownbeatTime,
-            timeSignature: timeSignature
+            timeSignature: timeSignature, onsets: onsets
         )
     }
 
     enum CodingKeys: String, CodingKey {
-        case bpm, beats, sections, waveformPeaks, downbeatOffset, firstDownbeatTime, timeSignature
+        case bpm, beats, sections, waveformPeaks, downbeatOffset, firstDownbeatTime, timeSignature, onsets
     }
 
     init(from decoder: Decoder) throws {
@@ -63,11 +66,12 @@ struct TrackAnalysis: Codable, Equatable {
         self.waveformPeaks = try c.decode([Float].self, forKey: .waveformPeaks)
         self.downbeatOffset = try c.decodeIfPresent(Int.self, forKey: .downbeatOffset) ?? 0
         self.timeSignature = try c.decodeIfPresent(TimeSignature.self, forKey: .timeSignature) ?? .fourFour
+        self.onsets = try c.decodeIfPresent([Float].self, forKey: .onsets) ?? []
         if let t = try c.decodeIfPresent(Float.self, forKey: .firstDownbeatTime) {
             self.firstDownbeatTime = t
         } else if !beats.isEmpty {
             let idx = max(0, min(self.downbeatOffset, self.beats.count - 1))
-            self.firstDownbeatTime = self.beats[idx]
+            self.firstDownbeatTime = beats[idx]
         } else {
             self.firstDownbeatTime = 0
         }
