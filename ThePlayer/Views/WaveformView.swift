@@ -284,36 +284,32 @@ struct WaveformView: View {
             guard !peaks.isEmpty else { return }
             let midY = size.height / 2
             let n = peaks.count
-            let pxPerPeak = size.width / CGFloat(n)
 
-            // Determine how many visual segments to draw: one per pixel for max detail
-            let segments = max(Int(size.width), n)
+            // Draw at most one rect per peak (when zoomed in) or one per pixel
+            // (when zoomed out) — whichever is smaller. Prevents stretched
+            // staircase at high zoom and caps the draw count at low zoom.
+            let segments = max(1, min(Int(size.width), n))
             let peakPerSegment = CGFloat(n) / CGFloat(segments)
+            let segmentWidth = size.width / CGFloat(segments)
 
-            // Played vs unplayed split based on currentTime
             let playedX = duration > 0 ? CGFloat(currentTime / duration) * size.width : 0
 
-            // Build two rectangles per x: one played, one unplayed (split at playhead)
             for s in 0..<segments {
-                let x = CGFloat(s) * (size.width / CGFloat(segments))
-                let nextX = CGFloat(s + 1) * (size.width / CGFloat(segments))
-                // Average peaks in this x window
+                let x = CGFloat(s) * segmentWidth
                 let fromIdx = Int(CGFloat(s) * peakPerSegment)
-                let toIdx = min(n, Int(CGFloat(s + 1) * peakPerSegment) + 1)
-                guard fromIdx < toIdx else { continue }
+                let toIdx = min(n, max(fromIdx + 1, Int(CGFloat(s + 1) * peakPerSegment)))
                 var pk: Float = 0
                 for i in fromIdx..<toIdx { pk = max(pk, peaks[i]) }
                 let halfBar = CGFloat(pk) * size.height * 0.48
                 let rect = CGRect(
                     x: x,
                     y: midY - halfBar,
-                    width: max(nextX - x, 0.5),
+                    width: max(segmentWidth, 0.5),
                     height: halfBar * 2
                 )
                 let color: Color = (x < playedX) ? .blue : .gray.opacity(0.5)
                 context.fill(Path(rect), with: .color(color))
             }
-            _ = pxPerPeak  // silence unused warning
         }
         .frame(width: width, height: height)
         .allowsHitTesting(false)

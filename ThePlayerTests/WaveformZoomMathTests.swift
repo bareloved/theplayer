@@ -26,8 +26,11 @@ final class WaveformZoomMathTests: XCTestCase {
     }
 
     func testZoomFromDragClampsHigh() {
-        let z = WaveformZoomMath.zoomFromDrag(startZoom: 20.0, translationY: 10000)
-        XCTAssertEqual(z, 20.0, accuracy: 0.0001)
+        let z = WaveformZoomMath.zoomFromDrag(
+            startZoom: WaveformZoomMath.maxZoom,
+            translationY: 10000
+        )
+        XCTAssertEqual(z, WaveformZoomMath.maxZoom, accuracy: 0.0001)
     }
 
     func testScrollOriginForAnchorKeepsCursorBarFixed() {

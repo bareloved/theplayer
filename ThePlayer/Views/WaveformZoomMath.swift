@@ -3,7 +3,7 @@ import Foundation
 
 enum WaveformZoomMath {
     static let minZoom: CGFloat = 1.0
-    static let maxZoom: CGFloat = 20.0
+    static let maxZoom: CGFloat = 100.0
     /// Exponential gain per pixel of vertical drag. Drag-down (positive translation.height)
     /// zooms in. `exp(100 * 0.005) ≈ 1.65x` per 100pt, which matches Ableton's feel.
     static let dragSensitivity: CGFloat = 0.005
