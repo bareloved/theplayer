@@ -38,10 +38,9 @@ struct WaveformRulerBand: View {
                 .gesture(zoomDrag)
 
             // Tick marks + bar labels.
-            Canvas { context, size in
-                drawTicksAndLabels(in: context, size: size)
+            TiledCanvas(totalWidth: totalWidth, height: bandHeight) { context, size, xRange in
+                drawTicksAndLabels(in: &context, size: size, xRange: xRange)
             }
-            .frame(width: totalWidth, height: bandHeight)
             .allowsHitTesting(false)
         }
         .frame(width: totalWidth, height: bandHeight)
@@ -111,7 +110,7 @@ struct WaveformRulerBand: View {
             }
     }
 
-    private func drawTicksAndLabels(in context: GraphicsContext, size: CGSize) {
+    private func drawTicksAndLabels(in context: inout GraphicsContext, size: CGSize, xRange: ClosedRange<CGFloat>) {
         guard duration > 0, bpm > 0 else { return }
         let bpb = timeSignature.beatsPerBar
         guard bpb > 0 else { return }
@@ -121,6 +120,10 @@ struct WaveformRulerBand: View {
 
         let w = size.width
         let h = size.height
+        // Label text can extend ~24pt to the right of its anchor x.
+        let pad: CGFloat = 32
+        let xLo = xRange.lowerBound - pad
+        let xHi = xRange.upperBound + pad
         let barTickColor = GraphicsContext.Shading.color(.white.opacity(0.55))
         let beatTickColor = GraphicsContext.Shading.color(.white.opacity(0.22))
         let preDownbeatTickColor = GraphicsContext.Shading.color(.white.opacity(0.2))
@@ -140,18 +143,21 @@ struct WaveformRulerBand: View {
         while t < duration {
             if t >= 0 {
                 let x = CGFloat(t / duration) * w
-                let zeroBased = barIndex - 1
-                if zeroBased % barTickStride == 0 {
-                    var tick = Path()
-                    tick.move(to: CGPoint(x: x, y: h * 0.55))
-                    tick.addLine(to: CGPoint(x: x, y: h))
-                    context.stroke(tick, with: barTickColor, lineWidth: 1)
-                }
-                if zeroBased % labelStride == 0 {
-                    let label = Text("\(barIndex)")
-                        .font(.system(size: 10, weight: .medium).monospacedDigit())
-                        .foregroundColor(.white.opacity(0.85))
-                    context.draw(label, at: CGPoint(x: x + 3, y: 1), anchor: .topLeading)
+                if x > xHi { break }
+                if x >= xLo {
+                    let zeroBased = barIndex - 1
+                    if zeroBased % barTickStride == 0 {
+                        var tick = Path()
+                        tick.move(to: CGPoint(x: x, y: h * 0.55))
+                        tick.addLine(to: CGPoint(x: x, y: h))
+                        context.stroke(tick, with: barTickColor, lineWidth: 1)
+                    }
+                    if zeroBased % labelStride == 0 {
+                        let label = Text("\(barIndex)")
+                            .font(.system(size: 10, weight: .medium).monospacedDigit())
+                            .foregroundColor(.white.opacity(0.85))
+                        context.draw(label, at: CGPoint(x: x + 3, y: 1), anchor: .topLeading)
+                    }
                 }
             }
             barIndex += 1
@@ -162,14 +168,19 @@ struct WaveformRulerBand: View {
         if drawBeatTicks {
             var tb = firstDownbeatTime
             while tb < duration {
-                for b in 1..<bpb {
-                    let bt = tb + Float(b) * beatDuration
-                    if bt >= 0, bt < duration {
-                        let x = CGFloat(bt / duration) * w
-                        var tick = Path()
-                        tick.move(to: CGPoint(x: x, y: h * 0.75))
-                        tick.addLine(to: CGPoint(x: x, y: h))
-                        context.stroke(tick, with: beatTickColor, lineWidth: 0.75)
+                let tbX = CGFloat(tb / duration) * w
+                if tbX > xHi { break }
+                if tbX + barPxWidth >= xLo {
+                    for b in 1..<bpb {
+                        let bt = tb + Float(b) * beatDuration
+                        if bt >= 0, bt < duration {
+                            let x = CGFloat(bt / duration) * w
+                            if x < xLo || x > xHi { continue }
+                            var tick = Path()
+                            tick.move(to: CGPoint(x: x, y: h * 0.75))
+                            tick.addLine(to: CGPoint(x: x, y: h))
+                            context.stroke(tick, with: beatTickColor, lineWidth: 0.75)
+                        }
                     }
                 }
                 tb += barDuration
@@ -180,22 +191,26 @@ struct WaveformRulerBand: View {
         var backIndex = 1
         var tBack = firstDownbeatTime - barDuration
         while tBack >= 0 {
-            if backIndex % barTickStride == 0 {
-                let x = CGFloat(tBack / duration) * w
-                var tick = Path()
-                tick.move(to: CGPoint(x: x, y: h * 0.55))
-                tick.addLine(to: CGPoint(x: x, y: h))
-                context.stroke(tick, with: preDownbeatTickColor, lineWidth: 1)
-            }
-            if drawBeatTicks {
-                for b in 1..<bpb {
-                    let bt = tBack + Float(b) * beatDuration
-                    if bt >= 0, bt < duration {
-                        let bx = CGFloat(bt / duration) * w
-                        var btick = Path()
-                        btick.move(to: CGPoint(x: bx, y: h * 0.75))
-                        btick.addLine(to: CGPoint(x: bx, y: h))
-                        context.stroke(btick, with: preDownbeatTickColor, lineWidth: 0.75)
+            let x = CGFloat(tBack / duration) * w
+            if x < xLo - barPxWidth { break }
+            if x <= xHi {
+                if backIndex % barTickStride == 0, x >= xLo {
+                    var tick = Path()
+                    tick.move(to: CGPoint(x: x, y: h * 0.55))
+                    tick.addLine(to: CGPoint(x: x, y: h))
+                    context.stroke(tick, with: preDownbeatTickColor, lineWidth: 1)
+                }
+                if drawBeatTicks {
+                    for b in 1..<bpb {
+                        let bt = tBack + Float(b) * beatDuration
+                        if bt >= 0, bt < duration {
+                            let bx = CGFloat(bt / duration) * w
+                            if bx < xLo || bx > xHi { continue }
+                            var btick = Path()
+                            btick.move(to: CGPoint(x: bx, y: h * 0.75))
+                            btick.addLine(to: CGPoint(x: bx, y: h))
+                            context.stroke(btick, with: preDownbeatTickColor, lineWidth: 0.75)
+                        }
                     }
                 }
             }
@@ -213,55 +228,3 @@ struct WaveformRulerBand: View {
     }
 }
 
-/// Single red downbeat arrow that sits on top of the ruler band and can be dragged
-/// to move the first-downbeat time continuously.
-struct DownbeatArrowHandle: View {
-    let firstDownbeatTime: Float
-    let duration: Float
-    let parentWidth: CGFloat
-    let parentHeight: CGFloat
-    let onSetDownbeat: ((Float) -> Void)?
-
-    @State private var dragStartTime: Float?
-
-    var body: some View {
-        let x = duration > 0 ? CGFloat(firstDownbeatTime / duration) * parentWidth : 0
-
-        ZStack(alignment: .topLeading) {
-            // Invisible hit target — extends -5..17 (width 22) around the 0..12 triangle.
-            Rectangle()
-                .fill(Color.clear)
-                .frame(width: 22, height: max(parentHeight, 20))
-                .contentShape(Rectangle())
-                .offset(x: -5, y: 0)
-            // Visible triangle — tip at local x = 6.
-            Path { p in
-                p.move(to: CGPoint(x: 0, y: 0))
-                p.addLine(to: CGPoint(x: 12, y: 0))
-                p.addLine(to: CGPoint(x: 6, y: 10))
-                p.closeSubpath()
-            }
-            .fill(Color.red)
-            .frame(width: 12, height: 10)
-        }
-        .frame(width: 12, height: max(parentHeight, 20), alignment: .topLeading)
-        .offset(x: x - 6, y: 0)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .onHover { hovering in
-            if hovering { NSCursor.resizeLeftRight.set() } else { NSCursor.arrow.set() }
-        }
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { value in
-                    if dragStartTime == nil { dragStartTime = firstDownbeatTime }
-                    guard parentWidth > 0, duration > 0 else { return }
-                    let deltaTime = Float(value.translation.width / parentWidth) * duration
-                    let newTime = (dragStartTime ?? firstDownbeatTime) + deltaTime
-                    onSetDownbeat?(max(0, min(duration, newTime)))
-                }
-                .onEnded { _ in
-                    dragStartTime = nil
-                }
-        )
-    }
-}

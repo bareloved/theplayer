@@ -35,8 +35,7 @@ struct WaveformView: View {
             let height = geo.size.height
 
             let bandHeight = WaveformZoomMath.rulerHeight
-            let downbeatStripHeight: CGFloat = 12
-            let waveHeight = max(0, height - bandHeight - downbeatStripHeight)
+            let waveHeight = max(0, height - bandHeight)
 
             HorizontalNSScrollView(
                 contentWidth: totalWidth,
@@ -61,8 +60,6 @@ struct WaveformView: View {
                         scrollController: scrollController
                     )
 
-                    downbeatStrip(width: totalWidth, height: downbeatStripHeight)
-
                     ZStack(alignment: .leading) {
                         sectionBands(width: totalWidth, height: waveHeight)
                         if snapToGrid {
@@ -75,6 +72,7 @@ struct WaveformView: View {
                         }
 
                         playhead(width: totalWidth, height: waveHeight)
+                        downbeatIndicator(width: totalWidth, height: waveHeight)
 
                         if let vm = editorViewModel {
                             boundaryHandles(viewModel: vm, width: totalWidth, height: waveHeight)
@@ -212,33 +210,25 @@ struct WaveformView: View {
     }
 
     private func barLines(width: CGFloat, height: CGFloat) -> some View {
-        Canvas { context, size in
+        TiledCanvas(totalWidth: width, height: height) { context, size, xRange in
             guard duration > 0 else { return }
+            let pad: CGFloat = 2
 
-            let downbeatRounded = (firstDownbeatTime * 100).rounded() / 100
-
-            // Draw grid lines at snap positions
             for gridTime in gridPositions {
                 let x = CGFloat(gridTime / duration) * size.width
+                if x < xRange.lowerBound - pad || x > xRange.upperBound + pad { continue }
                 let rounded = (gridTime * 100).rounded() / 100
                 let isBar = barPositions.contains(rounded)
-                let isDownbeatAnchor = abs(rounded - downbeatRounded) < 0.001
 
                 var path = Path()
                 path.move(to: CGPoint(x: x, y: 0))
                 path.addLine(to: CGPoint(x: x, y: size.height))
 
-                if isDownbeatAnchor {
-                    // Red line co-located with the draggable downbeat arrow.
-                    context.stroke(path, with: .color(.red.opacity(0.7)), lineWidth: 1.5)
-                } else {
-                    let opacity: CGFloat = isBar ? 0.45 : 0.2
-                    let lw: CGFloat = isBar ? 1.5 : 0.75
-                    context.stroke(path, with: .color(.white.opacity(opacity)), lineWidth: lw)
-                }
+                let opacity: CGFloat = isBar ? 0.45 : 0.2
+                let lw: CGFloat = isBar ? 1.5 : 0.75
+                context.stroke(path, with: .color(.white.opacity(opacity)), lineWidth: lw)
             }
         }
-        .frame(width: width, height: height)
         .allowsHitTesting(false)
     }
 
@@ -280,7 +270,7 @@ struct WaveformView: View {
     }
 
     private func waveformBars(width: CGFloat, height: CGFloat) -> some View {
-        Canvas { context, size in
+        TiledCanvas(totalWidth: width, height: height) { context, size, xRange in
             guard !peaks.isEmpty else { return }
             let midY = size.height / 2
             let n = peaks.count
@@ -294,7 +284,10 @@ struct WaveformView: View {
 
             let playedX = duration > 0 ? CGFloat(currentTime / duration) * size.width : 0
 
-            for s in 0..<segments {
+            // Only iterate segments that fall inside this tile's x-range.
+            let firstSeg = max(0, Int(floor(xRange.lowerBound / segmentWidth)) - 1)
+            let lastSeg = min(segments, Int(ceil(xRange.upperBound / segmentWidth)) + 1)
+            for s in firstSeg..<lastSeg {
                 let x = CGFloat(s) * segmentWidth
                 let fromIdx = Int(CGFloat(s) * peakPerSegment)
                 let toIdx = min(n, max(fromIdx + 1, Int(CGFloat(s + 1) * peakPerSegment)))
@@ -311,27 +304,20 @@ struct WaveformView: View {
                 context.fill(Path(rect), with: .color(color))
             }
         }
-        .frame(width: width, height: height)
         .allowsHitTesting(false)
     }
 
     @ViewBuilder
-    private func downbeatStrip(width: CGFloat, height: CGFloat) -> some View {
-        ZStack(alignment: .topLeading) {
+    private func downbeatIndicator(width: CGFloat, height: CGFloat) -> some View {
+        if duration > 0 {
+            let clamped = max(0, min(firstDownbeatTime, duration))
+            let x = CGFloat(clamped / duration) * width
             Rectangle()
-                .fill(Color.black.opacity(0.15))
-                .frame(width: width, height: height)
-            if duration > 0, firstDownbeatTime >= 0, firstDownbeatTime < duration {
-                DownbeatArrowHandle(
-                    firstDownbeatTime: firstDownbeatTime,
-                    duration: duration,
-                    parentWidth: width,
-                    parentHeight: height,
-                    onSetDownbeat: onSetDownbeat
-                )
-            }
+                .fill(Color.red.opacity(0.75))
+                .frame(width: 1.5, height: height)
+                .offset(x: x)
+                .allowsHitTesting(false)
         }
-        .frame(width: width, height: height)
     }
 
     private func playhead(width: CGFloat, height: CGFloat) -> some View {
