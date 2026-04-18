@@ -109,6 +109,23 @@ extension AnalysisServiceMergeTests {
         XCTAssertEqual(merged.timeSignature, .threeFour)
     }
 
+    func testMergePreservesOnsets() throws {
+        let analyzed = TrackAnalysis(
+            bpm: 120,
+            beats: [0, 0.5, 1.0],
+            sections: [AudioSection(label: "A", startTime: 0, endTime: 1, startBeat: 0, endBeat: 4, colorIndex: 0)],
+            waveformPeaks: [0.1],
+            onsets: [0.05, 0.52, 1.03]
+        )
+        let edited = [AudioSection(label: "Manual", startTime: 0, endTime: 1, startBeat: 0, endBeat: 4, colorIndex: 2)]
+        let merged = AnalysisService.mergeCachedAnalysis(
+            analyzed,
+            userEdits: UserEdits(sections: edited)
+        )
+        XCTAssertEqual(merged.onsets, [0.05, 0.52, 1.03])
+        XCTAssertEqual(merged.sections.first?.label, "Manual")
+    }
+
     func testSaveTimingOverridesPatchesWithoutClobberingSections() async throws {
         let key = "timing-patch"
         let analyzed = TrackAnalysis(

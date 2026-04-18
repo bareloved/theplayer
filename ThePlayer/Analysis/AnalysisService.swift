@@ -26,6 +26,7 @@ struct EssentiaAnalyzerSwift: TrackAnalyzerProtocol {
 
                     let beats = result.beats.map { $0.floatValue }
                     let peaks = (try? WaveformExtractor.extractPeaks(from: fileURL)) ?? []
+                    let onsets = (result.onsets ?? []).map { $0.floatValue }
 
                     progress(1.0)
 
@@ -35,7 +36,8 @@ struct EssentiaAnalyzerSwift: TrackAnalyzerProtocol {
                         sections: sections,
                         waveformPeaks: peaks,
                         downbeatOffset: Int(result.downbeatOffset),
-                        timeSignature: .fourFour
+                        timeSignature: .fourFour,
+                        onsets: onsets
                     )
                     continuation.resume(returning: analysis)
                 } catch {
@@ -84,7 +86,8 @@ final class AnalysisService {
             waveformPeaks: analysis.waveformPeaks,
             downbeatOffset: analysis.downbeatOffset,
             firstDownbeatTime: mergedFirstDb,
-            timeSignature: mergedTimeSig
+            timeSignature: mergedTimeSig,
+            onsets: analysis.onsets
         )
     }
 

@@ -20,7 +20,8 @@ struct MockAnalyzer: TrackAnalyzerProtocol {
                 AudioSection(label: "Bridge", startTime: 135, endTime: 155, startBeat: 270, endBeat: 310, colorIndex: 3),
                 AudioSection(label: "Outro", startTime: 155, endTime: 180, startBeat: 310, endBeat: 360, colorIndex: 0),
             ],
-            waveformPeaks: (0..<500).map { _ in Float.random(in: 0.1...0.9) }
+            waveformPeaks: (0..<500).map { _ in Float.random(in: 0.1...0.9) },
+            onsets: stride(from: Float(0), to: 180, by: 0.5).map { $0 + 0.01 }
         )
     }
 }
