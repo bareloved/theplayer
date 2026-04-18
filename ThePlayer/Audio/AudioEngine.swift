@@ -52,6 +52,13 @@ final class AudioEngine {
         return (playbackOrigin + elapsed, nodeTime.hostTime)
     }
 
+    /// Wall-clock seconds of processing delay the song incurs beyond the click path.
+    /// The song passes through `timePitchNode`; clicks bypass it. To keep them in
+    /// sync at the speaker, the click scheduler delays each click by this amount.
+    var songExtraLatencySeconds: TimeInterval {
+        TimeInterval(timePitchNode.latency)
+    }
+
     private var engine = AVAudioEngine()
     private var playerNode = AVAudioPlayerNode()
     private var timePitchNode = AVAudioUnitTimePitch()
@@ -294,10 +301,16 @@ final class AudioEngine {
         let hostDeltaTicks: UInt64 = now > nodeTime.hostTime ? (now &- nodeTime.hostTime) : 0
         let hostDeltaSeconds = Double(hostDeltaTicks) * Double(tb.numer) / Double(tb.denom) / 1_000_000_000.0
 
+        // Compensate for timePitchNode's processing latency so the playhead
+        // matches what the user is hearing, not the just-rendered sample
+        // that's still working its way through the time-pitch unit.
+        let songLatencySeconds = Float(timePitchNode.latency) * speed
+
         // Visual-only look-ahead: user-tunable extra offset on top of the
         // host-clock interpolation. Does NOT affect click scheduling
         // (which uses `preciseNow` and host-time math).
-        let time = playbackOrigin + elapsed + Float(hostDeltaSeconds) * speed + visualLookAheadSeconds * speed
+        let time = playbackOrigin + elapsed + Float(hostDeltaSeconds) * speed
+            - songLatencySeconds + visualLookAheadSeconds * speed
         if time >= 0 && time <= duration {
             currentTime = time
         }

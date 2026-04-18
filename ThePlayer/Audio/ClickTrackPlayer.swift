@@ -74,6 +74,13 @@ final class ClickTrackPlayer {
         let beatDurationSong: Float = 60.0 / bpm
         let kStart = Int(ceil(Double((currentSongTime - firstDownbeatTime) / beatDurationSong)))
 
+        // Delay every click by the song's extra processing latency (time-pitch
+        // node) so the click emerges from the speakers at the same wall-clock
+        // moment as the song sample at the corresponding song-time.
+        let songExtraLatency = audioEngine.songExtraLatencySeconds
+        let latencyNanos = UInt64(max(0, songExtraLatency) * 1_000_000_000)
+        let latencyHostTicks = latencyNanos * UInt64(timebase.denom) / UInt64(timebase.numer)
+
         let beatsToSchedule = 80
         playerNode.volume = volume
 
@@ -84,7 +91,7 @@ final class ClickTrackPlayer {
             if offsetSeconds < 0 { continue }
             let offsetNanos = UInt64(offsetSeconds * 1_000_000_000)
             let offsetHostTicks = offsetNanos * UInt64(timebase.denom) / UInt64(timebase.numer)
-            let clickHostTime = currentHostTime &+ offsetHostTicks
+            let clickHostTime = currentHostTime &+ offsetHostTicks &+ latencyHostTicks
             let avTime = AVAudioTime(hostTime: clickHostTime)
 
             let isDownbeat = ((k % beatsPerBar) + beatsPerBar) % beatsPerBar == 0
