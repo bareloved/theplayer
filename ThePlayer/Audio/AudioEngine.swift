@@ -1,4 +1,5 @@
 import AVFoundation
+import Darwin
 import Observation
 
 enum AudioEngineState: Equatable {
@@ -282,9 +283,21 @@ final class AudioEngine {
               nodeTime.isSampleTimeValid,
               let playerTime = playerNode.playerTime(forNodeTime: nodeTime) else { return }
         let elapsed = Float(playerTime.sampleTime) / Float(playerTime.sampleRate)
-        // Visual-only look-ahead: keeps playhead aligned with what the user hears.
-        // Does NOT affect click scheduling (which uses `preciseNow` and host-time math).
-        let time = playbackOrigin + elapsed + visualLookAheadSeconds * speed
+
+        // Forward-project from the last render tick to NOW using the host clock,
+        // so the playhead tracks the hardware clock continuously instead of
+        // stair-stepping at 60 Hz (which caused ~up-to-16ms visual lag behind
+        // the click you hear).
+        var tb = mach_timebase_info_data_t()
+        mach_timebase_info(&tb)
+        let now = mach_absolute_time()
+        let hostDeltaTicks: UInt64 = now > nodeTime.hostTime ? (now &- nodeTime.hostTime) : 0
+        let hostDeltaSeconds = Double(hostDeltaTicks) * Double(tb.numer) / Double(tb.denom) / 1_000_000_000.0
+
+        // Visual-only look-ahead: user-tunable extra offset on top of the
+        // host-clock interpolation. Does NOT affect click scheduling
+        // (which uses `preciseNow` and host-time math).
+        let time = playbackOrigin + elapsed + Float(hostDeltaSeconds) * speed + visualLookAheadSeconds * speed
         if time >= 0 && time <= duration {
             currentTime = time
         }
