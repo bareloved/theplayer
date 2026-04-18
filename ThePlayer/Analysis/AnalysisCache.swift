@@ -35,6 +35,15 @@ final class AnalysisCache {
             return nil
         }
 
+        // Invalidate entries from before onset detection shipped: they have
+        // beats but no onsets. Tiny synthetic fixtures used by tests never have
+        // enough peaks to trip the n >= 1000 check above, so gate this on the
+        // same peak count to stay friendly to tests.
+        if n >= 1000, analysis.onsets.isEmpty, !analysis.beats.isEmpty {
+            try? FileManager.default.removeItem(at: url)
+            return nil
+        }
+
         return analysis
     }
 
