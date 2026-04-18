@@ -137,63 +137,91 @@ struct WaveformRulerBand: View {
         let beatTickColor = GraphicsContext.Shading.color(.white.opacity(0.22))
         let preDownbeatTickColor = GraphicsContext.Shading.color(.white.opacity(0.2))
 
+        // Pixel width of one bar / one beat at current zoom.
+        let barPxWidth = CGFloat(barDuration / duration) * w
+        let beatPxWidth = CGFloat(beatDuration / duration) * w
+
+        // Choose power-of-two strides so labels / ticks never crowd.
+        let labelStride = niceStride(minPx: 32, itemPx: barPxWidth)
+        let barTickStride = niceStride(minPx: 6, itemPx: barPxWidth)
+        let drawBeatTicks = beatPxWidth >= 6
+
         // Bars at/after firstDownbeatTime — labeled 1, 2, 3, ...
         var barIndex = 1
         var t = firstDownbeatTime
         while t < duration {
             if t >= 0 {
                 let x = CGFloat(t / duration) * w
-                var tick = Path()
-                tick.move(to: CGPoint(x: x, y: 0))
-                tick.addLine(to: CGPoint(x: x, y: h))
-                context.stroke(tick, with: barTickColor, lineWidth: 1)
-
-                let label = Text("\(barIndex)")
-                    .font(.system(size: 10, weight: .medium).monospacedDigit())
-                    .foregroundColor(.white.opacity(0.85))
-                context.draw(label, at: CGPoint(x: x + 3, y: 1), anchor: .topLeading)
+                let zeroBased = barIndex - 1
+                if zeroBased % barTickStride == 0 {
+                    var tick = Path()
+                    tick.move(to: CGPoint(x: x, y: 0))
+                    tick.addLine(to: CGPoint(x: x, y: h))
+                    context.stroke(tick, with: barTickColor, lineWidth: 1)
+                }
+                if zeroBased % labelStride == 0 {
+                    let label = Text("\(barIndex)")
+                        .font(.system(size: 10, weight: .medium).monospacedDigit())
+                        .foregroundColor(.white.opacity(0.85))
+                    context.draw(label, at: CGPoint(x: x + 3, y: 1), anchor: .topLeading)
+                }
             }
             barIndex += 1
             t += barDuration
         }
 
-        // Beat ticks between bars, at/after firstDownbeatTime.
-        var tb = firstDownbeatTime
-        while tb < duration {
-            for b in 1..<bpb {
-                let bt = tb + Float(b) * beatDuration
-                if bt >= 0, bt < duration {
-                    let x = CGFloat(bt / duration) * w
-                    var tick = Path()
-                    tick.move(to: CGPoint(x: x, y: h * 0.55))
-                    tick.addLine(to: CGPoint(x: x, y: h))
-                    context.stroke(tick, with: beatTickColor, lineWidth: 0.75)
+        // Beat ticks between bars, at/after firstDownbeatTime — only when zoomed in enough.
+        if drawBeatTicks {
+            var tb = firstDownbeatTime
+            while tb < duration {
+                for b in 1..<bpb {
+                    let bt = tb + Float(b) * beatDuration
+                    if bt >= 0, bt < duration {
+                        let x = CGFloat(bt / duration) * w
+                        var tick = Path()
+                        tick.move(to: CGPoint(x: x, y: h * 0.55))
+                        tick.addLine(to: CGPoint(x: x, y: h))
+                        context.stroke(tick, with: beatTickColor, lineWidth: 0.75)
+                    }
                 }
+                tb += barDuration
             }
-            tb += barDuration
         }
 
-        // Bars + beats before firstDownbeatTime (no labels, dimmer).
+        // Bars + beats before firstDownbeatTime (no labels, dimmer, same stride).
+        var backIndex = 1
         var tBack = firstDownbeatTime - barDuration
         while tBack >= 0 {
-            let x = CGFloat(tBack / duration) * w
-            var tick = Path()
-            tick.move(to: CGPoint(x: x, y: 0))
-            tick.addLine(to: CGPoint(x: x, y: h))
-            context.stroke(tick, with: preDownbeatTickColor, lineWidth: 1)
-
-            for b in 1..<bpb {
-                let bt = tBack + Float(b) * beatDuration
-                if bt >= 0, bt < duration {
-                    let bx = CGFloat(bt / duration) * w
-                    var btick = Path()
-                    btick.move(to: CGPoint(x: bx, y: h * 0.55))
-                    btick.addLine(to: CGPoint(x: bx, y: h))
-                    context.stroke(btick, with: preDownbeatTickColor, lineWidth: 0.75)
+            if backIndex % barTickStride == 0 {
+                let x = CGFloat(tBack / duration) * w
+                var tick = Path()
+                tick.move(to: CGPoint(x: x, y: 0))
+                tick.addLine(to: CGPoint(x: x, y: h))
+                context.stroke(tick, with: preDownbeatTickColor, lineWidth: 1)
+            }
+            if drawBeatTicks {
+                for b in 1..<bpb {
+                    let bt = tBack + Float(b) * beatDuration
+                    if bt >= 0, bt < duration {
+                        let bx = CGFloat(bt / duration) * w
+                        var btick = Path()
+                        btick.move(to: CGPoint(x: bx, y: h * 0.55))
+                        btick.addLine(to: CGPoint(x: bx, y: h))
+                        context.stroke(btick, with: preDownbeatTickColor, lineWidth: 0.75)
+                    }
                 }
             }
+            backIndex += 1
             tBack -= barDuration
         }
+    }
+
+    /// Smallest power-of-two stride such that `stride * itemPx >= minPx`.
+    private func niceStride(minPx: CGFloat, itemPx: CGFloat) -> Int {
+        guard itemPx > 0 else { return 1 }
+        var s = 1
+        while CGFloat(s) * itemPx < minPx { s *= 2 }
+        return s
     }
 }
 
