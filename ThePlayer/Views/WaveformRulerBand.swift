@@ -17,14 +17,14 @@ struct WaveformRulerBand: View {
     @Binding var zoomLevel: CGFloat
     let scrollController: ScrollController
     let onSetDownbeat: ((Float) -> Void)?
-    let onSeek: (Float) -> Void
 
-    private enum DragMode { case undecided, zoom, scrub }
+    private enum DragMode { case undecided, zoom, pan }
 
     @State private var dragMode: DragMode = .undecided
     @State private var dragStartZoom: CGFloat?
     @State private var dragAnchorFraction: CGFloat?
     @State private var dragCursorXInViewport: CGFloat?
+    @State private var dragStartScrollOriginX: CGFloat?
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -66,7 +66,7 @@ struct WaveformRulerBand: View {
                     let dx = abs(value.translation.width)
                     let dy = abs(value.translation.height)
                     guard max(dx, dy) >= 3 else { return }
-                    dragMode = dx > dy ? .scrub : .zoom
+                    dragMode = dx > dy ? .pan : .zoom
 
                     if dragMode == .zoom {
                         dragStartZoom = zoomLevel
@@ -74,15 +74,18 @@ struct WaveformRulerBand: View {
                         let totalAtStart = geoWidth * zoomLevel
                         dragAnchorFraction = totalAtStart > 0 ? startContentX / totalAtStart : 0
                         dragCursorXInViewport = startContentX - scrollController.scrollOriginX
+                    } else {
+                        dragStartScrollOriginX = scrollController.scrollOriginX
+                        NSCursor.closedHand.set()
                     }
                 }
 
                 switch dragMode {
-                case .scrub:
-                    guard totalWidth > 0, duration > 0 else { return }
-                    let fraction = Float(value.location.x / totalWidth)
-                    let time = max(0, min(duration, fraction * duration))
-                    onSeek(time)
+                case .pan:
+                    guard let startOrigin = dragStartScrollOriginX else { return }
+                    let maxOrigin = max(0, totalWidth - geoWidth)
+                    let newOrigin = min(max(startOrigin - value.translation.width, 0), maxOrigin)
+                    scrollController.setScrollOriginX(newOrigin)
                 case .zoom:
                     guard
                         let startZoom = dragStartZoom,
@@ -111,10 +114,12 @@ struct WaveformRulerBand: View {
                 }
             }
             .onEnded { _ in
+                if dragMode == .pan { NSCursor.openHand.set() }
                 dragMode = .undecided
                 dragStartZoom = nil
                 dragAnchorFraction = nil
                 dragCursorXInViewport = nil
+                dragStartScrollOriginX = nil
             }
     }
 

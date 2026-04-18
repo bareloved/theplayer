@@ -58,8 +58,7 @@ struct WaveformView: View {
                         bandHeight: bandHeight,
                         zoomLevel: $zoomLevel,
                         scrollController: scrollController,
-                        onSetDownbeat: onSetDownbeat,
-                        onSeek: onSeek
+                        onSetDownbeat: onSetDownbeat
                     )
 
                     ZStack(alignment: .leading) {
