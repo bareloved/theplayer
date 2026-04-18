@@ -26,7 +26,7 @@ struct EssentiaAnalyzerSwift: TrackAnalyzerProtocol {
 
                     let beats = result.beats.map { $0.floatValue }
                     let peaks = (try? WaveformExtractor.extractPeaks(from: fileURL)) ?? []
-                    let onsets = (result.onsets ?? []).map { $0.floatValue }
+                    let onsets = result.onsets.map { $0.floatValue }
 
                     progress(1.0)
 
