@@ -38,6 +38,20 @@ struct WaveformView: View {
     @State private var mouseLocation: CGPoint?
     @State private var highlightedOnset: Float?
 
+    private static let onsetSnapMaxPx: Double = 30
+
+    private func nearestOnset(at location: CGPoint?, totalWidth: CGFloat) -> Float? {
+        guard let location, totalWidth > 0, duration > 0 else { return nil }
+        let pxPerSec = Double(totalWidth) / Double(max(duration, 0.001))
+        let time = Float(location.x / totalWidth) * duration
+        return OnsetPicker.nearestOnset(
+            to: time,
+            in: onsets,
+            pxPerSec: pxPerSec,
+            maxPx: Self.onsetSnapMaxPx
+        )
+    }
+
     var body: some View {
         GeometryReader { geo in
             let totalWidth = geo.size.width * zoomLevel
@@ -174,17 +188,7 @@ struct WaveformView: View {
                         }
                     }
                     .contextMenu {
-                        let pxPerSec = Double(totalWidth) / Double(max(duration, 0.001))
-                        let clickTime: Float = {
-                            guard let loc = mouseLocation, totalWidth > 0 else { return 0 }
-                            return Float(loc.x / totalWidth) * duration
-                        }()
-                        let nearest = OnsetPicker.nearestOnset(
-                            to: clickTime,
-                            in: onsets,
-                            pxPerSec: pxPerSec,
-                            maxPx: 30.0
-                        )
+                        let nearest = nearestOnset(at: mouseLocation, totalWidth: totalWidth)
                         Button(action: {
                             if let t = nearest {
                                 onSetDownbeat?(t)
@@ -196,18 +200,7 @@ struct WaveformView: View {
                         .disabled(nearest == nil)
                     }
                     .onChange(of: mouseLocation) { _, newLoc in
-                        guard let loc = newLoc, totalWidth > 0, duration > 0 else {
-                            highlightedOnset = nil
-                            return
-                        }
-                        let pxPerSec = Double(totalWidth) / Double(max(duration, 0.001))
-                        let clickTime = Float(loc.x / totalWidth) * duration
-                        highlightedOnset = OnsetPicker.nearestOnset(
-                            to: clickTime,
-                            in: onsets,
-                            pxPerSec: pxPerSec,
-                            maxPx: 30.0
-                        )
+                        highlightedOnset = nearestOnset(at: newLoc, totalWidth: totalWidth)
                     }
                     .onContinuousHover { phase in
                         switch phase {
