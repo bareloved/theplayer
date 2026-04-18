@@ -24,7 +24,18 @@ final class AnalysisCache {
         let url = directory.appendingPathComponent("\(key).json")
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
         let data = try Data(contentsOf: url)
-        return try JSONDecoder().decode(TrackAnalysis.self, from: data)
+        let analysis = try JSONDecoder().decode(TrackAnalysis.self, from: data)
+
+        // Invalidate entries whose peaks were extracted at the old lower
+        // resolution — force re-analysis to pick up the current density.
+        // The lower bound exempts tiny synthetic fixtures used by tests.
+        let n = analysis.waveformPeaks.count
+        if n >= 1000, n < WaveformExtractor.targetPeakCount {
+            try? FileManager.default.removeItem(at: url)
+            return nil
+        }
+
+        return analysis
     }
 
     static func fileHash(for url: URL) throws -> String {

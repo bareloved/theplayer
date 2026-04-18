@@ -2,7 +2,11 @@ import AVFoundation
 
 enum WaveformExtractor {
 
-    static func extractPeaks(from url: URL, targetCount: Int = 16000) throws -> [Float] {
+    /// Default number of peak samples extracted per track. Bumps here should
+    /// also trigger cache invalidation for old analyses (see `AnalysisCache`).
+    static let targetPeakCount: Int = 16000
+
+    static func extractPeaks(from url: URL, targetCount: Int = targetPeakCount) throws -> [Float] {
         let file = try AVAudioFile(forReading: url)
         let format = file.processingFormat
         let frameCount = AVAudioFrameCount(file.length)
