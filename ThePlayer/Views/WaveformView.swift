@@ -147,7 +147,7 @@ struct WaveformView: View {
                     .foregroundStyle(zoomLevel > WaveformZoomMath.minZoom ? .primary : .tertiary)
                     .disabled(zoomLevel <= WaveformZoomMath.minZoom)
 
-                    Text("\(Int(zoomLevel * 100))%")
+                    Text(formatZoom(zoomLevel))
                         .font(.caption2.monospaced())
                         .foregroundStyle(.secondary)
                         .frame(width: 36)
@@ -406,6 +406,16 @@ struct WaveformView: View {
         Text(text)
             .font(.caption.monospaced())
             .foregroundStyle(.secondary)
+    }
+
+    private func formatZoom(_ zoom: CGFloat) -> String {
+        if zoom >= 9.95 {
+            return "x\(Int(zoom.rounded()))"
+        } else if abs(zoom - zoom.rounded()) < 0.05 {
+            return "x\(Int(zoom.rounded()))"
+        } else {
+            return String(format: "x%.1f", Double(zoom))
+        }
     }
 
     private func formatTime(_ seconds: Float) -> String {
