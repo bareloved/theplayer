@@ -76,10 +76,10 @@ using namespace essentia::standard;
                 "type", std::string("hann"));
             Algorithm* odSpectrum = factory.create("Spectrum");
             Algorithm* onsetDetection = factory.create("OnsetDetection",
-                "method", std::string("complex"),
+                "method", std::string("hfc"),
                 "sampleRate", 44100.0);
 
-            std::vector<Real> odFrame, odWindowed, odSpec, odPhase;
+            std::vector<Real> odFrame, odWindowed, odSpec;
             Real odValue;
 
             odFrameCutter->input("signal").set(audio);
@@ -92,7 +92,6 @@ using namespace essentia::standard;
             odSpectrum->output("spectrum").set(odSpec);
 
             onsetDetection->input("spectrum").set(odSpec);
-            onsetDetection->input("phase").set(odPhase); // unused for "complex" but must be bound
             onsetDetection->output("onsetDetection").set(odValue);
 
             std::vector<Real> detectionFunction;
@@ -101,7 +100,6 @@ using namespace essentia::standard;
                 if (odFrame.empty()) break;
                 odWindowing->compute();
                 odSpectrum->compute();
-                // "complex" method only reads the spectrum — phase vector may be empty.
                 onsetDetection->compute();
                 detectionFunction.push_back(odValue);
             }
