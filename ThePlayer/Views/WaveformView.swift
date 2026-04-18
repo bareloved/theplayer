@@ -35,7 +35,8 @@ struct WaveformView: View {
             let height = geo.size.height
 
             let bandHeight = WaveformZoomMath.rulerHeight
-            let waveHeight = max(0, height - bandHeight)
+            let downbeatStripHeight: CGFloat = 12
+            let waveHeight = max(0, height - bandHeight - downbeatStripHeight)
 
             HorizontalNSScrollView(
                 contentWidth: totalWidth,
@@ -57,9 +58,10 @@ struct WaveformView: View {
                         geoWidth: geo.size.width,
                         bandHeight: bandHeight,
                         zoomLevel: $zoomLevel,
-                        scrollController: scrollController,
-                        onSetDownbeat: onSetDownbeat
+                        scrollController: scrollController
                     )
+
+                    downbeatStrip(width: totalWidth, height: downbeatStripHeight)
 
                     ZStack(alignment: .leading) {
                         sectionBands(width: totalWidth, height: waveHeight)
@@ -315,6 +317,25 @@ struct WaveformView: View {
         }
         .frame(width: width, height: height)
         .allowsHitTesting(false)
+    }
+
+    @ViewBuilder
+    private func downbeatStrip(width: CGFloat, height: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
+            Rectangle()
+                .fill(Color.black.opacity(0.15))
+                .frame(width: width, height: height)
+            if duration > 0, firstDownbeatTime >= 0, firstDownbeatTime < duration {
+                DownbeatArrowHandle(
+                    firstDownbeatTime: firstDownbeatTime,
+                    duration: duration,
+                    parentWidth: width,
+                    parentHeight: height,
+                    onSetDownbeat: onSetDownbeat
+                )
+            }
+        }
+        .frame(width: width, height: height)
     }
 
     private func playhead(width: CGFloat, height: CGFloat) -> some View {

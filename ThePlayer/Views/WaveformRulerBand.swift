@@ -16,7 +16,6 @@ struct WaveformRulerBand: View {
     let bandHeight: CGFloat
     @Binding var zoomLevel: CGFloat
     let scrollController: ScrollController
-    let onSetDownbeat: ((Float) -> Void)?
 
     private enum DragMode { case undecided, zoom, pan }
 
@@ -44,17 +43,6 @@ struct WaveformRulerBand: View {
             }
             .frame(width: totalWidth, height: bandHeight)
             .allowsHitTesting(false)
-
-            // Downbeat triangle — child gesture wins over the band's zoom drag.
-            if duration > 0, firstDownbeatTime >= 0, firstDownbeatTime < duration {
-                DownbeatArrowHandle(
-                    firstDownbeatTime: firstDownbeatTime,
-                    duration: duration,
-                    parentWidth: totalWidth,
-                    parentHeight: bandHeight,
-                    onSetDownbeat: onSetDownbeat
-                )
-            }
         }
         .frame(width: totalWidth, height: bandHeight)
     }
