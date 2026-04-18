@@ -79,7 +79,7 @@ using namespace essentia::standard;
                 "method", std::string("hfc"),
                 "sampleRate", 44100.0);
 
-            std::vector<Real> odFrame, odWindowed, odSpec;
+            std::vector<Real> odFrame, odWindowed, odSpec, odPhase;
             Real odValue;
 
             odFrameCutter->input("signal").set(audio);
@@ -92,6 +92,7 @@ using namespace essentia::standard;
             odSpectrum->output("spectrum").set(odSpec);
 
             onsetDetection->input("spectrum").set(odSpec);
+            onsetDetection->input("phase").set(odPhase);
             onsetDetection->output("onsetDetection").set(odValue);
 
             std::vector<Real> detectionFunction;
@@ -100,6 +101,9 @@ using namespace essentia::standard;
                 if (odFrame.empty()) break;
                 odWindowing->compute();
                 odSpectrum->compute();
+                // hfc ignores phase values, but Essentia still validates that the bound
+                // phase vector has the same size as the spectrum on every compute().
+                odPhase.assign(odSpec.size(), 0.0f);
                 onsetDetection->compute();
                 detectionFunction.push_back(odValue);
             }
