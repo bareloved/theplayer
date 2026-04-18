@@ -28,6 +28,9 @@ struct WaveformView: View {
     @State private var hoverTime: Float?
     @State private var hoverLocation: CGPoint?
     @StateObject private var scrollController = ScrollController()
+    @State private var dragStartZoom: CGFloat?
+    @State private var dragAnchorFraction: CGFloat?
+    @State private var dragCursorXInViewport: CGFloat?
 
     var body: some View {
         GeometryReader { geo in
@@ -70,6 +73,8 @@ struct WaveformView: View {
                     if let time = hoverTime, let loc = hoverLocation {
                         hoverTooltip(time: time, location: loc)
                     }
+
+                    zoomRulerStrip(width: totalWidth, geoWidth: geo.size.width)
                 }
                 .frame(width: totalWidth, height: height)
                 .contentShape(Rectangle())
@@ -368,6 +373,59 @@ struct WaveformView: View {
         }
         .offset(x: x)
         .allowsHitTesting(false)
+    }
+
+    @ViewBuilder
+    private func zoomRulerStrip(width: CGFloat, geoWidth: CGFloat) -> some View {
+        Rectangle()
+            .fill(Color.clear)
+            .contentShape(Rectangle())
+            .frame(width: width, height: WaveformZoomMath.rulerHeight)
+            .frame(maxHeight: .infinity, alignment: .top)
+            .onHover { hovering in
+                if hovering { NSCursor.resizeUpDown.set() } else { NSCursor.arrow.set() }
+            }
+            .gesture(
+                DragGesture(minimumDistance: 2, coordinateSpace: .local)
+                    .onChanged { value in
+                        if dragStartZoom == nil {
+                            dragStartZoom = zoomLevel
+                            let startContentX = value.startLocation.x
+                            let totalAtStart = geoWidth * zoomLevel
+                            dragAnchorFraction = totalAtStart > 0 ? startContentX / totalAtStart : 0
+                            dragCursorXInViewport = startContentX - scrollController.scrollOriginX
+                        }
+                        guard
+                            let startZoom = dragStartZoom,
+                            let anchor = dragAnchorFraction,
+                            let cursorX = dragCursorXInViewport,
+                            geoWidth > 0
+                        else { return }
+
+                        let newZoom = WaveformZoomMath.zoomFromDrag(
+                            startZoom: startZoom,
+                            translationY: value.translation.height
+                        )
+                        zoomLevel = newZoom
+
+                        let newOrigin = WaveformZoomMath.scrollOriginForAnchor(
+                            anchorFraction: anchor,
+                            cursorXInViewport: cursorX,
+                            geoWidth: geoWidth,
+                            newZoom: newZoom
+                        )
+                        // Defer so NSScrollView sees the new documentView size from this frame.
+                        DispatchQueue.main.async {
+                            scrollController.setScrollOriginX(newOrigin)
+                        }
+                    }
+                    .onEnded { _ in
+                        dragStartZoom = nil
+                        dragAnchorFraction = nil
+                        dragCursorXInViewport = nil
+                    }
+            )
+            .allowsHitTesting(true)
     }
 
     private func hoverTooltip(time: Float, location: CGPoint) -> some View {
