@@ -5,6 +5,7 @@ struct WaveformView: View {
     let peaks: [Float]
     let sections: [AudioSection]
     let beats: [Float]
+    let onsets: [Float]
     let bpm: Float
     let snapToGrid: Bool
     let snapDivision: SnapDivision

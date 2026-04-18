@@ -191,6 +191,7 @@ struct ContentView: View {
                     peaks: analysisService.lastAnalysis?.waveformPeaks ?? [],
                     sections: analysisService.lastAnalysis?.sections ?? [],
                     beats: analysisService.lastAnalysis?.beats ?? [],
+                    onsets: analysisService.lastAnalysis?.onsets ?? [],
                     bpm: analysisService.lastAnalysis?.bpm ?? 0,
                     snapToGrid: snapToGrid,
                     snapDivision: snapDivision,
