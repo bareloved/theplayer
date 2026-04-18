@@ -155,7 +155,7 @@ struct WaveformRulerBand: View {
                 let zeroBased = barIndex - 1
                 if zeroBased % barTickStride == 0 {
                     var tick = Path()
-                    tick.move(to: CGPoint(x: x, y: 0))
+                    tick.move(to: CGPoint(x: x, y: h * 0.55))
                     tick.addLine(to: CGPoint(x: x, y: h))
                     context.stroke(tick, with: barTickColor, lineWidth: 1)
                 }
@@ -179,7 +179,7 @@ struct WaveformRulerBand: View {
                     if bt >= 0, bt < duration {
                         let x = CGFloat(bt / duration) * w
                         var tick = Path()
-                        tick.move(to: CGPoint(x: x, y: h * 0.55))
+                        tick.move(to: CGPoint(x: x, y: h * 0.75))
                         tick.addLine(to: CGPoint(x: x, y: h))
                         context.stroke(tick, with: beatTickColor, lineWidth: 0.75)
                     }
@@ -195,7 +195,7 @@ struct WaveformRulerBand: View {
             if backIndex % barTickStride == 0 {
                 let x = CGFloat(tBack / duration) * w
                 var tick = Path()
-                tick.move(to: CGPoint(x: x, y: 0))
+                tick.move(to: CGPoint(x: x, y: h * 0.55))
                 tick.addLine(to: CGPoint(x: x, y: h))
                 context.stroke(tick, with: preDownbeatTickColor, lineWidth: 1)
             }
@@ -205,7 +205,7 @@ struct WaveformRulerBand: View {
                     if bt >= 0, bt < duration {
                         let bx = CGFloat(bt / duration) * w
                         var btick = Path()
-                        btick.move(to: CGPoint(x: bx, y: h * 0.55))
+                        btick.move(to: CGPoint(x: bx, y: h * 0.75))
                         btick.addLine(to: CGPoint(x: bx, y: h))
                         context.stroke(btick, with: preDownbeatTickColor, lineWidth: 0.75)
                     }
