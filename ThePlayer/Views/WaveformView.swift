@@ -28,14 +28,14 @@ struct WaveformView: View {
     @State private var hoverTime: Float?
     @State private var hoverLocation: CGPoint?
     @StateObject private var scrollController = ScrollController()
-    @State private var dragStartZoom: CGFloat?
-    @State private var dragAnchorFraction: CGFloat?
-    @State private var dragCursorXInViewport: CGFloat?
 
     var body: some View {
         GeometryReader { geo in
             let totalWidth = geo.size.width * zoomLevel
             let height = geo.size.height
+
+            let bandHeight = WaveformZoomMath.rulerHeight
+            let waveHeight = max(0, height - bandHeight)
 
             HorizontalNSScrollView(
                 contentWidth: totalWidth,
@@ -47,66 +47,78 @@ struct WaveformView: View {
                 },
                 controller: scrollController
             ) {
-                ZStack(alignment: .leading) {
-                    sectionBands(width: totalWidth, height: height)
-                    if snapToGrid {
-                        barLines(width: totalWidth, height: height)
+                VStack(spacing: 0) {
+                    WaveformRulerBand(
+                        duration: duration,
+                        bpm: bpm,
+                        firstDownbeatTime: firstDownbeatTime,
+                        timeSignature: timeSignature,
+                        totalWidth: totalWidth,
+                        geoWidth: geo.size.width,
+                        bandHeight: bandHeight,
+                        zoomLevel: $zoomLevel,
+                        scrollController: scrollController,
+                        onSetDownbeat: onSetDownbeat
+                    )
+
+                    ZStack(alignment: .leading) {
+                        sectionBands(width: totalWidth, height: waveHeight)
+                        if snapToGrid {
+                            barLines(width: totalWidth, height: waveHeight)
+                        }
+                        waveformBars(width: totalWidth, height: waveHeight)
+
+                        if let loop = loopRegion {
+                            loopOverlay(loop: loop, width: totalWidth, height: waveHeight)
+                        }
+
+                        playhead(width: totalWidth, height: waveHeight)
+
+                        if let vm = editorViewModel {
+                            boundaryHandles(viewModel: vm, width: totalWidth, height: waveHeight)
+                        }
+
+                        if let start = pendingLoopStart {
+                            pendingLoopMarker(start: start, width: totalWidth, height: waveHeight)
+                        }
+
+                        if let time = hoverTime, let loc = hoverLocation {
+                            hoverTooltip(time: time, location: loc)
+                        }
                     }
-                    waveformBars(width: totalWidth, height: height)
-
-                    if let loop = loopRegion {
-                        loopOverlay(loop: loop, width: totalWidth, height: height)
+                    .frame(width: totalWidth, height: waveHeight)
+                    .contentShape(Rectangle())
+                    .onTapGesture { location in
+                        let fraction = Float(location.x / totalWidth)
+                        let time = fraction * duration
+                        if isSettingDownbeat, let onSetDownbeat {
+                            onSetDownbeat(time)
+                            return
+                        }
+                        if let onSelectSection = onSelectSection, editorViewModel != nil {
+                            let hit = sections.first(where: { time >= $0.startTime && time < $0.endTime })
+                            onSelectSection(hit?.stableId)
+                            return
+                        }
+                        if isSettingLoop {
+                            onLoopPointSet(time)
+                        } else {
+                            onSeek(time)
+                        }
                     }
-
-                    playhead(width: totalWidth, height: height)
-
-                    if let vm = editorViewModel {
-                        boundaryHandles(viewModel: vm, width: totalWidth, height: height)
+                    .onContinuousHover { phase in
+                        switch phase {
+                        case .active(let location):
+                            let fraction = Float(location.x / totalWidth)
+                            hoverTime = fraction * duration
+                            hoverLocation = location
+                        case .ended:
+                            hoverTime = nil
+                            hoverLocation = nil
+                        }
                     }
-
-                    if let start = pendingLoopStart {
-                        pendingLoopMarker(start: start, width: totalWidth, height: height)
-                    }
-
-                    downbeatArrows(width: totalWidth, height: height)
-
-                    if let time = hoverTime, let loc = hoverLocation {
-                        hoverTooltip(time: time, location: loc)
-                    }
-
-                    zoomRulerStrip(width: totalWidth, geoWidth: geo.size.width)
                 }
                 .frame(width: totalWidth, height: height)
-                .contentShape(Rectangle())
-                .onTapGesture { location in
-                    let fraction = Float(location.x / totalWidth)
-                    let time = fraction * duration
-                    if isSettingDownbeat, let onSetDownbeat {
-                        onSetDownbeat(time)
-                        return
-                    }
-                    if let onSelectSection = onSelectSection, editorViewModel != nil {
-                        let hit = sections.first(where: { time >= $0.startTime && time < $0.endTime })
-                        onSelectSection(hit?.stableId)
-                        return
-                    }
-                    if isSettingLoop {
-                        onLoopPointSet(time)
-                    } else {
-                        onSeek(time)
-                    }
-                }
-                .onContinuousHover { phase in
-                    switch phase {
-                    case .active(let location):
-                        let fraction = Float(location.x / totalWidth)
-                        hoverTime = fraction * duration
-                        hoverLocation = location
-                    case .ended:
-                        hoverTime = nil
-                        hoverLocation = nil
-                    }
-                }
             }
             .gesture(MagnifyGesture().onChanged { value in
                 zoomLevel = max(WaveformZoomMath.minZoom,
@@ -305,21 +317,6 @@ struct WaveformView: View {
         .allowsHitTesting(false)
     }
 
-    @ViewBuilder
-    private func downbeatArrows(width: CGFloat, height: CGFloat) -> some View {
-        // Single red arrow anchoring the grid to the first downbeat.
-        // Draggable: moves the downbeat time continuously.
-        if duration > 0, firstDownbeatTime >= 0, firstDownbeatTime < duration {
-            DownbeatArrowHandle(
-                firstDownbeatTime: firstDownbeatTime,
-                duration: duration,
-                parentWidth: width,
-                parentHeight: height,
-                onSetDownbeat: onSetDownbeat
-            )
-        }
-    }
-
     private func playhead(width: CGFloat, height: CGFloat) -> some View {
         let x = duration > 0 ? CGFloat(currentTime / duration) * width : 0
         return Rectangle()
@@ -375,59 +372,6 @@ struct WaveformView: View {
         .allowsHitTesting(false)
     }
 
-    @ViewBuilder
-    private func zoomRulerStrip(width: CGFloat, geoWidth: CGFloat) -> some View {
-        Rectangle()
-            .fill(Color.clear)
-            .contentShape(Rectangle())
-            .frame(width: width, height: WaveformZoomMath.rulerHeight)
-            .frame(maxHeight: .infinity, alignment: .top)
-            .onHover { hovering in
-                if hovering { NSCursor.resizeUpDown.set() } else { NSCursor.arrow.set() }
-            }
-            .gesture(
-                DragGesture(minimumDistance: 2, coordinateSpace: .local)
-                    .onChanged { value in
-                        if dragStartZoom == nil {
-                            dragStartZoom = zoomLevel
-                            let startContentX = value.startLocation.x
-                            let totalAtStart = geoWidth * zoomLevel
-                            dragAnchorFraction = totalAtStart > 0 ? startContentX / totalAtStart : 0
-                            dragCursorXInViewport = startContentX - scrollController.scrollOriginX
-                        }
-                        guard
-                            let startZoom = dragStartZoom,
-                            let anchor = dragAnchorFraction,
-                            let cursorX = dragCursorXInViewport,
-                            geoWidth > 0
-                        else { return }
-
-                        let newZoom = WaveformZoomMath.zoomFromDrag(
-                            startZoom: startZoom,
-                            translationY: value.translation.height
-                        )
-                        zoomLevel = newZoom
-
-                        let newOrigin = WaveformZoomMath.scrollOriginForAnchor(
-                            anchorFraction: anchor,
-                            cursorXInViewport: cursorX,
-                            geoWidth: geoWidth,
-                            newZoom: newZoom
-                        )
-                        // Defer so NSScrollView sees the new documentView size from this frame.
-                        DispatchQueue.main.async {
-                            scrollController.setScrollOriginX(newOrigin)
-                        }
-                    }
-                    .onEnded { _ in
-                        dragStartZoom = nil
-                        dragAnchorFraction = nil
-                        dragCursorXInViewport = nil
-                    }
-            )
-            .allowsHitTesting(true)
-    }
-
     private func hoverTooltip(time: Float, location: CGPoint) -> some View {
         Text(formatTime(time))
             .font(.caption2.monospaced())
@@ -450,57 +394,3 @@ struct WaveformView: View {
     }
 }
 
-/// Single red downbeat arrow that sits on top of the waveform and can be dragged to move
-/// the first-downbeat time continuously. Uses `DragGesture.Value.translation` so movement
-/// is stable even as the handle reflows during the drag.
-private struct DownbeatArrowHandle: View {
-    let firstDownbeatTime: Float
-    let duration: Float
-    let parentWidth: CGFloat
-    let parentHeight: CGFloat
-    let onSetDownbeat: ((Float) -> Void)?
-
-    @State private var dragStartTime: Float?
-
-    var body: some View {
-        let x = duration > 0 ? CGFloat(firstDownbeatTime / duration) * parentWidth : 0
-
-        ZStack(alignment: .topLeading) {
-            // Invisible hit target — extends -5..17 (width 22) around the 0..12 triangle.
-            Rectangle()
-                .fill(Color.clear)
-                .frame(width: 22, height: 24)
-                .contentShape(Rectangle())
-                .offset(x: -5, y: 0)
-            // Visible triangle — tip at local x = 6.
-            Path { p in
-                p.move(to: CGPoint(x: 0, y: 0))
-                p.addLine(to: CGPoint(x: 12, y: 0))
-                p.addLine(to: CGPoint(x: 6, y: 10))
-                p.closeSubpath()
-            }
-            .fill(Color.red)
-            .frame(width: 12, height: 10)
-        }
-        // Anchor frame to the triangle's geometry so `offset(x: x - 6)` lands the tip at `x`.
-        .frame(width: 12, height: 24, alignment: .topLeading)
-        .offset(x: x - 6, y: 0)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .onHover { hovering in
-            if hovering { NSCursor.resizeLeftRight.set() } else { NSCursor.arrow.set() }
-        }
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { value in
-                    if dragStartTime == nil { dragStartTime = firstDownbeatTime }
-                    guard parentWidth > 0, duration > 0 else { return }
-                    let deltaTime = Float(value.translation.width / parentWidth) * duration
-                    let newTime = (dragStartTime ?? firstDownbeatTime) + deltaTime
-                    onSetDownbeat?(max(0, min(duration, newTime)))
-                }
-                .onEnded { _ in
-                    dragStartTime = nil
-                }
-        )
-    }
-}

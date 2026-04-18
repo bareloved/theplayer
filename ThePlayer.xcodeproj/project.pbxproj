@@ -54,6 +54,7 @@
 		D07083A6D6B037EBF0FBFA0F /* SectionEditorViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33D6E4513A8CE2D29BA9839 /* SectionEditorViewModelTests.swift */; };
 		D6D9A4F59AC6FC828DD2AF52 /* TimingControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = F22690D1FF10B6E1709707B6 /* TimingControls.swift */; };
 		E4E2D630F2F95D928349B515 /* TimeSignatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A5476FE5A910E95D19415E /* TimeSignatureTests.swift */; };
+		E501FB1442821A07F832D30E /* WaveformRulerBand.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA142BCABBA3999837117912 /* WaveformRulerBand.swift */; };
 		E89668FE9E4738CC28475BCE /* TimeSignature.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2CED90042F451C490FE4468 /* TimeSignature.swift */; };
 		E961C393569D82BC0011A993 /* EssentiaAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 80465283817407589D4C9CAE /* EssentiaAnalyzer.mm */; };
 		E9E5CE8A32EC4A4C6BD27FC4 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15F32C86DE7BF5020059DDBD /* WaveformView.swift */; };
@@ -127,6 +128,7 @@
 		CF874CC40CAC2840728EE0DD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D176EE181B6CB24E1860C08E /* ThePlayerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ThePlayerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D33D6E4513A8CE2D29BA9839 /* SectionEditorViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionEditorViewModelTests.swift; sourceTree = "<group>"; };
+		DA142BCABBA3999837117912 /* WaveformRulerBand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformRulerBand.swift; sourceTree = "<group>"; };
 		EA9B0495E1332E265855B195 /* ClickTrackPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickTrackPlayer.swift; sourceTree = "<group>"; };
 		EBAFA19FD76857DF511CB74A /* TrackAnalyzerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackAnalyzerProtocol.swift; sourceTree = "<group>"; };
 		F22690D1FF10B6E1709707B6 /* TimingControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimingControls.swift; sourceTree = "<group>"; };
@@ -245,6 +247,7 @@
 				743EBB1DA28F3FD0555C76F6 /* SpeedPitchControl.swift */,
 				F22690D1FF10B6E1709707B6 /* TimingControls.swift */,
 				6E87A69A0986B002C10713F7 /* TransportBar.swift */,
+				DA142BCABBA3999837117912 /* WaveformRulerBand.swift */,
 				15F32C86DE7BF5020059DDBD /* WaveformView.swift */,
 				151993C14891191F1CCEBAFA /* WaveformZoomMath.swift */,
 				E37A0FCF33C578CA1FF319F8 /* SectionEditor */,
@@ -435,6 +438,7 @@
 				C6356943CA5A3561E3A3B7D7 /* UserEdits.swift in Sources */,
 				BC92147DB6AE77C3B00EBCE1 /* UserEditsStore.swift in Sources */,
 				7A083D949ED86A7019CA3554 /* WaveformExtractor.swift in Sources */,
+				E501FB1442821A07F832D30E /* WaveformRulerBand.swift in Sources */,
 				E9E5CE8A32EC4A4C6BD27FC4 /* WaveformView.swift in Sources */,
 				44B5F45DB8960A8C3C4F6ABE /* WaveformZoomMath.swift in Sources */,
 			);
@@ -462,7 +466,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"1\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"1.0\", \"CFBundleDisplayName\": \"The Player\"]";
+				INFOPLIST_VALUES = "[\"CFBundleShortVersionString\": \"1.0\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleVersion\": \"1\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -569,7 +573,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"1\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"1.0\", \"CFBundleDisplayName\": \"The Player\"]";
+				INFOPLIST_VALUES = "[\"CFBundleShortVersionString\": \"1.0\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleVersion\": \"1\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

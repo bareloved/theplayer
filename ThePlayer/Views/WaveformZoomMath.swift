@@ -8,8 +8,9 @@ enum WaveformZoomMath {
     /// zooms in. `exp(100 * 0.005) ≈ 1.65x` per 100pt, which matches Ableton's feel.
     static let dragSensitivity: CGFloat = 0.005
 
-    /// Height of the invisible ruler strip that owns the zoom-drag gesture.
-    static let rulerHeight: CGFloat = 18
+    /// Height of the visible ruler band that hosts bar labels, beat ticks,
+    /// the downbeat triangle, and the zoom-drag gesture.
+    static let rulerHeight: CGFloat = 22
 
     /// Compute new zoom level from a drag translation, clamped to [minZoom, maxZoom].
     static func zoomFromDrag(startZoom: CGFloat, translationY: CGFloat) -> CGFloat {
