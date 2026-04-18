@@ -269,10 +269,12 @@ final class AudioEngine {
         displayLink = nil
     }
 
-    /// How far ahead of the "last rendered sample" to draw the visual playhead.
-    /// Compensates for the SwiftUI render-pipeline latency (one display frame ≈ 16 ms)
-    /// plus a small safety margin. Without this, the playhead visibly lags the audio.
-    private let visualLookAheadSeconds: Float = 0.030
+    /// Visual playhead time offset (seconds) applied to the reported currentTime.
+    /// User-tunable via @AppStorage("visualOffsetMs") in ContentView.
+    private var visualLookAheadSeconds: Float {
+        let ms = UserDefaults.standard.object(forKey: "visualOffsetMs") as? Double
+        return Float((ms ?? 0.0) / 1000.0)
+    }
 
     private func updateCurrentTime() {
         guard state == .playing else { return }
