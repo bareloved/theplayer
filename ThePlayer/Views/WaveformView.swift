@@ -27,13 +27,23 @@ struct WaveformView: View {
     @State private var scrollOffset: CGFloat = 0
     @State private var hoverTime: Float?
     @State private var hoverLocation: CGPoint?
+    @StateObject private var scrollController = ScrollController()
 
     var body: some View {
         GeometryReader { geo in
             let totalWidth = geo.size.width * zoomLevel
             let height = geo.size.height
 
-            ScrollView(.horizontal, showsIndicators: true) {
+            HorizontalNSScrollView(
+                contentWidth: totalWidth,
+                contentHeight: height,
+                onCommandScroll: { delta in
+                    let factor: CGFloat = delta > 0 ? 1.15 : 1.0 / 1.15
+                    zoomLevel = max(WaveformZoomMath.minZoom,
+                                    min(zoomLevel * factor, WaveformZoomMath.maxZoom))
+                },
+                controller: scrollController
+            ) {
                 ZStack(alignment: .leading) {
                     sectionBands(width: totalWidth, height: height)
                     if snapToGrid {
@@ -94,14 +104,9 @@ struct WaveformView: View {
                 }
             }
             .gesture(MagnifyGesture().onChanged { value in
-                zoomLevel = max(1.0, min(zoomLevel * value.magnification, 20.0))
+                zoomLevel = max(WaveformZoomMath.minZoom,
+                                min(zoomLevel * value.magnification, WaveformZoomMath.maxZoom))
             })
-            .background {
-                ScrollWheelHandler { delta in
-                    let factor: CGFloat = delta > 0 ? 1.15 : 1.0 / 1.15
-                    zoomLevel = max(1.0, min(zoomLevel * factor, 20.0))
-                }
-            }
         }
         .background(.quaternary)
         .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -115,26 +120,26 @@ struct WaveformView: View {
                     .foregroundStyle(.secondary)
 
                 HStack(spacing: 4) {
-                    Button(action: { zoomLevel = max(1.0, zoomLevel / 1.5) }) {
+                    Button(action: { zoomLevel = max(WaveformZoomMath.minZoom, zoomLevel / 1.5) }) {
                         Image(systemName: "minus.magnifyingglass")
                             .font(.caption)
                     }
                     .buttonStyle(.plain)
-                    .foregroundStyle(zoomLevel > 1.0 ? .primary : .tertiary)
-                    .disabled(zoomLevel <= 1.0)
+                    .foregroundStyle(zoomLevel > WaveformZoomMath.minZoom ? .primary : .tertiary)
+                    .disabled(zoomLevel <= WaveformZoomMath.minZoom)
 
                     Text("\(Int(zoomLevel * 100))%")
                         .font(.caption2.monospaced())
                         .foregroundStyle(.secondary)
                         .frame(width: 36)
 
-                    Button(action: { zoomLevel = min(20.0, zoomLevel * 1.5) }) {
+                    Button(action: { zoomLevel = min(WaveformZoomMath.maxZoom, zoomLevel * 1.5) }) {
                         Image(systemName: "plus.magnifyingglass")
                             .font(.caption)
                     }
                     .buttonStyle(.plain)
-                    .foregroundStyle(zoomLevel < 20.0 ? .primary : .tertiary)
-                    .disabled(zoomLevel >= 20.0)
+                    .foregroundStyle(zoomLevel < WaveformZoomMath.maxZoom ? .primary : .tertiary)
+                    .disabled(zoomLevel >= WaveformZoomMath.maxZoom)
                 }
                 .padding(6)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
@@ -384,32 +389,6 @@ struct WaveformView: View {
         let mins = Int(seconds) / 60
         let secs = Int(seconds) % 60
         return "\(mins):\(String(format: "%02d", secs))"
-    }
-}
-
-private struct ScrollWheelHandler: NSViewRepresentable {
-    let onScroll: (CGFloat) -> Void
-
-    func makeNSView(context: Context) -> ScrollWheelNSView {
-        let view = ScrollWheelNSView()
-        view.onScroll = onScroll
-        return view
-    }
-
-    func updateNSView(_ nsView: ScrollWheelNSView, context: Context) {
-        nsView.onScroll = onScroll
-    }
-}
-
-private class ScrollWheelNSView: NSView {
-    var onScroll: ((CGFloat) -> Void)?
-
-    override func scrollWheel(with event: NSEvent) {
-        if event.modifierFlags.contains(.command) && abs(event.scrollingDeltaY) > abs(event.scrollingDeltaX) {
-            onScroll?(event.scrollingDeltaY)
-        } else {
-            super.scrollWheel(with: event)
-        }
     }
 }
 
