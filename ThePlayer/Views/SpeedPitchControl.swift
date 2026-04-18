@@ -182,7 +182,7 @@ private struct CustomSlider: View {
                                 let frac = max(0, min(1, (dragStartX + drag.translation.width) / width))
                                 var newVal = valueFor(fraction: frac)
                                 for snap in snapPoints {
-                                    if abs(newVal - snap) < step * 1.2 {
+                                    if abs(newVal - snap) < step * 0.5 {
                                         newVal = snap
                                         break
                                     }
