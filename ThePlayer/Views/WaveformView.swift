@@ -28,6 +28,9 @@ struct WaveformView: View {
     @State private var hoverTime: Float?
     @State private var hoverLocation: CGPoint?
     @StateObject private var scrollController = ScrollController()
+    @State private var alignDragStartFDT: Float?
+    @State private var alignDragStartScrollX: CGFloat?
+    @State private var alignDragActive: Bool = false
 
     var body: some View {
         GeometryReader { geo in
@@ -88,6 +91,35 @@ struct WaveformView: View {
                     }
                     .frame(width: totalWidth, height: waveHeight)
                     .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 2, coordinateSpace: .local)
+                            .onChanged { value in
+                                guard totalWidth > 0, duration > 0 else { return }
+                                if !alignDragActive {
+                                    alignDragActive = true
+                                    alignDragStartFDT = firstDownbeatTime
+                                    alignDragStartScrollX = scrollController.scrollOriginX
+                                    NSCursor.closedHand.set()
+                                }
+                                guard
+                                    let startFDT = alignDragStartFDT,
+                                    let startScroll = alignDragStartScrollX
+                                else { return }
+                                let pxPerSec = totalWidth / CGFloat(duration)
+                                let deltaSec = Float(value.translation.width / pxPerSec)
+                                let newFDT = max(0, min(Float(duration), startFDT - deltaSec))
+                                onSetDownbeat?(newFDT)
+                                let maxOrigin = max(0, totalWidth - geo.size.width)
+                                let newScroll = min(max(startScroll - value.translation.width, 0), maxOrigin)
+                                scrollController.setScrollOriginX(newScroll)
+                            }
+                            .onEnded { _ in
+                                alignDragActive = false
+                                alignDragStartFDT = nil
+                                alignDragStartScrollX = nil
+                                NSCursor.arrow.set()
+                            }
+                    )
                     .onTapGesture { location in
                         let fraction = Float(location.x / totalWidth)
                         let time = fraction * duration
