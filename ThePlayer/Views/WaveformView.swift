@@ -31,6 +31,12 @@ struct WaveformView: View {
     @State private var alignDragStartFDT: Float?
     @State private var alignDragStartScrollX: CGFloat?
     @State private var alignDragActive: Bool = false
+    /// Local override applied during a drag to avoid persisting on every frame.
+    @State private var fdtDragOverride: Float?
+
+    private var effectiveFDT: Float {
+        fdtDragOverride ?? firstDownbeatTime
+    }
 
     var body: some View {
         GeometryReader { geo in
@@ -54,7 +60,7 @@ struct WaveformView: View {
                     WaveformRulerBand(
                         duration: duration,
                         bpm: bpm,
-                        firstDownbeatTime: firstDownbeatTime,
+                        firstDownbeatTime: effectiveFDT,
                         timeSignature: timeSignature,
                         totalWidth: totalWidth,
                         geoWidth: geo.size.width,
@@ -97,7 +103,7 @@ struct WaveformView: View {
                                 guard totalWidth > 0, duration > 0 else { return }
                                 if !alignDragActive {
                                     alignDragActive = true
-                                    alignDragStartFDT = firstDownbeatTime
+                                    alignDragStartFDT = effectiveFDT
                                     alignDragStartScrollX = scrollController.scrollOriginX
                                     NSCursor.closedHand.set()
                                 }
@@ -108,12 +114,20 @@ struct WaveformView: View {
                                 let pxPerSec = totalWidth / CGFloat(duration)
                                 let deltaSec = Float(value.translation.width / pxPerSec)
                                 let newFDT = max(0, min(Float(duration), startFDT - deltaSec))
-                                onSetDownbeat?(newFDT)
+                                fdtDragOverride = newFDT
                                 let maxOrigin = max(0, totalWidth - geo.size.width)
                                 let newScroll = min(max(startScroll - value.translation.width, 0), maxOrigin)
                                 scrollController.setScrollOriginX(newScroll)
                             }
                             .onEnded { _ in
+                                if let fdt = fdtDragOverride {
+                                    onSetDownbeat?(fdt)
+                                }
+                                // Clear the override on the next runloop tick so the
+                                // parent has time to propagate its updated firstDownbeatTime.
+                                DispatchQueue.main.async {
+                                    fdtDragOverride = nil
+                                }
                                 alignDragActive = false
                                 alignDragStartFDT = nil
                                 alignDragStartScrollX = nil
@@ -229,18 +243,18 @@ struct WaveformView: View {
         snapDivision.snapPositions(
             beats: beats, bpm: bpm, duration: duration,
             beatsPerBar: timeSignature.beatsPerBar,
-            firstBeatTime: firstDownbeatTime
+            firstBeatTime: effectiveFDT
         )
     }
 
-    /// Bar positions (every `beatsPerBar` beats, starting at `firstDownbeatTime`) for strong lines
+    /// Bar positions (every `beatsPerBar` beats, starting at `effectiveFDT`) for strong lines
     private var barPositions: Set<Float> {
         let bpb = timeSignature.beatsPerBar
         guard bpm > 0, bpb > 0, duration > 0 else { return [] }
         let barDuration: Float = Float(60.0) / bpm * Float(bpb)
         guard barDuration > 0 else { return [] }
         var positions: Set<Float> = []
-        var t = firstDownbeatTime
+        var t = effectiveFDT
         // Walk forward
         while t < duration {
             if t >= 0 {
@@ -249,7 +263,7 @@ struct WaveformView: View {
             t += barDuration
         }
         // Walk backward from the first downbeat so bars cover the intro as well
-        var tBack = firstDownbeatTime - barDuration
+        var tBack = effectiveFDT - barDuration
         while tBack >= 0 {
             positions.insert((tBack * 100).rounded() / 100)
             tBack -= barDuration
@@ -358,7 +372,7 @@ struct WaveformView: View {
     @ViewBuilder
     private func downbeatIndicator(width: CGFloat, height: CGFloat) -> some View {
         if duration > 0 {
-            let clamped = max(0, min(firstDownbeatTime, duration))
+            let clamped = max(0, min(effectiveFDT, duration))
             let x = CGFloat(clamped / duration) * width
             Rectangle()
                 .fill(Color.red.opacity(0.75))
