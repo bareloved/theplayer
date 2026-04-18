@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) float bpm;
 @property (nonatomic) NSInteger downbeatOffset;
 @property (nonatomic, strong) NSArray<NSNumber *> *beats;
+@property (nonatomic, strong) NSArray<NSNumber *> *onsets;
 @property (nonatomic, strong) NSArray<EssentiaSection *> *sections;
 @end
 

@@ -61,6 +61,102 @@ using namespace essentia::standard;
         rhythm->compute();
         delete rhythm;
 
+        // --- Onset detection + sample-accurate refinement ---
+        // Hop size 512 @ 44.1 kHz → ~11.6 ms detection-function resolution.
+        // We then refine each reported onset to the local short-term RMS peak
+        // in a ±10 ms window of raw samples.
+        std::vector<Real> refinedOnsets;
+        {
+            const int onsetFrameSize = 1024;
+            const int onsetHopSize = 512;
+            Algorithm* odFrameCutter = factory.create("FrameCutter",
+                "frameSize", onsetFrameSize,
+                "hopSize", onsetHopSize);
+            Algorithm* odWindowing = factory.create("Windowing",
+                "type", std::string("hann"));
+            Algorithm* odSpectrum = factory.create("Spectrum");
+            Algorithm* onsetDetection = factory.create("OnsetDetection",
+                "method", std::string("complex"),
+                "sampleRate", 44100.0);
+
+            std::vector<Real> odFrame, odWindowed, odSpec, odPhase;
+            Real odValue;
+
+            odFrameCutter->input("signal").set(audio);
+            odFrameCutter->output("frame").set(odFrame);
+
+            odWindowing->input("frame").set(odFrame);
+            odWindowing->output("frame").set(odWindowed);
+
+            odSpectrum->input("frame").set(odWindowed);
+            odSpectrum->output("spectrum").set(odSpec);
+
+            onsetDetection->input("spectrum").set(odSpec);
+            onsetDetection->input("phase").set(odPhase); // unused for "complex" but must be bound
+            onsetDetection->output("onsetDetection").set(odValue);
+
+            std::vector<Real> detectionFunction;
+            while (true) {
+                odFrameCutter->compute();
+                if (odFrame.empty()) break;
+                odWindowing->compute();
+                odSpectrum->compute();
+                // "complex" method only reads the spectrum — phase vector may be empty.
+                onsetDetection->compute();
+                detectionFunction.push_back(odValue);
+            }
+
+            delete odFrameCutter;
+            delete odWindowing;
+            delete odSpectrum;
+            delete onsetDetection;
+
+            // Peak-pick the detection function into onset times.
+            std::vector<Real> rawOnsets;
+            if (!detectionFunction.empty()) {
+                Algorithm* onsets = factory.create("Onsets",
+                    "frameRate", 44100.0 / (Real)onsetHopSize);
+                // Onsets expects a TNT::Array2D<Real> with rows = detectors, cols = frames.
+                TNT::Array2D<Real> detectionMatrix(1, (int)detectionFunction.size());
+                for (int i = 0; i < (int)detectionFunction.size(); i++) {
+                    detectionMatrix[0][i] = detectionFunction[i];
+                }
+                std::vector<Real> weights; weights.push_back(1.0);
+                onsets->input("detections").set(detectionMatrix);
+                onsets->input("weights").set(weights);
+                onsets->output("onsets").set(rawOnsets);
+                onsets->compute();
+                delete onsets;
+            }
+
+            // Refine each onset to the local short-term RMS peak within ±10ms.
+            const Real sr = 44100.0;
+            const int refineRadius = (int)(0.010 * sr); // ±10 ms window
+            const int rmsWindow = (int)(0.002 * sr);    // 2 ms RMS window
+            for (Real t : rawOnsets) {
+                int center = (int)(t * sr);
+                int lo = std::max(0, center - refineRadius);
+                int hi = std::min((int)audio.size() - 1, center + refineRadius);
+                if (hi - lo < rmsWindow) { refinedOnsets.push_back(t); continue; }
+
+                // Slide a 2ms RMS window across [lo, hi] and pick the peak center.
+                // Use running sum of squares for O(n) refinement.
+                double sumSq = 0.0;
+                for (int i = lo; i < lo + rmsWindow && i < (int)audio.size(); i++) {
+                    sumSq += (double)audio[i] * (double)audio[i];
+                }
+                double bestRms = sumSq;
+                int bestStart = lo;
+                for (int i = lo + 1; i + rmsWindow <= hi; i++) {
+                    sumSq -= (double)audio[i - 1] * (double)audio[i - 1];
+                    sumSq += (double)audio[i + rmsWindow - 1] * (double)audio[i + rmsWindow - 1];
+                    if (sumSq > bestRms) { bestRms = sumSq; bestStart = i; }
+                }
+                Real refined = (Real)(bestStart + rmsWindow / 2) / sr;
+                refinedOnsets.push_back(refined);
+            }
+        }
+
         // --- Section segmentation via SBic ---
         // First compute MFCCs for the segmenter
         Algorithm* frameCutter = factory.create("FrameCutter",
@@ -365,6 +461,13 @@ using namespace essentia::standard;
             [beatArray addObject:@(tick)];
         }
         result.beats = beatArray;
+
+        // Onsets (sample-accurate refined times)
+        NSMutableArray<NSNumber *> *onsetArray = [NSMutableArray arrayWithCapacity:refinedOnsets.size()];
+        for (Real t : refinedOnsets) {
+            [onsetArray addObject:@(t)];
+        }
+        result.onsets = onsetArray;
 
         // Sections from segmentation boundaries
         float audioDuration = (float)audio.size() / 44100.0f;
