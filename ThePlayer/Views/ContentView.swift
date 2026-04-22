@@ -131,11 +131,14 @@ struct ContentView: View {
         .onChange(of: analysisService.lastAnalysis?.bpm) { _, _ in rescheduleClicks() }
         .onChange(of: analysisService.lastAnalysis?.firstDownbeatTime) { _, _ in rescheduleClicks() }
         .onChange(of: analysisService.lastAnalysis?.timeSignature) { _, _ in rescheduleClicks() }
-        .onChange(of: analysisService.lastAnalysis?.beats.count) { _, _ in
-            if let analysis = analysisService.lastAnalysis {
-                sectionsVM = buildSectionsVM(from: analysis)
+        .onChange(of: analysisService.lastAnalysisKey) { _, newKey in
+            guard newKey != nil, let analysis = analysisService.lastAnalysis else {
+                sectionsVM = nil
                 selectedSectionId = nil
+                return
             }
+            sectionsVM = buildSectionsVM(from: analysis)
+            selectedSectionId = nil
         }
         .onReceive(NotificationCenter.default.publisher(for: .openAudioFile)) { notification in
             if let url = notification.object as? URL {
@@ -311,9 +314,9 @@ struct ContentView: View {
             duration: Float(audioEngine.duration)
         )
         vm.onChange = { [weak analysisService] sections in
-            // Never persist the synthetic single-Untitled default; only real edits.
-            let isDefault = sections.count == 1 && sections[0].label == "Untitled"
-            if isDefault { return }
+            // `onChange` only fires after a user mutation — the initial synthetic seed
+            // is installed before this closure is attached (and SectionsViewModel init
+            // never calls onChange), so no guard is needed.
             try? analysisService?.saveUserEdits(sections)
         }
         return vm

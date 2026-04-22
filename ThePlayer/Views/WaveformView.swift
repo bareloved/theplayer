@@ -173,11 +173,6 @@ struct WaveformView: View {
                     .onTapGesture { location in
                         let fraction = Float(location.x / totalWidth)
                         let time = fraction * duration
-                        if let onSelectSection = onSelectSection, sectionsVM != nil {
-                            let hit = sections.first(where: { time >= $0.startTime && time < $0.endTime })
-                            onSelectSection(hit?.stableId)
-                            return
-                        }
                         if isSettingLoop {
                             onLoopPointSet(time)
                         } else {
