@@ -19,7 +19,7 @@ struct WaveformView: View {
     let firstDownbeatTime: Float
     let timeSignature: TimeSignature
     let onSetDownbeat: ((Float) -> Void)?
-    let editorViewModel: SectionEditorViewModel?
+    let sectionsVM: SectionsViewModel?
     let selectedSectionId: UUID?
     let onSelectSection: ((UUID?) -> Void)?
 
@@ -36,6 +36,10 @@ struct WaveformView: View {
     @State private var waveformDragOffset: CGFloat = 0
     @State private var mouseLocation: CGPoint?
     @State private var highlightedOnset: Float?
+    @State private var sectionDragActive: Bool = false
+    @State private var sectionDragStartTime: Float?
+    @State private var sectionDragCurrentTime: Float?
+    @State private var pendingSectionRenameId: UUID?
 
     private static let onsetSnapMaxPx: Double = 30
 
@@ -85,6 +89,25 @@ struct WaveformView: View {
                     ZStack(alignment: .leading) {
                         sectionBands(width: totalWidth, height: waveHeight)
                             .offset(x: waveformDragOffset)
+                        if sectionDragActive,
+                           let s = sectionDragStartTime,
+                           let e = sectionDragCurrentTime {
+                            let lo = min(s, e)
+                            let hi = max(s, e)
+                            let snappedLo: Float = snapToGrid ? SectionsViewModel.snapToNearestBeat(time: lo, beats: beats) : lo
+                            let snappedHi: Float = snapToGrid ? SectionsViewModel.snapToNearestBeat(time: hi, beats: beats) : hi
+                            let leftX = max(0, CGFloat(snappedLo / duration) * totalWidth)
+                            let rightX = min(totalWidth, CGFloat(snappedHi / duration) * totalWidth)
+                            let width = max(0, rightX - leftX)
+                            Rectangle()
+                                .fill(Color.accentColor.opacity(0.18))
+                                .overlay(
+                                    Rectangle()
+                                        .strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                                )
+                                .frame(width: width, height: waveHeight)
+                                .offset(x: leftX)
+                        }
                         if snapToGrid {
                             barLines(width: totalWidth, height: waveHeight)
                         }
@@ -109,7 +132,7 @@ struct WaveformView: View {
                                 .allowsHitTesting(false)
                         }
 
-                        if let vm = editorViewModel {
+                        if let vm = sectionsVM {
                             boundaryHandles(viewModel: vm, width: totalWidth, height: waveHeight)
                                 .offset(x: waveformDragOffset)
                         }
@@ -129,7 +152,9 @@ struct WaveformView: View {
                         DragGesture(minimumDistance: 2, coordinateSpace: .local)
                             .onChanged { value in
                                 guard totalWidth > 0, duration > 0 else { return }
+                                guard !sectionDragActive else { return }
                                 if !alignDragActive {
+                                    guard NSEvent.modifierFlags.contains(.command) else { return }
                                     alignDragActive = true
                                     alignDragStartFDT = firstDownbeatTime
                                     NSCursor.closedHand.set()
@@ -143,9 +168,10 @@ struct WaveformView: View {
                                 waveformDragOffset = min(max(value.translation.width, -maxDragLeft), maxDragRight)
                             }
                             .onEnded { _ in
-                                guard let startFDT = alignDragStartFDT else {
+                                guard alignDragActive, let startFDT = alignDragStartFDT else {
                                     waveformDragOffset = 0
                                     alignDragActive = false
+                                    alignDragStartFDT = nil
                                     NSCursor.arrow.set()
                                     return
                                 }
@@ -168,14 +194,44 @@ struct WaveformView: View {
                                 NSCursor.arrow.set()
                             }
                     )
+                    .simultaneousGesture(
+                        DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                            .onChanged { value in
+                                guard totalWidth > 0, duration > 0, sectionsVM != nil else { return }
+                                if !sectionDragActive {
+                                    guard NSEvent.modifierFlags.contains(.option) else { return }
+                                    sectionDragActive = true
+                                    sectionDragStartTime = Float(value.startLocation.x / totalWidth) * duration
+                                    NSCursor.crosshair.set()
+                                }
+                                sectionDragCurrentTime = Float(value.location.x / totalWidth) * duration
+                            }
+                            .onEnded { value in
+                                defer {
+                                    sectionDragActive = false
+                                    sectionDragStartTime = nil
+                                    sectionDragCurrentTime = nil
+                                    NSCursor.arrow.set()
+                                }
+                                guard sectionDragActive,
+                                      let vm = sectionsVM,
+                                      let startT = sectionDragStartTime else { return }
+                                let dx = value.location.x - value.startLocation.x
+                                guard abs(dx) >= 8 else { return }
+                                let endT = Float(value.location.x / totalWidth) * duration
+                                if let newId = vm.createSection(
+                                    startTime: startT,
+                                    endTime: endT,
+                                    snapToBeat: snapToGrid
+                                ) {
+                                    onSelectSection?(newId)
+                                    pendingSectionRenameId = newId
+                                }
+                            }
+                    )
                     .onTapGesture { location in
                         let fraction = Float(location.x / totalWidth)
                         let time = fraction * duration
-                        if let onSelectSection = onSelectSection, editorViewModel != nil {
-                            let hit = sections.first(where: { time >= $0.startTime && time < $0.endTime })
-                            onSelectSection(hit?.stableId)
-                            return
-                        }
                         if isSettingLoop {
                             onLoopPointSet(time)
                         } else {
@@ -338,10 +394,13 @@ struct WaveformView: View {
     }
 
     private func sectionBands(width: CGFloat, height: CGFloat) -> some View {
-        HStack(spacing: 0) {
+        ZStack(alignment: .topLeading) {
             ForEach(sections) { section in
+                let sectionX = CGFloat(section.startTime / duration) * width
                 let sectionWidth = CGFloat((section.endTime - section.startTime) / duration) * width
                 let isSelected = section.stableId == selectedSectionId
+
+                // Band background
                 Rectangle()
                     .fill(section.color.opacity(isSelected ? 0.25 : 0.1))
                     .overlay(
@@ -349,12 +408,57 @@ struct WaveformView: View {
                             .strokeBorder(section.color, lineWidth: isSelected ? 2 : 0)
                     )
                     .frame(width: sectionWidth, height: height)
+                    .offset(x: sectionX)
+
+                // Label badge (only if the band has room to show it)
+                if sectionWidth >= 20 {
+                    SectionLabelBadge(
+                        label: section.label,
+                        color: section.color,
+                        isSelected: isSelected,
+                        isRenaming: Binding(
+                            get: { pendingSectionRenameId == section.stableId },
+                            set: { if !$0 { pendingSectionRenameId = nil } }
+                        ),
+                        onCommitRename: { newLabel in
+                            sectionsVM?.rename(sectionId: section.stableId, to: newLabel)
+                        },
+                        onTap: { onSelectSection?(section.stableId) },
+                        contextMenuContent: {
+                            AnyView(
+                                Group {
+                                    Button("Rename") { pendingSectionRenameId = section.stableId }
+                                    Menu("Change Color") {
+                                        ForEach(0..<8, id: \.self) { idx in
+                                            Button(action: {
+                                                sectionsVM?.recolor(sectionId: section.stableId, colorIndex: idx)
+                                            }) {
+                                                Text("•").foregroundColor(AudioSection.color(forIndex: idx))
+                                            }
+                                        }
+                                    }
+                                    Divider()
+                                    Button("Delete", role: .destructive) {
+                                        sectionsVM?.delete(sectionId: section.stableId)
+                                        if selectedSectionId == section.stableId {
+                                            onSelectSection?(nil)
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                    )
+                    .padding(.leading, 4)
+                    .padding(.top, 3)
+                    .offset(x: sectionX)
+                }
             }
         }
+        .frame(width: width, height: height, alignment: .topLeading)
     }
 
     @ViewBuilder
-    private func boundaryHandles(viewModel vm: SectionEditorViewModel, width: CGFloat, height: CGFloat) -> some View {
+    private func boundaryHandles(viewModel vm: SectionsViewModel, width: CGFloat, height: CGFloat) -> some View {
         ForEach(Array(vm.sections.enumerated()), id: \.element.stableId) { idx, section in
             if idx > 0 {
                 let x = CGFloat(section.startTime / duration) * width

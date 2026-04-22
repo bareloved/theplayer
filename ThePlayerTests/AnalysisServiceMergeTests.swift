@@ -154,4 +154,18 @@ extension AnalysisServiceMergeTests {
         XCTAssertEqual(loaded?.timeSignatureOverride, .threeFour)
         XCTAssertEqual(loaded?.sections.first?.label, "Mine", "sections must not be clobbered")
     }
+
+    func testMergeIgnoresAnalyzerSectionsEvenWhenUserEditsEmpty() {
+        let base = TrackAnalysis(
+            bpm: 120,
+            beats: [],
+            sections: [
+                AudioSection(label: "Stale", startTime: 0, endTime: 30, startBeat: 0, endBeat: 60, colorIndex: 0)
+            ],
+            waveformPeaks: [],
+            onsets: []
+        )
+        let merged = AnalysisService.mergeCachedAnalysis(base, userEdits: UserEdits(sections: []))
+        XCTAssertTrue(merged.sections.isEmpty)
+    }
 }

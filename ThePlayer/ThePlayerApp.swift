@@ -17,6 +17,14 @@ struct ThePlayerApp: App {
                 }
                 .keyboardShortcut("o")
             }
+            CommandGroup(replacing: .undoRedo) {
+                Button("Undo") {
+                    NotificationCenter.default.post(name: .sectionsUndoRequested, object: nil)
+                }.keyboardShortcut("z", modifiers: .command)
+                Button("Redo") {
+                    NotificationCenter.default.post(name: .sectionsRedoRequested, object: nil)
+                }.keyboardShortcut("z", modifiers: [.command, .shift])
+            }
         }
 
         Settings {
@@ -38,4 +46,6 @@ struct ThePlayerApp: App {
 
 extension Notification.Name {
     static let openAudioFile = Notification.Name("openAudioFile")
+    static let sectionsUndoRequested = Notification.Name("sectionsUndoRequested")
+    static let sectionsRedoRequested = Notification.Name("sectionsRedoRequested")
 }

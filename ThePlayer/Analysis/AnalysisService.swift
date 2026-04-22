@@ -13,16 +13,7 @@ struct EssentiaAnalyzerSwift: TrackAnalyzerProtocol {
 
                     progress(0.8)
 
-                    let sections = result.sections.enumerated().map { _, section in
-                        AudioSection(
-                            label: section.label,
-                            startTime: section.startTime,
-                            endTime: section.endTime,
-                            startBeat: Int(section.startBeat),
-                            endBeat: Int(section.endBeat),
-                            colorIndex: Int(section.colorIndex)
-                        )
-                    }
+                    let sections: [AudioSection] = []
 
                     let beats = result.beats.map { $0.floatValue }
                     let peaks = (try? WaveformExtractor.extractPeaks(from: fileURL)) ?? []
@@ -75,7 +66,8 @@ final class AnalysisService {
 
     static func mergeCachedAnalysis(_ analysis: TrackAnalysis, userEdits: UserEdits?) -> TrackAnalysis {
         guard let edits = userEdits else { return analysis }
-        let mergedSections = edits.sections.isEmpty ? analysis.sections : edits.sections
+        // Analyzer sections are never consulted; user edits are the only source.
+        let mergedSections = edits.sections
         let mergedBpm = edits.bpmOverride ?? analysis.bpm
         let mergedTimeSig = edits.timeSignatureOverride ?? analysis.timeSignature
         let mergedFirstDb = edits.downbeatTimeOverride ?? analysis.firstDownbeatTime
@@ -165,14 +157,6 @@ final class AnalysisService {
         hasUserEditsForCurrent = true
     }
 
-    /// True if the user has edited sections (vs. timing overrides only).
-    /// Separate from `hasUserEditsForCurrent` so the "Manual section edits applied" banner
-    /// doesn't fire for silent timing tweaks (BPM / downbeat / time signature).
-    var hasUserSectionEdits: Bool {
-        guard let base = baseAnalysis, let last = lastAnalysis else { return false }
-        return last.sections != base.sections
-    }
-
     /// Persist edited sections for the currently loaded track. Preserves any timing overrides
     /// already in the sidecar (bpm / downbeat / time signature).
     func saveUserEdits(_ sections: [AudioSection]) throws {
@@ -182,31 +166,6 @@ final class AnalysisService {
         next.modifiedAt = Date()
         try userEdits.store(next, forKey: key)
         hasUserEditsForCurrent = true
-    }
-
-    /// Discard SECTION edits only. Timing overrides (bpm / downbeat / time signature) remain.
-    /// Used by the "Discard Edits" banner.
-    func discardSectionEdits() async {
-        guard let key = lastAnalysisKey, let base = baseAnalysis else { return }
-        var next = (try? userEdits.retrieve(forKey: key)) ?? UserEdits(sections: [])
-        next.sections = []
-        next.modifiedAt = Date()
-        try? userEdits.store(next, forKey: key)
-        lastAnalysis = Self.mergeCachedAnalysis(base, userEdits: next)
-        let hasAny = next.bpmOverride != nil ||
-                     next.downbeatTimeOverride != nil ||
-                     next.timeSignatureOverride != nil ||
-                     !next.sections.isEmpty
-        hasUserEditsForCurrent = hasAny
-    }
-
-    /// Nuke the entire sidecar (sections + timing). Kept in case a caller needs a full reset.
-    func discardUserEdits() async {
-        guard let key = lastAnalysisKey, let cached = try? cache.retrieve(forKey: key) else { return }
-        try? userEdits.delete(forKey: key)
-        hasUserEditsForCurrent = false
-        baseAnalysis = cached
-        lastAnalysis = cached
     }
 
     /// Apply a patched sidecar and re-merge lastAnalysis. Used by timing-controls UI.

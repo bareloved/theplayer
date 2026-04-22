@@ -16,8 +16,7 @@
 		2061A62B29D9D56719A55B78 /* AnalysisCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5977AA4444DB7CCED9E19ED /* AnalysisCacheTests.swift */; };
 		2791E14F3AC460B2BEE28B85 /* AudioEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 521777D67BC2502BC0D6E99F /* AudioEngineTests.swift */; };
 		2C6D74E899222C88A40C98D5 /* TrackAnalyzerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBAFA19FD76857DF511CB74A /* TrackAnalyzerProtocol.swift */; };
-		31D284C63708762005B721BF /* SectionInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798A28AB6F497AC3430DFC2F /* SectionInspector.swift */; };
-		33FB5D51EA02965FB20F0B81 /* SectionEditorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE7A9AEF57B44BAC317C1109 /* SectionEditorViewModel.swift */; };
+		33FB5D51EA02965FB20F0B81 /* SectionsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE7A9AEF57B44BAC317C1109 /* SectionsViewModel.swift */; };
 		34FF45C280143157A0857F52 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2186B684F94740C4334F974F /* ContentView.swift */; };
 		3A4562BC8654BD495DE7A77C /* LoopRegion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AB80366F01A6405A511CD73 /* LoopRegion.swift */; };
 		3B3606F64ACDF745EBCA9F0B /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500D286F761A41D53CCF8686 /* SidebarView.swift */; };
@@ -30,7 +29,6 @@
 		4AF6A8E39FBF9E9C4D9054C3 /* UserEditsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26BF9246DAC36B848385421B /* UserEditsStoreTests.swift */; };
 		53B8299CCC6F85F0A5A8DB1E /* SongEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F8EC3301A0F34525C62628F /* SongEntryTests.swift */; };
 		5D81134392342D8F454746E0 /* WaveformZoomMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C736235ADA8702AA8E5A1546 /* WaveformZoomMathTests.swift */; };
-		5DAC963A111E86B89C931CAC /* SectionEditorToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287ACCC5138ECE035DE0D669 /* SectionEditorToolbar.swift */; };
 		5E5720A7B16935AA06E9FF91 /* LibrarySidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A03B07752B72C37B23CFD647 /* LibrarySidebar.swift */; };
 		6DC4215F33F35BA2B290157B /* PlayerLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4E562CF2C345A8D59AF34F7 /* PlayerLibrary.swift */; };
 		6EA5666C03AF054F8A798A8A /* LibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F97DBB529000EB77AB53A26 /* LibraryService.swift */; };
@@ -42,6 +40,7 @@
 		7861515EFBEFE53E2F5D6A96 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8982BCF190C14AE590C2261C /* SettingsView.swift */; };
 		7A083D949ED86A7019CA3554 /* WaveformExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3536351E8625D9CB1C72D8D5 /* WaveformExtractor.swift */; };
 		7C65E2AF2F876FE8EF222194 /* SectionBoundaryHandle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A48686E6C904A6FBA6028FBF /* SectionBoundaryHandle.swift */; };
+		B1BADEF001000000000000A1 /* SectionLabelBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1BADEF002000000000000A2 /* SectionLabelBadge.swift */; };
 		8627B6EB9945F2DE636DC585 /* LibraryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BBB560288245846FECACB7B /* LibraryServiceTests.swift */; };
 		9CF23F9F27AD41DB0F89BCED /* SongEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADD12242074A22EC6EB1E5A /* SongEntry.swift */; };
 		A1FC707F579F83574BEED62C /* PlayerLibraryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19886AAD63D0E49913A39577 /* PlayerLibraryTests.swift */; };
@@ -95,7 +94,6 @@
 		2186B684F94740C4334F974F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		25E6BE5FCB69D04322BDEA0A /* ThePlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThePlayerTests.swift; sourceTree = "<group>"; };
 		26BF9246DAC36B848385421B /* UserEditsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserEditsStoreTests.swift; sourceTree = "<group>"; };
-		287ACCC5138ECE035DE0D669 /* SectionEditorToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionEditorToolbar.swift; sourceTree = "<group>"; };
 		2ADD12242074A22EC6EB1E5A /* SongEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongEntry.swift; sourceTree = "<group>"; };
 		3536351E8625D9CB1C72D8D5 /* WaveformExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformExtractor.swift; sourceTree = "<group>"; };
 		3DD1849C48D0FB2C04509BC8 /* SectionLabelPresets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionLabelPresets.swift; sourceTree = "<group>"; };
@@ -112,7 +110,6 @@
 		6AB8B7EC78716DFB858C2274 /* AudioSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSection.swift; sourceTree = "<group>"; };
 		6E87A69A0986B002C10713F7 /* TransportBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransportBar.swift; sourceTree = "<group>"; };
 		743EBB1DA28F3FD0555C76F6 /* SpeedPitchControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedPitchControl.swift; sourceTree = "<group>"; };
-		798A28AB6F497AC3430DFC2F /* SectionInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionInspector.swift; sourceTree = "<group>"; };
 		7A5D5329004D98673486A598 /* TrackAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackAnalysis.swift; sourceTree = "<group>"; };
 		80465283817407589D4C9CAE /* EssentiaAnalyzer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = EssentiaAnalyzer.mm; sourceTree = "<group>"; };
 		8982BCF190C14AE590C2261C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -122,6 +119,7 @@
 		9C79D8D2FE894770473CC4CE /* ThePlayerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThePlayerApp.swift; sourceTree = "<group>"; };
 		A03B07752B72C37B23CFD647 /* LibrarySidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibrarySidebar.swift; sourceTree = "<group>"; };
 		A48686E6C904A6FBA6028FBF /* SectionBoundaryHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionBoundaryHandle.swift; sourceTree = "<group>"; };
+		B1BADEF002000000000000A2 /* SectionLabelBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionLabelBadge.swift; sourceTree = "<group>"; };
 		AB55C97EE8D9174F2C168E60 /* LoopRegionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopRegionTests.swift; sourceTree = "<group>"; };
 		B5977AA4444DB7CCED9E19ED /* AnalysisCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisCacheTests.swift; sourceTree = "<group>"; };
 		BA74B35A7F37F97C50B887B2 /* HorizontalNSScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorizontalNSScrollView.swift; sourceTree = "<group>"; };
@@ -143,7 +141,7 @@
 		F4E562CF2C345A8D59AF34F7 /* PlayerLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerLibrary.swift; sourceTree = "<group>"; };
 		F5FA6BAEA919480930036F64 /* ThePlayer-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ThePlayer-Bridging-Header.h"; sourceTree = "<group>"; };
 		F9A29D01F8B31978173A6853 /* UserEditsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserEditsStore.swift; sourceTree = "<group>"; };
-		FE7A9AEF57B44BAC317C1109 /* SectionEditorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionEditorViewModel.swift; sourceTree = "<group>"; };
+		FE7A9AEF57B44BAC317C1109 /* SectionsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionsViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -281,9 +279,8 @@
 			isa = PBXGroup;
 			children = (
 				A48686E6C904A6FBA6028FBF /* SectionBoundaryHandle.swift */,
-				287ACCC5138ECE035DE0D669 /* SectionEditorToolbar.swift */,
-				FE7A9AEF57B44BAC317C1109 /* SectionEditorViewModel.swift */,
-				798A28AB6F497AC3430DFC2F /* SectionInspector.swift */,
+				B1BADEF002000000000000A2 /* SectionLabelBadge.swift */,
+				FE7A9AEF57B44BAC317C1109 /* SectionsViewModel.swift */,
 				3DD1849C48D0FB2C04509BC8 /* SectionLabelPresets.swift */,
 			);
 			path = SectionEditor;
@@ -434,9 +431,8 @@
 				022C36FCB67CD59CD64513A4 /* Playlist.swift in Sources */,
 				C4974526D99B1B285A028313 /* ResizableDivider.swift in Sources */,
 				7C65E2AF2F876FE8EF222194 /* SectionBoundaryHandle.swift in Sources */,
-				5DAC963A111E86B89C931CAC /* SectionEditorToolbar.swift in Sources */,
-				33FB5D51EA02965FB20F0B81 /* SectionEditorViewModel.swift in Sources */,
-				31D284C63708762005B721BF /* SectionInspector.swift in Sources */,
+				B1BADEF001000000000000A1 /* SectionLabelBadge.swift in Sources */,
+				33FB5D51EA02965FB20F0B81 /* SectionsViewModel.swift in Sources */,
 				C101B804AC3D8771DB30DA84 /* SectionLabelPresets.swift in Sources */,
 				A3617ECD46F2CFFC5E82B380 /* Setlist.swift in Sources */,
 				7861515EFBEFE53E2F5D6A96 /* SettingsView.swift in Sources */,

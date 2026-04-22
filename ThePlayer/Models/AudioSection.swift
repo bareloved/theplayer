@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct AudioSection: Identifiable, Equatable {
-    let stableId: UUID
+    var stableId: UUID
     var label: String
     var startTime: Float
     var endTime: Float
@@ -36,9 +36,13 @@ struct AudioSection: Identifiable, Equatable {
         self.colorIndex = colorIndex
     }
 
-    private static let palette: [Color] = [
+    static let palette: [Color] = [
         .blue, .green, .red, .yellow, .purple, .orange, .cyan, .pink
     ]
+
+    static func color(forIndex idx: Int) -> Color {
+        palette[idx % palette.count]
+    }
 
     var color: Color { Self.palette[colorIndex % Self.palette.count] }
 }

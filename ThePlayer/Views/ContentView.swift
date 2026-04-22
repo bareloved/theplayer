@@ -5,7 +5,6 @@ struct ContentView: View {
     @Bindable var audioEngine: AudioEngine
     @Bindable var analysisService: AnalysisService
     @Bindable var libraryService: LibraryService
-    @State private var selectedSection: AudioSection?
     @State private var loopRegion: LoopRegion?
     @State private var isTargeted = false
     @State private var isSettingLoop = false
@@ -19,12 +18,16 @@ struct ContentView: View {
     @State private var showSectionsSidebar = true
     @State private var librarySidebarWidth: CGFloat = 220
     @State private var sectionsSidebarWidth: CGFloat = 220
-    @State private var sectionEditor: SectionEditorViewModel?
-    @State private var selectedSectionForEdit: UUID?
-    @State private var showResetConfirm = false
+    @State private var sectionsVM: SectionsViewModel?
+    @State private var selectedSectionId: UUID?
     @State private var clickTrackPlayer: ClickTrackPlayer?
     @AppStorage("clickTrackEnabled") private var clickEnabled: Bool = false
     @AppStorage("clickTrackVolume") private var clickVolume: Double = 0.5
+
+    private var selectedSection: AudioSection? {
+        guard let id = selectedSectionId else { return nil }
+        return sectionsVM?.sections.first(where: { $0.stableId == id })
+    }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -60,19 +63,33 @@ struct ContentView: View {
                 ResizableDivider(dimension: $sectionsSidebarWidth, minSize: 160, maxSize: 400, isLeading: false)
 
                 SidebarView(
-                    sections: analysisService.lastAnalysis?.sections ?? [],
+                    sections: sectionsVM?.sections ?? [],
                     bpm: analysisService.lastAnalysis?.bpm,
                     timeSignature: analysisService.lastAnalysis?.timeSignature ?? .fourFour,
                     duration: audioEngine.duration,
                     sampleRate: audioEngine.sampleRate,
                     onSectionTap: { section in
-                        selectedSection = section
+                        selectedSectionId = section.stableId
                         let loop = LoopRegion.from(section: section)
                         loopRegion = loop
                         audioEngine.setLoop(loop)
                         audioEngine.playLoop()
                     },
-                    selectedSection: $selectedSection
+                    selectedSection: Binding(
+                        get: { self.selectedSection },
+                        set: { newValue in
+                            if let section = newValue {
+                                self.selectedSectionId = section.stableId
+                                let loop = LoopRegion.from(section: section)
+                                self.loopRegion = loop
+                                self.audioEngine.setLoop(loop)
+                            } else {
+                                self.selectedSectionId = nil
+                                self.loopRegion = nil
+                                self.audioEngine.setLoop(nil)
+                            }
+                        }
+                    )
                 )
                 .frame(width: sectionsSidebarWidth)
             }
@@ -132,10 +149,41 @@ struct ContentView: View {
         .onChange(of: analysisService.lastAnalysis?.bpm) { _, _ in rescheduleClicks() }
         .onChange(of: analysisService.lastAnalysis?.firstDownbeatTime) { _, _ in rescheduleClicks() }
         .onChange(of: analysisService.lastAnalysis?.timeSignature) { _, _ in rescheduleClicks() }
+        .onChange(of: analysisService.lastAnalysisKey) { _, newKey in
+            guard newKey != nil, let analysis = analysisService.lastAnalysis else {
+                sectionsVM = nil
+                selectedSectionId = nil
+                return
+            }
+            sectionsVM = buildSectionsVM(from: analysis)
+            selectedSectionId = nil
+        }
+        .onChange(of: sectionsVM?.sections) { _, newSections in
+            guard let id = selectedSectionId else { return }
+            if let newSections,
+               let section = newSections.first(where: { $0.stableId == id }) {
+                let loop = LoopRegion.from(section: section)
+                if loopRegion != loop {
+                    loopRegion = loop
+                    audioEngine.setLoop(loop)
+                }
+            } else {
+                // Section no longer exists — clear loop + selection.
+                selectedSectionId = nil
+                loopRegion = nil
+                audioEngine.setLoop(nil)
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .openAudioFile)) { notification in
             if let url = notification.object as? URL {
                 openFile(url: url)
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .sectionsUndoRequested)) { _ in
+            sectionsVM?.undoManager.undo()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .sectionsRedoRequested)) { _ in
+            sectionsVM?.undoManager.redo()
         }
         .alert("Error", isPresented: $showErrorAlert) {
             Button("OK", role: .cancel) {}
@@ -168,27 +216,11 @@ struct ContentView: View {
             .padding(.horizontal, 16)
             .padding(.top, 16)
 
-            if analysisService.hasUserSectionEdits && sectionEditor == nil {
-                HStack {
-                    Image(systemName: "pencil.circle")
-                    Text("Manual section edits applied")
-                        .font(.caption)
-                    Spacer()
-                    Button("Discard Edits") {
-                        Task { await analysisService.discardSectionEdits() }
-                    }
-                    .controlSize(.small)
-                }
-                .padding(8)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
-                .padding(.horizontal, 12)
-            }
-
             // Waveform
             ZStack {
                 WaveformView(
                     peaks: analysisService.lastAnalysis?.waveformPeaks ?? [],
-                    sections: analysisService.lastAnalysis?.sections ?? [],
+                    sections: sectionsVM?.sections ?? [],
                     beats: analysisService.lastAnalysis?.beats ?? [],
                     onsets: analysisService.lastAnalysis?.onsets ?? [],
                     bpm: analysisService.lastAnalysis?.bpm ?? 0,
@@ -206,9 +238,29 @@ struct ContentView: View {
                     onSetDownbeat: { time in
                         setDownbeatOverride(time)
                     },
-                    editorViewModel: sectionEditor,
-                    selectedSectionId: selectedSectionForEdit,
-                    onSelectSection: { selectedSectionForEdit = $0 }
+                    sectionsVM: sectionsVM,
+                    selectedSectionId: selectedSectionId,
+                    onSelectSection: { newId in
+                        guard let vm = sectionsVM else { return }
+                        if let id = newId,
+                           let section = vm.sections.first(where: { $0.stableId == id }) {
+                            if selectedSectionId == id {
+                                // Toggle off
+                                selectedSectionId = nil
+                                loopRegion = nil
+                                audioEngine.setLoop(nil)
+                            } else {
+                                selectedSectionId = id
+                                let loop = LoopRegion.from(section: section)
+                                loopRegion = loop
+                                audioEngine.setLoop(loop)
+                            }
+                        } else {
+                            selectedSectionId = nil
+                            loopRegion = nil
+                            audioEngine.setLoop(nil)
+                        }
+                    }
                 )
 
                 if analysisService.isAnalyzing {
@@ -229,55 +281,8 @@ struct ContentView: View {
                     .padding(8)
                 }
 
-                if let vm = sectionEditor {
-                    VStack(alignment: .trailing, spacing: 8) {
-                        SectionEditorToolbar(
-                            viewModel: vm,
-                            canDelete: selectedSectionForEdit != nil && vm.sections.count > 1,
-                            onAdd: {
-                                let id = selectedSectionForEdit ?? vm.sections.first(where: {
-                                    Float(audioEngine.currentTime) >= $0.startTime && Float(audioEngine.currentTime) < $0.endTime
-                                })?.stableId
-                                if let id { vm.addSplit(inSectionId: id, atTime: Float(audioEngine.currentTime), snapToBeat: true) }
-                            },
-                            onDelete: {
-                                if let id = selectedSectionForEdit {
-                                    vm.delete(sectionId: id)
-                                    selectedSectionForEdit = nil
-                                }
-                            },
-                            onReset: { showResetConfirm = true },
-                            onDone: { exitSectionEditor() }
-                        )
-                        SectionInspector(
-                            viewModel: vm,
-                            selectedSectionId: selectedSectionForEdit,
-                            onLabelCommit: { newLabel in
-                                if let id = selectedSectionForEdit { vm.rename(sectionId: id, to: newLabel) }
-                            },
-                            onColorPick: { idx in
-                                if let id = selectedSectionForEdit { vm.recolor(sectionId: id, colorIndex: idx) }
-                            }
-                        )
-                    }
-                    .padding(12)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                }
             }
             .padding(16)
-            .confirmationDialog("Reset all section edits?", isPresented: $showResetConfirm) {
-                Button("Reset", role: .destructive) {
-                    Task {
-                        await analysisService.discardUserEdits()
-                        if let analysis = analysisService.lastAnalysis {
-                            sectionEditor?.replaceAll(with: analysis.sections)
-                        }
-                    }
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("Your manual edits will be discarded and the analyzer's sections restored.")
-            }
 
             TransportBar(
                 audioEngine: audioEngine,
@@ -287,10 +292,6 @@ struct ContentView: View {
                 snapDivision: $snapDivision,
                 isInSetlist: libraryService.activeSetlistId != nil,
                 onNextInSetlist: { advanceSetlist() },
-                onToggleSectionEditor: {
-                    if sectionEditor == nil { enterSectionEditor() } else { exitSectionEditor() }
-                },
-                isSectionEditing: sectionEditor != nil,
                 timingControls: AnyView(
                     TimingControls(
                         bpm: analysisService.lastAnalysis?.bpm ?? 0,
@@ -352,23 +353,33 @@ struct ContentView: View {
         try? analysisService.applyUserEditsPatch(next)
     }
 
-    private func enterSectionEditor() {
-        guard let analysis = analysisService.lastAnalysis else { return }
-        let vm = SectionEditorViewModel(
-            sections: analysis.sections,
+    private func buildSectionsVM(from analysis: TrackAnalysis) -> SectionsViewModel {
+        let persisted = analysis.sections
+        let seed: [AudioSection]
+        if persisted.isEmpty {
+            seed = [AudioSection(
+                label: "Untitled",
+                startTime: 0,
+                endTime: Float(audioEngine.duration),
+                startBeat: 0,
+                endBeat: max(0, analysis.beats.count - 1),
+                colorIndex: 0
+            )]
+        } else {
+            seed = persisted
+        }
+        let vm = SectionsViewModel(
+            sections: seed,
             beats: analysis.beats,
             duration: Float(audioEngine.duration)
         )
         vm.onChange = { [weak analysisService] sections in
+            // `onChange` only fires after a user mutation — the initial synthetic seed
+            // is installed before this closure is attached (and SectionsViewModel init
+            // never calls onChange), so no guard is needed.
             try? analysisService?.saveUserEdits(sections)
         }
-        sectionEditor = vm
-        selectedSectionForEdit = nil
-    }
-
-    private func exitSectionEditor() {
-        sectionEditor = nil
-        selectedSectionForEdit = nil
+        return vm
     }
 
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
@@ -386,7 +397,7 @@ struct ContentView: View {
     func openFile(url: URL) {
         do {
             try audioEngine.loadFile(url: url)
-            selectedSection = nil
+            selectedSectionId = nil
             loopRegion = nil
             loadError = nil
             NSDocumentController.shared.noteNewRecentDocumentURL(url)
@@ -534,9 +545,15 @@ struct ContentView: View {
         case 37: // L
             if loopRegion != nil { loopRegion = nil }
             return true
+        case 51: // Delete/Backspace
+            if let id = selectedSectionId {
+                sectionsVM?.delete(sectionId: id)
+                return true
+            }
+            return false
         case 53: // Escape
             loopRegion = nil
-            selectedSection = nil
+            selectedSectionId = nil
             pendingLoopStart = nil
             isSettingLoop = false
             return true
@@ -570,10 +587,10 @@ struct ContentView: View {
     }
 
     private func jumpToSection(_ index: Int) {
-        guard let sections = analysisService.lastAnalysis?.sections,
+        guard let sections = sectionsVM?.sections,
               index <= sections.count else { return }
         let section = sections[index - 1]
-        selectedSection = section
+        selectedSectionId = section.stableId
         let loop = LoopRegion.from(section: section)
         loopRegion = loop
         audioEngine.setLoop(loop)
