@@ -22,6 +22,9 @@ struct HorizontalNSScrollView<Content: View>: NSViewRepresentable {
         scroll.drawsBackground = false
         scroll.horizontalScrollElasticity = .none
         scroll.verticalScrollElasticity = .none
+        // Force legacy (non-overlay) scrollers so the horizontal bar reserves
+        // layout space at the bottom instead of floating over the waveform.
+        scroll.scrollerStyle = .legacy
         scroll.onCommandScroll = onCommandScroll
 
         let hosting = TiledHostingView(rootView: AnyView(content()))
