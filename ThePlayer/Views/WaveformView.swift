@@ -574,7 +574,7 @@ struct WaveformView: View {
     private func loopOverlay(loop: LoopRegion, width: CGFloat, height: CGFloat) -> some View {
         let startX = CGFloat(loop.startTime / duration) * width
         let endX = CGFloat(loop.endTime / duration) * width
-        return ZStack(alignment: .bottomLeading) {
+        return ZStack(alignment: .topLeading) {
             Rectangle()
                 .fill(.blue.opacity(0.1))
                 .frame(width: endX - startX, height: height)
@@ -592,6 +592,7 @@ struct WaveformView: View {
                 .font(.system(size: 10, weight: .bold))
                 .foregroundStyle(.blue)
                 .padding(4)
+                .frame(width: endX - startX, height: height, alignment: .bottomLeading)
         }
         .offset(x: startX)
         .allowsHitTesting(false)
