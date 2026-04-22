@@ -36,6 +36,10 @@ struct WaveformView: View {
     @State private var waveformDragOffset: CGFloat = 0
     @State private var mouseLocation: CGPoint?
     @State private var highlightedOnset: Float?
+    @State private var sectionDragActive: Bool = false
+    @State private var sectionDragStartTime: Float?
+    @State private var sectionDragCurrentTime: Float?
+    @State private var pendingSectionRenameId: UUID?
 
     private static let onsetSnapMaxPx: Double = 30
 
@@ -85,6 +89,25 @@ struct WaveformView: View {
                     ZStack(alignment: .leading) {
                         sectionBands(width: totalWidth, height: waveHeight)
                             .offset(x: waveformDragOffset)
+                        if sectionDragActive,
+                           let s = sectionDragStartTime,
+                           let e = sectionDragCurrentTime {
+                            let lo = min(s, e)
+                            let hi = max(s, e)
+                            let snappedLo: Float = snapToGrid ? SectionsViewModel.snapToNearestBeat(time: lo, beats: beats) : lo
+                            let snappedHi: Float = snapToGrid ? SectionsViewModel.snapToNearestBeat(time: hi, beats: beats) : hi
+                            let leftX = CGFloat(snappedLo / duration) * totalWidth
+                            let rightX = CGFloat(snappedHi / duration) * totalWidth
+                            let width = max(0, rightX - leftX)
+                            Rectangle()
+                                .fill(Color.accentColor.opacity(0.18))
+                                .overlay(
+                                    Rectangle()
+                                        .strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                                )
+                                .frame(width: width, height: waveHeight)
+                                .offset(x: leftX)
+                        }
                         if snapToGrid {
                             barLines(width: totalWidth, height: waveHeight)
                         }
@@ -129,6 +152,7 @@ struct WaveformView: View {
                         DragGesture(minimumDistance: 2, coordinateSpace: .local)
                             .onChanged { value in
                                 guard totalWidth > 0, duration > 0 else { return }
+                                guard !sectionDragActive else { return }
                                 if !alignDragActive {
                                     guard NSEvent.modifierFlags.contains(.command) else { return }
                                     alignDragActive = true
@@ -168,6 +192,41 @@ struct WaveformView: View {
                                 alignDragActive = false
                                 alignDragStartFDT = nil
                                 NSCursor.arrow.set()
+                            }
+                    )
+                    .simultaneousGesture(
+                        DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                            .onChanged { value in
+                                guard totalWidth > 0, duration > 0, sectionsVM != nil else { return }
+                                if !sectionDragActive {
+                                    guard NSEvent.modifierFlags.contains(.option) else { return }
+                                    sectionDragActive = true
+                                    sectionDragStartTime = Float(value.startLocation.x / totalWidth) * duration
+                                    NSCursor.crosshair.set()
+                                }
+                                sectionDragCurrentTime = Float(value.location.x / totalWidth) * duration
+                            }
+                            .onEnded { value in
+                                defer {
+                                    sectionDragActive = false
+                                    sectionDragStartTime = nil
+                                    sectionDragCurrentTime = nil
+                                    NSCursor.arrow.set()
+                                }
+                                guard sectionDragActive,
+                                      let vm = sectionsVM,
+                                      let startT = sectionDragStartTime else { return }
+                                let dx = value.location.x - value.startLocation.x
+                                guard abs(dx) >= 8 else { return }
+                                let endT = Float(value.location.x / totalWidth) * duration
+                                if let newId = vm.createSection(
+                                    startTime: startT,
+                                    endTime: endT,
+                                    snapToBeat: snapToGrid
+                                ) {
+                                    onSelectSection?(newId)
+                                    pendingSectionRenameId = newId
+                                }
                             }
                     )
                     .onTapGesture { location in
