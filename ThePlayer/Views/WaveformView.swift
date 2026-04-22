@@ -94,8 +94,8 @@ struct WaveformView: View {
                            let e = sectionDragCurrentTime {
                             let lo = min(s, e)
                             let hi = max(s, e)
-                            let snappedLo: Float = snapToGrid ? SectionsViewModel.snapToNearestBeat(time: lo, beats: beats) : lo
-                            let snappedHi: Float = snapToGrid ? SectionsViewModel.snapToNearestBeat(time: hi, beats: beats) : hi
+                            let snappedLo: Float = snapToGrid ? nearestGridTime(to: lo) : lo
+                            let snappedHi: Float = snapToGrid ? nearestGridTime(to: hi) : hi
                             let leftX = max(0, CGFloat(snappedLo / duration) * totalWidth)
                             let rightX = min(totalWidth, CGFloat(snappedHi / duration) * totalWidth)
                             let width = max(0, rightX - leftX)
@@ -218,11 +218,16 @@ struct WaveformView: View {
                                       let startT = sectionDragStartTime else { return }
                                 let dx = value.location.x - value.startLocation.x
                                 guard abs(dx) >= 8 else { return }
-                                let endT = Float(value.location.x / totalWidth) * duration
+                                let rawEnd = Float(value.location.x / totalWidth) * duration
+                                // Snap to the visible grid (bar lines per snapDivision), not to
+                                // individual beats — the VM's beat-level snap would drift off a
+                                // bar boundary to the nearest adjacent beat.
+                                let snappedStart = snapToGrid ? nearestGridTime(to: startT) : startT
+                                let snappedEnd = snapToGrid ? nearestGridTime(to: rawEnd) : rawEnd
                                 if let newId = vm.createSection(
-                                    startTime: startT,
-                                    endTime: endT,
-                                    snapToBeat: snapToGrid
+                                    startTime: snappedStart,
+                                    endTime: snappedEnd,
+                                    snapToBeat: false
                                 ) {
                                     onSelectSection?(newId)
                                     pendingSectionRenameId = newId
