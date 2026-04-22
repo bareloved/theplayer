@@ -27,6 +27,14 @@ struct HorizontalNSScrollView<Content: View>: NSViewRepresentable {
         scroll.scrollerStyle = .legacy
         scroll.onCommandScroll = onCommandScroll
 
+        // Use a flipped clip view so the SwiftUI-hosted content (top-left origin)
+        // anchors to the top-left of the visible area. Without this the doc view
+        // either floats against the bottom (when shorter than the clip) or the
+        // top gets cut off (when equal height) due to default bottom-up origin.
+        let flippedClip = FlippedClipView()
+        flippedClip.drawsBackground = false
+        scroll.contentView = flippedClip
+
         let hosting = TiledHostingView(rootView: AnyView(content()))
         hosting.translatesAutoresizingMaskIntoConstraints = true
         hosting.frame = NSRect(x: 0, y: 0, width: contentWidth, height: Self.docHeight(contentHeight))
@@ -49,16 +57,22 @@ struct HorizontalNSScrollView<Content: View>: NSViewRepresentable {
         }
     }
 
-    /// Reserve vertical space for the legacy horizontal scroller so the document
-    /// view fits inside the clip view without overflowing.
+    /// Reserve vertical room for the legacy horizontal scroller so the doc view
+    /// fits inside the clip view with no overflow.
     private static func docHeight(_ containerHeight: CGFloat) -> CGFloat {
-        let scrollerThickness = NSScroller.scrollerWidth(for: .regular, scrollerStyle: .legacy)
-        return max(0, containerHeight - scrollerThickness)
+        let thickness = NSScroller.scrollerWidth(for: .regular, scrollerStyle: .legacy)
+        return max(0, containerHeight - thickness)
     }
 
     final class Coordinator {
         var hosting: NSView?
     }
+}
+
+/// NSClipView with a top-left origin, so SwiftUI-hosted flipped content anchors
+/// to the top of the visible area instead of floating against the bottom.
+final class FlippedClipView: NSClipView {
+    override var isFlipped: Bool { true }
 }
 
 /// Exposed handle the SwiftUI view holds as `@StateObject` so it can push scroll-origin
