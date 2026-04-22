@@ -140,6 +140,22 @@ struct ContentView: View {
             sectionsVM = buildSectionsVM(from: analysis)
             selectedSectionId = nil
         }
+        .onChange(of: sectionsVM?.sections) { _, newSections in
+            guard let id = selectedSectionId else { return }
+            if let newSections,
+               let section = newSections.first(where: { $0.stableId == id }) {
+                let loop = LoopRegion.from(section: section)
+                if loopRegion != loop {
+                    loopRegion = loop
+                    audioEngine.setLoop(loop)
+                }
+            } else {
+                // Section no longer exists — clear loop + selection.
+                selectedSectionId = nil
+                loopRegion = nil
+                audioEngine.setLoop(nil)
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .openAudioFile)) { notification in
             if let url = notification.object as? URL {
                 openFile(url: url)
@@ -200,7 +216,27 @@ struct ContentView: View {
                     },
                     sectionsVM: sectionsVM,
                     selectedSectionId: selectedSectionId,
-                    onSelectSection: { selectedSectionId = $0 }
+                    onSelectSection: { newId in
+                        guard let vm = sectionsVM else { return }
+                        if let id = newId,
+                           let section = vm.sections.first(where: { $0.stableId == id }) {
+                            if selectedSectionId == id {
+                                // Toggle off
+                                selectedSectionId = nil
+                                loopRegion = nil
+                                audioEngine.setLoop(nil)
+                            } else {
+                                selectedSectionId = id
+                                let loop = LoopRegion.from(section: section)
+                                loopRegion = loop
+                                audioEngine.setLoop(loop)
+                            }
+                        } else {
+                            selectedSectionId = nil
+                            loopRegion = nil
+                            audioEngine.setLoop(nil)
+                        }
+                    }
                 )
 
                 if analysisService.isAnalyzing {
