@@ -167,6 +167,104 @@ final class SectionEditorViewModel {
         }
     }
 
+    // MARK: - Creation
+
+    @discardableResult
+    func createSection(startTime requestedStart: Float, endTime requestedEnd: Float, snapToBeat: Bool) -> UUID? {
+        var s = min(requestedStart, requestedEnd)
+        var e = max(requestedStart, requestedEnd)
+        s = max(0, min(duration, s))
+        e = max(0, min(duration, e))
+        if snapToBeat {
+            s = Self.snapToNearestBeat(time: s, beats: beats)
+            e = Self.snapToNearestBeat(time: e, beats: beats)
+        }
+        let minLen: Float = beats.count >= 2 ? Float(beats[1] - beats[0]) : 0.5
+        guard e - s >= minLen else { return nil }
+
+        let prev = sections
+        let colorIndex = nextColorIndex(avoidingNeighborsOf: s, in: prev)
+        let newSection = AudioSection(
+            label: "",
+            startTime: s,
+            endTime: e,
+            startBeat: 0,
+            endBeat: 0,
+            colorIndex: colorIndex
+        )
+        let newId = newSection.stableId
+
+        applyChange(undoLabel: "Add Section") {
+            self.sections = Self.rebuildPartition(inserting: newSection, into: prev, minLen: minLen)
+            self.recomputeBeatsForRange(0 ... self.sections.count - 1)
+        } undo: {
+            self.sections = prev
+        }
+        return newId
+    }
+
+    private static func rebuildPartition(
+        inserting new: AudioSection,
+        into existing: [AudioSection],
+        minLen: Float
+    ) -> [AudioSection] {
+        var result: [AudioSection] = []
+        var inserted = false
+        let s = new.startTime
+        let e = new.endTime
+        for section in existing {
+            let fullyEngulfed = section.startTime >= s && section.endTime <= e
+            let partialLeft  = section.startTime < s && section.endTime > s && section.endTime <= e
+            let partialRight = section.startTime >= s && section.startTime < e && section.endTime > e
+            let contains     = section.startTime < s && section.endTime > e
+
+            if fullyEngulfed {
+                continue
+            } else if partialLeft {
+                var trimmed = section
+                trimmed.endTime = s
+                if trimmed.endTime - trimmed.startTime >= minLen { result.append(trimmed) }
+            } else if partialRight {
+                var trimmed = section
+                trimmed.startTime = e
+                if trimmed.endTime - trimmed.startTime >= minLen { result.append(trimmed) }
+            } else if contains {
+                var before = section
+                before.endTime = s
+                var after = section
+                after.stableId = UUID() // keep `before` stable; give `after` a new id
+                after.startTime = e
+                var effectiveNew = new
+                if before.endTime - before.startTime >= minLen { result.append(before) }
+                else { effectiveNew.startTime = before.startTime }
+                result.append(effectiveNew)
+                inserted = true
+                if after.endTime - after.startTime >= minLen { result.append(after) }
+                else { result[result.count - 1].endTime = after.endTime }
+                continue
+            } else {
+                result.append(section)
+            }
+        }
+        if !inserted {
+            let insertIdx = result.firstIndex(where: { $0.startTime >= e }) ?? result.count
+            result.insert(new, at: insertIdx)
+        }
+        return result
+    }
+
+    private func nextColorIndex(avoidingNeighborsOf s: Float, in existing: [AudioSection]) -> Int {
+        let paletteSize = 8
+        let usedByNeighbors = Set(existing
+            .filter { abs($0.endTime - s) < 0.001 || abs($0.startTime - s) < 0.001 }
+            .map { $0.colorIndex })
+        for offset in 0..<paletteSize {
+            let idx = (existing.count + offset) % paletteSize
+            if !usedByNeighbors.contains(idx) { return idx }
+        }
+        return 0
+    }
+
     // MARK: - Helpers
 
     static func snapToNearestBeat(time: Float, beats: [Float]) -> Float {

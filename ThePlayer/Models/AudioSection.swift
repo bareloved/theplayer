@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct AudioSection: Identifiable, Equatable {
-    let stableId: UUID
+    var stableId: UUID
     var label: String
     var startTime: Float
     var endTime: Float

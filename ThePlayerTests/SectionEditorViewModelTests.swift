@@ -163,4 +163,77 @@ final class SectionEditorViewModelTests: XCTestCase {
         vm.undoManager.undo()
         XCTAssertEqual(fireCount, 2)
     }
+
+    func testCreateSectionInsideOneProducesThreeWaySplit() {
+        let vm = makeVM()
+        // Verse is 10..30. Create inside: [15, 25]
+        let newId = vm.createSection(startTime: 15, endTime: 25, snapToBeat: false)
+        XCTAssertNotNil(newId)
+        XCTAssertEqual(vm.sections.count, 5)
+        XCTAssertEqual(vm.sections[0].label, "Intro")     // 0..10
+        XCTAssertEqual(vm.sections[1].startTime, 10)      // Verse-before 10..15
+        XCTAssertEqual(vm.sections[1].endTime, 15)
+        XCTAssertEqual(vm.sections[2].startTime, 15)      // new 15..25
+        XCTAssertEqual(vm.sections[2].endTime, 25)
+        XCTAssertEqual(vm.sections[2].label, "")
+        XCTAssertEqual(vm.sections[3].startTime, 25)      // Verse-after 25..30
+        XCTAssertEqual(vm.sections[3].endTime, 30)
+        XCTAssertEqual(vm.sections[4].label, "Chorus")    // 30..50
+    }
+
+    func testCreateSectionPartialLeftOverlapTrimsExisting() {
+        let vm = makeVM()
+        // Intro 0..10, Verse 10..30. Create 5..15 → trims Intro to 0..5, engulfs nothing, trims Verse's left to 15..30.
+        vm.createSection(startTime: 5, endTime: 15, snapToBeat: false)
+        XCTAssertEqual(vm.sections.count, 4)
+        XCTAssertEqual(vm.sections[0].endTime, 5)
+        XCTAssertEqual(vm.sections[1].startTime, 5)
+        XCTAssertEqual(vm.sections[1].endTime, 15)
+        XCTAssertEqual(vm.sections[2].startTime, 15)
+    }
+
+    func testCreateSectionSpanningMultipleEngulfsMiddle() {
+        let vm = makeVM()
+        // Intro 0..10, Verse 10..30, Chorus 30..50. Create 5..35.
+        vm.createSection(startTime: 5, endTime: 35, snapToBeat: false)
+        XCTAssertEqual(vm.sections.count, 3)
+        XCTAssertEqual(vm.sections[0].endTime, 5)      // Intro 0..5
+        XCTAssertEqual(vm.sections[1].startTime, 5)    // new 5..35
+        XCTAssertEqual(vm.sections[1].endTime, 35)
+        XCTAssertEqual(vm.sections[2].startTime, 35)   // Chorus 35..50
+    }
+
+    func testCreateSectionDegenerateRangeReturnsNil() {
+        let vm = makeVM()
+        XCTAssertNil(vm.createSection(startTime: 20, endTime: 20, snapToBeat: false))
+        XCTAssertEqual(vm.sections.count, 3)
+    }
+
+    func testCreateSectionSnapsEndpointsToBeats() {
+        let vm = makeVM()
+        // Beats are at 0.0, 0.5, 1.0 ... Request 14.2..25.8, expect 14.0..26.0 (nearest beats).
+        vm.createSection(startTime: 14.2, endTime: 25.8, snapToBeat: true)
+        XCTAssertEqual(vm.sections[1].endTime, 14.0)
+        XCTAssertEqual(vm.sections[2].startTime, 14.0)
+        XCTAssertEqual(vm.sections[2].endTime, 26.0)
+        XCTAssertEqual(vm.sections[3].startTime, 26.0)
+    }
+
+    func testCreateSectionSwapsReversedInput() {
+        let vm = makeVM()
+        vm.createSection(startTime: 25, endTime: 15, snapToBeat: false)
+        XCTAssertEqual(vm.sections[2].startTime, 15)
+        XCTAssertEqual(vm.sections[2].endTime, 25)
+    }
+
+    func testCreateSectionUndoRestoresPartition() {
+        let vm = makeVM()
+        let before = vm.sections
+        vm.createSection(startTime: 15, endTime: 25, snapToBeat: false)
+        vm.undoManager.undo()
+        XCTAssertEqual(vm.sections.count, before.count)
+        XCTAssertEqual(vm.sections[0].stableId, before[0].stableId)
+        XCTAssertEqual(vm.sections[1].stableId, before[1].stableId)
+        XCTAssertEqual(vm.sections[2].stableId, before[2].stableId)
+    }
 }
