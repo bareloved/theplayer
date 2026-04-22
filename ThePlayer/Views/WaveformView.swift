@@ -94,8 +94,8 @@ struct WaveformView: View {
                            let e = sectionDragCurrentTime {
                             let lo = min(s, e)
                             let hi = max(s, e)
-                            let snappedLo: Float = snapToGrid ? nearestGridTime(to: lo) : lo
-                            let snappedHi: Float = snapToGrid ? nearestGridTime(to: hi) : hi
+                            let snappedLo: Float = snapToGrid ? gridFloor(lo) : lo
+                            let snappedHi: Float = snapToGrid ? gridCeil(hi) : hi
                             let leftX = max(0, CGFloat(snappedLo / duration) * totalWidth)
                             let rightX = min(totalWidth, CGFloat(snappedHi / duration) * totalWidth)
                             let width = max(0, rightX - leftX)
@@ -219,14 +219,16 @@ struct WaveformView: View {
                                 let dx = value.location.x - value.startLocation.x
                                 guard abs(dx) >= 8 else { return }
                                 let rawEnd = Float(value.location.x / totalWidth) * duration
-                                // Snap to the visible grid (bar lines per snapDivision), not to
-                                // individual beats — the VM's beat-level snap would drift off a
-                                // bar boundary to the nearest adjacent beat.
-                                let snappedStart = snapToGrid ? nearestGridTime(to: startT) : startT
-                                let snappedEnd = snapToGrid ? nearestGridTime(to: rawEnd) : rawEnd
+                                // Floor the lower bound, ceil the upper, so any nonzero drag
+                                // encloses at least one whole grid cell (matches DAW convention).
+                                // Nearest-snap would collapse sub-bar drags to zero length.
+                                let lo = min(startT, rawEnd)
+                                let hi = max(startT, rawEnd)
+                                let snappedLo = snapToGrid ? gridFloor(lo) : lo
+                                let snappedHi = snapToGrid ? gridCeil(hi) : hi
                                 if let newId = vm.createSection(
-                                    startTime: snappedStart,
-                                    endTime: snappedEnd,
+                                    startTime: snappedLo,
+                                    endTime: snappedHi,
                                     snapToBeat: false
                                 ) {
                                     onSelectSection?(newId)
@@ -324,6 +326,23 @@ struct WaveformView: View {
                     .allowsHitTesting(false)
             }
         }
+    }
+
+    /// Largest grid position ≤ `t`, or `t` itself if no grid is available or `t` precedes the grid.
+    private func gridFloor(_ t: Float) -> Float {
+        let grid = gridPositions
+        guard !grid.isEmpty else { return t }
+        var best: Float = grid.first ?? t
+        for g in grid where g <= t + 0.0001 { best = g }
+        return best
+    }
+
+    /// Smallest grid position ≥ `t`, or `t` itself if no grid is available or `t` exceeds the grid.
+    private func gridCeil(_ t: Float) -> Float {
+        let grid = gridPositions
+        guard !grid.isEmpty else { return t }
+        for g in grid where g >= t - 0.0001 { return g }
+        return grid.last ?? t
     }
 
     /// Nearest grid-snap time to `t`, or `t` itself if no grid is available.
