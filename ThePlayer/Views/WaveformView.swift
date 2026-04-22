@@ -61,7 +61,10 @@ struct WaveformView: View {
             let height = geo.size.height
 
             let bandHeight = WaveformZoomMath.rulerHeight
-            let waveHeight = max(0, height - bandHeight)
+            // Reserve room at the bottom so the overlay horizontal scroller
+            // doesn't land on top of the waveform bars.
+            let scrollerReserved: CGFloat = HorizontalNSScrollView<AnyView>.overlayScrollerReservedHeight
+            let waveHeight = max(0, height - bandHeight - scrollerReserved)
 
             HorizontalNSScrollView(
                 contentWidth: totalWidth,
@@ -588,16 +591,11 @@ struct WaveformView: View {
                 .frame(width: 2, height: height)
                 .offset(x: endX - startX - 2)
 
-            VStack(alignment: .leading, spacing: 0) {
-                Spacer()
-                Text("LOOP")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.blue)
-                    .padding(4)
-            }
-            .frame(width: endX - startX, height: height)
+            Text("LOOP")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.blue)
+                .padding(4)
         }
-        .frame(width: endX - startX, height: height)
         .offset(x: startX)
         .allowsHitTesting(false)
     }

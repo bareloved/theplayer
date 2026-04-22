@@ -22,22 +22,11 @@ struct HorizontalNSScrollView<Content: View>: NSViewRepresentable {
         scroll.drawsBackground = false
         scroll.horizontalScrollElasticity = .none
         scroll.verticalScrollElasticity = .none
-        // Force legacy (non-overlay) scrollers so the horizontal bar reserves
-        // layout space at the bottom instead of floating over the waveform.
-        scroll.scrollerStyle = .legacy
         scroll.onCommandScroll = onCommandScroll
-
-        // Use a flipped clip view so the SwiftUI-hosted content (top-left origin)
-        // anchors to the top-left of the visible area. Without this the doc view
-        // either floats against the bottom (when shorter than the clip) or the
-        // top gets cut off (when equal height) due to default bottom-up origin.
-        let flippedClip = FlippedClipView()
-        flippedClip.drawsBackground = false
-        scroll.contentView = flippedClip
 
         let hosting = TiledHostingView(rootView: AnyView(content()))
         hosting.translatesAutoresizingMaskIntoConstraints = true
-        hosting.frame = NSRect(x: 0, y: 0, width: contentWidth, height: Self.docHeight(contentHeight))
+        hosting.frame = NSRect(x: 0, y: 0, width: contentWidth, height: contentHeight)
         scroll.documentView = hosting
 
         controller.scrollView = scroll
@@ -50,18 +39,11 @@ struct HorizontalNSScrollView<Content: View>: NSViewRepresentable {
         controller.scrollView = nsView
         if let hosting = context.coordinator.hosting as? TiledHostingView<AnyView> {
             hosting.rootView = AnyView(content())
-            let newSize = NSSize(width: contentWidth, height: Self.docHeight(contentHeight))
+            let newSize = NSSize(width: contentWidth, height: contentHeight)
             if hosting.frame.size != newSize {
                 hosting.setFrameSize(newSize)
             }
         }
-    }
-
-    /// Reserve vertical room for the legacy horizontal scroller so the doc view
-    /// fits inside the clip view with no overflow.
-    private static func docHeight(_ containerHeight: CGFloat) -> CGFloat {
-        let thickness = NSScroller.scrollerWidth(for: .regular, scrollerStyle: .legacy)
-        return max(0, containerHeight - thickness)
     }
 
     final class Coordinator {
@@ -69,10 +51,10 @@ struct HorizontalNSScrollView<Content: View>: NSViewRepresentable {
     }
 }
 
-/// NSClipView with a top-left origin, so SwiftUI-hosted flipped content anchors
-/// to the top of the visible area instead of floating against the bottom.
-final class FlippedClipView: NSClipView {
-    override var isFlipped: Bool { true }
+/// Height the overlay horizontal scroller visually occupies, so callers can
+/// pad their content to prevent the scroller from sitting over meaningful UI.
+extension HorizontalNSScrollView {
+    static var overlayScrollerReservedHeight: CGFloat { 15 }
 }
 
 /// Exposed handle the SwiftUI view holds as `@StateObject` so it can push scroll-origin
