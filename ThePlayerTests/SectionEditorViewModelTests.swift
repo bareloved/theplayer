@@ -116,17 +116,6 @@ final class SectionEditorViewModelTests: XCTestCase {
         XCTAssertEqual(vm.sections[1].colorIndex, 7)
     }
 
-    func testReorderSwapsLabelAndColorOnly() {
-        let vm = makeVM()
-        let aId = vm.sections[1].stableId
-        vm.reorder(sectionId: aId, direction: .right)
-        // Label/color of original sections[1] now at index 2; times unchanged for both.
-        XCTAssertEqual(vm.sections[1].label, "Chorus")
-        XCTAssertEqual(vm.sections[2].label, "Verse")
-        XCTAssertEqual(vm.sections[1].startTime, 10)
-        XCTAssertEqual(vm.sections[2].startTime, 30)
-    }
-
     func testUndoRevertsRename() {
         let vm = makeVM()
         let id = vm.sections[1].stableId

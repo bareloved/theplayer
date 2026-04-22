@@ -3,8 +3,6 @@ import Observation
 
 @Observable
 final class SectionEditorViewModel {
-    enum ReorderDirection { case left, right }
-
     private(set) var sections: [AudioSection]
     private(set) var manualColorOverrides: Set<UUID> = []  // session-only
 
@@ -130,30 +128,6 @@ final class SectionEditorViewModel {
                 self.sections[idx + 1] = neighbor
                 self.sections.insert(removed, at: idx)
             }
-        }
-    }
-
-    func reorder(sectionId: UUID, direction: ReorderDirection) {
-        guard let idx = sections.firstIndex(where: { $0.stableId == sectionId }) else { return }
-        let other: Int
-        switch direction {
-        case .left:  other = idx - 1
-        case .right: other = idx + 1
-        }
-        guard sections.indices.contains(other) else { return }
-
-        let aPrev = sections[idx]
-        let bPrev = sections[other]
-
-        applyChange(undoLabel: "Reorder Section") {
-            // Swap label + colorIndex (and stableId where appropriate). Keep time ranges in place.
-            self.sections[idx].label = bPrev.label
-            self.sections[idx].colorIndex = bPrev.colorIndex
-            self.sections[other].label = aPrev.label
-            self.sections[other].colorIndex = aPrev.colorIndex
-        } undo: {
-            self.sections[idx] = aPrev
-            self.sections[other] = bPrev
         }
     }
 
