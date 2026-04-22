@@ -117,6 +117,9 @@ struct WaveformView: View {
                         waveformBars(width: totalWidth, height: waveHeight)
                             .offset(x: waveformDragOffset)
 
+                        sectionLabels(width: totalWidth, height: waveHeight)
+                            .offset(x: waveformDragOffset)
+
                         if let loop = loopRegion {
                             loopOverlay(loop: loop, width: totalWidth, height: waveHeight)
                                 .offset(x: waveformDragOffset)
@@ -430,7 +433,6 @@ struct WaveformView: View {
                 let sectionWidth = CGFloat((section.endTime - section.startTime) / duration) * width
                 let isSelected = section.stableId == selectedSectionId
 
-                // Band background
                 Rectangle()
                     .fill(section.color.opacity(isSelected ? 0.25 : 0.1))
                     .overlay(
@@ -439,8 +441,19 @@ struct WaveformView: View {
                     )
                     .frame(width: sectionWidth, height: height)
                     .offset(x: sectionX)
+            }
+        }
+        .frame(width: width, height: height, alignment: .topLeading)
+    }
 
-                // Label badge (only if the band has room to show it)
+    /// Label badges rendered in a separate layer above the waveform bars so the
+    /// bars don't obscure the section titles.
+    private func sectionLabels(width: CGFloat, height: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
+            ForEach(sections) { section in
+                let sectionX = CGFloat(section.startTime / duration) * width
+                let sectionWidth = CGFloat((section.endTime - section.startTime) / duration) * width
+                let isSelected = section.stableId == selectedSectionId
                 if sectionWidth >= 20 {
                     SectionLabelBadge(
                         label: section.label,
