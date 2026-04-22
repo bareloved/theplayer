@@ -588,12 +588,16 @@ struct WaveformView: View {
                 .frame(width: 2, height: height)
                 .offset(x: endX - startX - 2)
 
-            Text("LOOP")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(.blue)
-                .padding(4)
-                .frame(width: endX - startX, height: height, alignment: .bottomLeading)
+            VStack(alignment: .leading, spacing: 0) {
+                Spacer()
+                Text("LOOP")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.blue)
+                    .padding(4)
+            }
+            .frame(width: endX - startX, height: height)
         }
+        .frame(width: endX - startX, height: height)
         .offset(x: startX)
         .allowsHitTesting(false)
     }
