@@ -17,12 +17,11 @@ struct ContentView: View {
     @State private var keyMonitor: Any?
     @State private var showLibrarySidebar = true
     @State private var showSectionsSidebar = true
-    @State private var librarySidebarWidth: CGFloat = 180
+    @State private var librarySidebarWidth: CGFloat = 220
     @State private var sectionsSidebarWidth: CGFloat = 220
     @State private var sectionEditor: SectionEditorViewModel?
     @State private var selectedSectionForEdit: UUID?
     @State private var showResetConfirm = false
-    @State private var isSettingDownbeat: Bool = false
     @State private var clickTrackPlayer: ClickTrackPlayer?
     @AppStorage("clickTrackEnabled") private var clickEnabled: Bool = false
     @AppStorage("clickTrackVolume") private var clickVolume: Double = 0.5
@@ -43,7 +42,7 @@ struct ContentView: View {
                 )
                 .frame(width: librarySidebarWidth)
 
-                ResizableDivider(dimension: $librarySidebarWidth, minSize: 140, maxSize: 400)
+                ResizableDivider(dimension: $librarySidebarWidth, minSize: 200, maxSize: 400)
             }
 
             // Center: Player
@@ -204,10 +203,8 @@ struct ContentView: View {
                     onLoopPointSet: { time in handleLoopPoint(time) },
                     firstDownbeatTime: analysisService.lastAnalysis?.firstDownbeatTime ?? 0,
                     timeSignature: analysisService.lastAnalysis?.timeSignature ?? .fourFour,
-                    isSettingDownbeat: isSettingDownbeat,
                     onSetDownbeat: { time in
                         setDownbeatOverride(time)
-                        isSettingDownbeat = false
                     },
                     editorViewModel: sectionEditor,
                     selectedSectionId: selectedSectionForEdit,
@@ -298,24 +295,12 @@ struct ContentView: View {
                     TimingControls(
                         bpm: analysisService.lastAnalysis?.bpm ?? 0,
                         timeSignature: analysisService.lastAnalysis?.timeSignature ?? .fourFour,
-                        isSettingDownbeat: isSettingDownbeat,
                         hasBpmOverride: analysisService.baseAnalysis?.bpm != analysisService.lastAnalysis?.bpm,
                         hasTimeSigOverride: analysisService.baseAnalysis?.timeSignature != analysisService.lastAnalysis?.timeSignature,
-                        hasDownbeatOverride: analysisService.baseAnalysis?.firstDownbeatTime != analysisService.lastAnalysis?.firstDownbeatTime,
                         onSetBpm: { v in setBpmOverride(v) },
                         onResetBpm: { setBpmOverride(nil) },
                         onSetTimeSignature: { ts in setTimeSignatureOverride(ts) },
                         onResetTimeSignature: { setTimeSignatureOverride(nil) },
-                        onShiftDownbeat: { deltaSeconds in
-                            let current = analysisService.lastAnalysis?.firstDownbeatTime ?? 0
-                            setDownbeatOverride(current + deltaSeconds)
-                        },
-                        onFineNudge: { deltaSeconds in
-                            let current = analysisService.lastAnalysis?.firstDownbeatTime ?? 0
-                            setDownbeatOverride(current + deltaSeconds)
-                        },
-                        onResetDownbeat: { setDownbeatOverride(nil) },
-                        onToggleSetDownbeat: { isSettingDownbeat.toggle() },
                         isClickEnabled: clickEnabled,
                         clickVolume: $clickVolume,
                         onToggleClick: { clickEnabled.toggle() }

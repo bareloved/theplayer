@@ -38,18 +38,14 @@ struct TransportBar: View {
             .buttonStyle(.bordered)
             .tint(snapToGrid ? .purple : .secondary)
 
-            HStack(spacing: 4) {
-                Text("Bars")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Picker("", selection: $snapDivision) {
-                    ForEach(SnapDivision.allCases) { div in
-                        Text(div.shortLabel).tag(div)
-                    }
+            Picker("Bars", selection: $snapDivision) {
+                ForEach(SnapDivision.allCases) { div in
+                    Text(div.shortLabel).tag(div)
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 200)
             }
+            .pickerStyle(.menu)
+            .fixedSize()
+            .font(.caption)
             .opacity(snapToGrid ? 1 : 0)
             .disabled(!snapToGrid)
             .allowsHitTesting(snapToGrid)

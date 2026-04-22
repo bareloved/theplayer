@@ -18,7 +18,6 @@ struct WaveformView: View {
     let onLoopPointSet: (Float) -> Void
     let firstDownbeatTime: Float
     let timeSignature: TimeSignature
-    let isSettingDownbeat: Bool
     let onSetDownbeat: ((Float) -> Void)?
     let editorViewModel: SectionEditorViewModel?
     let selectedSectionId: UUID?
@@ -172,10 +171,6 @@ struct WaveformView: View {
                     .onTapGesture { location in
                         let fraction = Float(location.x / totalWidth)
                         let time = fraction * duration
-                        if isSettingDownbeat, let onSetDownbeat {
-                            onSetDownbeat(time)
-                            return
-                        }
                         if let onSelectSection = onSelectSection, editorViewModel != nil {
                             let hit = sections.first(where: { time >= $0.startTime && time < $0.endTime })
                             onSelectSection(hit?.stableId)
@@ -265,10 +260,6 @@ struct WaveformView: View {
             if isSettingLoop {
                 RoundedRectangle(cornerRadius: 8)
                     .strokeBorder(.orange, lineWidth: 2)
-                    .allowsHitTesting(false)
-            } else if isSettingDownbeat {
-                RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(.cyan, lineWidth: 2)
                     .allowsHitTesting(false)
             }
         }
