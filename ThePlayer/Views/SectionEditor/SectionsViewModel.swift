@@ -131,16 +131,6 @@ final class SectionsViewModel {
         }
     }
 
-    func replaceAll(with newSections: [AudioSection]) {
-        let prev = sections
-        applyChange(undoLabel: "Reset Sections") {
-            self.sections = newSections
-            self.manualColorOverrides.removeAll()
-        } undo: {
-            self.sections = prev
-        }
-    }
-
     // MARK: - Creation
 
     @discardableResult
