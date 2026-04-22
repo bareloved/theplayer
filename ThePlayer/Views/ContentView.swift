@@ -5,7 +5,6 @@ struct ContentView: View {
     @Bindable var audioEngine: AudioEngine
     @Bindable var analysisService: AnalysisService
     @Bindable var libraryService: LibraryService
-    @State private var selectedSection: AudioSection?
     @State private var loopRegion: LoopRegion?
     @State private var isTargeted = false
     @State private var isSettingLoop = false
@@ -24,6 +23,11 @@ struct ContentView: View {
     @State private var clickTrackPlayer: ClickTrackPlayer?
     @AppStorage("clickTrackEnabled") private var clickEnabled: Bool = false
     @AppStorage("clickTrackVolume") private var clickVolume: Double = 0.5
+
+    private var selectedSection: AudioSection? {
+        guard let id = selectedSectionId else { return nil }
+        return sectionsVM?.sections.first(where: { $0.stableId == id })
+    }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -65,13 +69,27 @@ struct ContentView: View {
                     duration: audioEngine.duration,
                     sampleRate: audioEngine.sampleRate,
                     onSectionTap: { section in
-                        selectedSection = section
+                        selectedSectionId = section.stableId
                         let loop = LoopRegion.from(section: section)
                         loopRegion = loop
                         audioEngine.setLoop(loop)
                         audioEngine.playLoop()
                     },
-                    selectedSection: $selectedSection
+                    selectedSection: Binding(
+                        get: { self.selectedSection },
+                        set: { newValue in
+                            if let section = newValue {
+                                self.selectedSectionId = section.stableId
+                                let loop = LoopRegion.from(section: section)
+                                self.loopRegion = loop
+                                self.audioEngine.setLoop(loop)
+                            } else {
+                                self.selectedSectionId = nil
+                                self.loopRegion = nil
+                                self.audioEngine.setLoop(nil)
+                            }
+                        }
+                    )
                 )
                 .frame(width: sectionsSidebarWidth)
             }
@@ -379,7 +397,7 @@ struct ContentView: View {
     func openFile(url: URL) {
         do {
             try audioEngine.loadFile(url: url)
-            selectedSection = nil
+            selectedSectionId = nil
             loopRegion = nil
             loadError = nil
             NSDocumentController.shared.noteNewRecentDocumentURL(url)
@@ -535,7 +553,6 @@ struct ContentView: View {
             return false
         case 53: // Escape
             loopRegion = nil
-            selectedSection = nil
             selectedSectionId = nil
             pendingLoopStart = nil
             isSettingLoop = false
@@ -570,10 +587,10 @@ struct ContentView: View {
     }
 
     private func jumpToSection(_ index: Int) {
-        guard let sections = analysisService.lastAnalysis?.sections,
+        guard let sections = sectionsVM?.sections,
               index <= sections.count else { return }
         let section = sections[index - 1]
-        selectedSection = section
+        selectedSectionId = section.stableId
         let loop = LoopRegion.from(section: section)
         loopRegion = loop
         audioEngine.setLoop(loop)
