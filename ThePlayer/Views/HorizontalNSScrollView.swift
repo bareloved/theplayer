@@ -24,7 +24,7 @@ struct HorizontalNSScrollView<Content: View>: NSViewRepresentable {
         scroll.verticalScrollElasticity = .none
         scroll.onCommandScroll = onCommandScroll
 
-        let hosting = NSHostingView(rootView: AnyView(content()))
+        let hosting = TiledHostingView(rootView: AnyView(content()))
         hosting.translatesAutoresizingMaskIntoConstraints = true
         hosting.frame = NSRect(x: 0, y: 0, width: contentWidth, height: contentHeight)
         scroll.documentView = hosting
@@ -37,7 +37,7 @@ struct HorizontalNSScrollView<Content: View>: NSViewRepresentable {
     func updateNSView(_ nsView: ZoomScrollView, context: Context) {
         nsView.onCommandScroll = onCommandScroll
         controller.scrollView = nsView
-        if let hosting = context.coordinator.hosting as? NSHostingView<AnyView> {
+        if let hosting = context.coordinator.hosting as? TiledHostingView<AnyView> {
             hosting.rootView = AnyView(content())
             let newSize = NSSize(width: contentWidth, height: contentHeight)
             if hosting.frame.size != newSize {
