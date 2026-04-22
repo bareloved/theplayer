@@ -117,9 +117,6 @@ struct WaveformView: View {
                         waveformBars(width: totalWidth, height: waveHeight)
                             .offset(x: waveformDragOffset)
 
-                        sectionLabels(width: totalWidth, height: waveHeight)
-                            .offset(x: waveformDragOffset)
-
                         if let loop = loopRegion {
                             loopOverlay(loop: loop, width: totalWidth, height: waveHeight)
                                 .offset(x: waveformDragOffset)
@@ -151,6 +148,12 @@ struct WaveformView: View {
                         if let time = hoverTime, let loc = hoverLocation {
                             hoverTooltip(time: time, location: loc)
                         }
+
+                        // Section label badges are rendered LAST so they sit on
+                        // top of every other layer (bars, playhead, boundary
+                        // handles, loop overlay, etc.).
+                        sectionLabels(width: totalWidth, height: waveHeight)
+                            .offset(x: waveformDragOffset)
                     }
                     .frame(width: totalWidth, height: waveHeight)
                     .contentShape(Rectangle())
