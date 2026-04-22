@@ -195,7 +195,10 @@ struct WaveformView: View {
                             }
                     )
                     .simultaneousGesture(
-                        DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                        // minimumDistance: 8 matches the commit threshold below, and keeps
+                        // stationary clicks from activating this drag (so onTapGesture fires
+                        // normally for plain-click seek).
+                        DragGesture(minimumDistance: 8, coordinateSpace: .local)
                             .onChanged { value in
                                 guard totalWidth > 0, duration > 0, sectionsVM != nil else { return }
                                 if !sectionDragActive {
