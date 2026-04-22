@@ -17,7 +17,7 @@
 		2791E14F3AC460B2BEE28B85 /* AudioEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 521777D67BC2502BC0D6E99F /* AudioEngineTests.swift */; };
 		2C6D74E899222C88A40C98D5 /* TrackAnalyzerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBAFA19FD76857DF511CB74A /* TrackAnalyzerProtocol.swift */; };
 		31D284C63708762005B721BF /* SectionInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798A28AB6F497AC3430DFC2F /* SectionInspector.swift */; };
-		33FB5D51EA02965FB20F0B81 /* SectionEditorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE7A9AEF57B44BAC317C1109 /* SectionEditorViewModel.swift */; };
+		33FB5D51EA02965FB20F0B81 /* SectionsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE7A9AEF57B44BAC317C1109 /* SectionsViewModel.swift */; };
 		34FF45C280143157A0857F52 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2186B684F94740C4334F974F /* ContentView.swift */; };
 		3A4562BC8654BD495DE7A77C /* LoopRegion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AB80366F01A6405A511CD73 /* LoopRegion.swift */; };
 		3B3606F64ACDF745EBCA9F0B /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500D286F761A41D53CCF8686 /* SidebarView.swift */; };
@@ -143,7 +143,7 @@
 		F4E562CF2C345A8D59AF34F7 /* PlayerLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerLibrary.swift; sourceTree = "<group>"; };
 		F5FA6BAEA919480930036F64 /* ThePlayer-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ThePlayer-Bridging-Header.h"; sourceTree = "<group>"; };
 		F9A29D01F8B31978173A6853 /* UserEditsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserEditsStore.swift; sourceTree = "<group>"; };
-		FE7A9AEF57B44BAC317C1109 /* SectionEditorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionEditorViewModel.swift; sourceTree = "<group>"; };
+		FE7A9AEF57B44BAC317C1109 /* SectionsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionsViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -282,7 +282,7 @@
 			children = (
 				A48686E6C904A6FBA6028FBF /* SectionBoundaryHandle.swift */,
 				287ACCC5138ECE035DE0D669 /* SectionEditorToolbar.swift */,
-				FE7A9AEF57B44BAC317C1109 /* SectionEditorViewModel.swift */,
+				FE7A9AEF57B44BAC317C1109 /* SectionsViewModel.swift */,
 				798A28AB6F497AC3430DFC2F /* SectionInspector.swift */,
 				3DD1849C48D0FB2C04509BC8 /* SectionLabelPresets.swift */,
 			);
@@ -435,7 +435,7 @@
 				C4974526D99B1B285A028313 /* ResizableDivider.swift in Sources */,
 				7C65E2AF2F876FE8EF222194 /* SectionBoundaryHandle.swift in Sources */,
 				5DAC963A111E86B89C931CAC /* SectionEditorToolbar.swift in Sources */,
-				33FB5D51EA02965FB20F0B81 /* SectionEditorViewModel.swift in Sources */,
+				33FB5D51EA02965FB20F0B81 /* SectionsViewModel.swift in Sources */,
 				31D284C63708762005B721BF /* SectionInspector.swift in Sources */,
 				C101B804AC3D8771DB30DA84 /* SectionLabelPresets.swift in Sources */,
 				A3617ECD46F2CFFC5E82B380 /* Setlist.swift in Sources */,

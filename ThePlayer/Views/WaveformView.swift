@@ -19,7 +19,7 @@ struct WaveformView: View {
     let firstDownbeatTime: Float
     let timeSignature: TimeSignature
     let onSetDownbeat: ((Float) -> Void)?
-    let editorViewModel: SectionEditorViewModel?
+    let editorViewModel: SectionsViewModel?
     let selectedSectionId: UUID?
     let onSelectSection: ((UUID?) -> Void)?
 
@@ -356,7 +356,7 @@ struct WaveformView: View {
     }
 
     @ViewBuilder
-    private func boundaryHandles(viewModel vm: SectionEditorViewModel, width: CGFloat, height: CGFloat) -> some View {
+    private func boundaryHandles(viewModel vm: SectionsViewModel, width: CGFloat, height: CGFloat) -> some View {
         ForEach(Array(vm.sections.enumerated()), id: \.element.stableId) { idx, section in
             if idx > 0 {
                 let x = CGFloat(section.startTime / duration) * width

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SectionInspector: View {
-    @Bindable var viewModel: SectionEditorViewModel
+    @Bindable var viewModel: SectionsViewModel
     let selectedSectionId: UUID?
     let onLabelCommit: (String) -> Void
     let onColorPick: (Int) -> Void

@@ -2,7 +2,7 @@ import SwiftUI
 import Observation
 
 @Observable
-final class SectionEditorViewModel {
+final class SectionsViewModel {
     private(set) var sections: [AudioSection]
     private(set) var manualColorOverrides: Set<UUID> = []  // session-only
 

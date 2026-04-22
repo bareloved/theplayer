@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SectionEditorToolbar: View {
-    @Bindable var viewModel: SectionEditorViewModel
+    @Bindable var viewModel: SectionsViewModel
     let canDelete: Bool
     let onAdd: () -> Void
     let onDelete: () -> Void

@@ -19,7 +19,7 @@ struct ContentView: View {
     @State private var showSectionsSidebar = true
     @State private var librarySidebarWidth: CGFloat = 220
     @State private var sectionsSidebarWidth: CGFloat = 220
-    @State private var sectionEditor: SectionEditorViewModel?
+    @State private var sectionEditor: SectionsViewModel?
     @State private var selectedSectionForEdit: UUID?
     @State private var showResetConfirm = false
     @State private var clickTrackPlayer: ClickTrackPlayer?
@@ -354,7 +354,7 @@ struct ContentView: View {
 
     private func enterSectionEditor() {
         guard let analysis = analysisService.lastAnalysis else { return }
-        let vm = SectionEditorViewModel(
+        let vm = SectionsViewModel(
             sections: analysis.sections,
             beats: analysis.beats,
             duration: Float(audioEngine.duration)

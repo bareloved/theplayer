@@ -16,8 +16,8 @@ final class SectionEditorViewModelTests: XCTestCase {
         (0..<100).map { Float($0) * 0.5 }
     }
 
-    private func makeVM() -> SectionEditorViewModel {
-        SectionEditorViewModel(
+    private func makeVM() -> SectionsViewModel {
+        SectionsViewModel(
             sections: makeSections(),
             beats: makeBeats(),
             duration: 50
@@ -86,7 +86,7 @@ final class SectionEditorViewModelTests: XCTestCase {
     }
 
     func testCannotDeleteLastRemainingSection() {
-        let vm = SectionEditorViewModel(
+        let vm = SectionsViewModel(
             sections: [AudioSection(label: "Only", startTime: 0, endTime: 50, startBeat: 0, endBeat: 80, colorIndex: 0)],
             beats: makeBeats(),
             duration: 50
