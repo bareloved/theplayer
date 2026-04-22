@@ -96,8 +96,8 @@ struct WaveformView: View {
                             let hi = max(s, e)
                             let snappedLo: Float = snapToGrid ? SectionsViewModel.snapToNearestBeat(time: lo, beats: beats) : lo
                             let snappedHi: Float = snapToGrid ? SectionsViewModel.snapToNearestBeat(time: hi, beats: beats) : hi
-                            let leftX = CGFloat(snappedLo / duration) * totalWidth
-                            let rightX = CGFloat(snappedHi / duration) * totalWidth
+                            let leftX = max(0, CGFloat(snappedLo / duration) * totalWidth)
+                            let rightX = min(totalWidth, CGFloat(snappedHi / duration) * totalWidth)
                             let width = max(0, rightX - leftX)
                             Rectangle()
                                 .fill(Color.accentColor.opacity(0.18))
