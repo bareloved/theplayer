@@ -8,8 +8,6 @@ struct TransportBar: View {
     @Binding var snapDivision: SnapDivision
     let isInSetlist: Bool
     let onNextInSetlist: () -> Void
-    let onToggleSectionEditor: () -> Void
-    let isSectionEditing: Bool
     let timingControls: AnyView?
 
     var body: some View {
@@ -58,12 +56,6 @@ struct TransportBar: View {
                 .buttonStyle(.bordered)
                 .tint(.blue)
             }
-
-            Button(action: onToggleSectionEditor) {
-                Image(systemName: isSectionEditing ? "pencil.circle.fill" : "pencil.circle")
-            }
-            .buttonStyle(.plain)
-            .help(isSectionEditing ? "Exit section editor" : "Edit sections")
 
             if let timingControls { timingControls }
         }

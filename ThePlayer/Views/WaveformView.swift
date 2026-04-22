@@ -19,7 +19,7 @@ struct WaveformView: View {
     let firstDownbeatTime: Float
     let timeSignature: TimeSignature
     let onSetDownbeat: ((Float) -> Void)?
-    let editorViewModel: SectionsViewModel?
+    let sectionsVM: SectionsViewModel?
     let selectedSectionId: UUID?
     let onSelectSection: ((UUID?) -> Void)?
 
@@ -109,7 +109,7 @@ struct WaveformView: View {
                                 .allowsHitTesting(false)
                         }
 
-                        if let vm = editorViewModel {
+                        if let vm = sectionsVM {
                             boundaryHandles(viewModel: vm, width: totalWidth, height: waveHeight)
                                 .offset(x: waveformDragOffset)
                         }
@@ -173,7 +173,7 @@ struct WaveformView: View {
                     .onTapGesture { location in
                         let fraction = Float(location.x / totalWidth)
                         let time = fraction * duration
-                        if let onSelectSection = onSelectSection, editorViewModel != nil {
+                        if let onSelectSection = onSelectSection, sectionsVM != nil {
                             let hit = sections.first(where: { time >= $0.startTime && time < $0.endTime })
                             onSelectSection(hit?.stableId)
                             return
