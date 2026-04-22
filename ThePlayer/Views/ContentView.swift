@@ -161,6 +161,12 @@ struct ContentView: View {
                 openFile(url: url)
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .sectionsUndoRequested)) { _ in
+            sectionsVM?.undoManager.undo()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .sectionsRedoRequested)) { _ in
+            sectionsVM?.undoManager.redo()
+        }
         .alert("Error", isPresented: $showErrorAlert) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -521,9 +527,16 @@ struct ContentView: View {
         case 37: // L
             if loopRegion != nil { loopRegion = nil }
             return true
+        case 51: // Delete/Backspace
+            if let id = selectedSectionId {
+                sectionsVM?.delete(sectionId: id)
+                return true
+            }
+            return false
         case 53: // Escape
             loopRegion = nil
             selectedSection = nil
+            selectedSectionId = nil
             pendingLoopStart = nil
             isSettingLoop = false
             return true
