@@ -24,7 +24,7 @@ struct SectionLabelBadge: View {
                 .frame(minWidth: 60, maxWidth: 140)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(color.opacity(0.6), in: Capsule())
+                .background(color, in: Capsule())
                 .foregroundStyle(textColor)
                 .onAppear {
                     draft = label
@@ -45,7 +45,7 @@ struct SectionLabelBadge: View {
                     .truncationMode(.tail)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
-                    .background(color.opacity(0.6), in: Capsule())
+                    .background(color, in: Capsule())
                     .foregroundStyle(textColor)
                     .overlay(
                         Capsule().strokeBorder(color, lineWidth: isSelected ? 2 : 0)
