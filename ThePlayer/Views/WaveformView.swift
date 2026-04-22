@@ -280,7 +280,7 @@ struct WaveformView: View {
                         }
                     }
                 }
-                .frame(width: totalWidth, height: height)
+                .frame(width: totalWidth, height: height, alignment: .top)
             }
             .gesture(MagnifyGesture().onChanged { value in
                 zoomLevel = max(WaveformZoomMath.minZoom,
