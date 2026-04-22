@@ -29,7 +29,7 @@ struct HorizontalNSScrollView<Content: View>: NSViewRepresentable {
 
         let hosting = TiledHostingView(rootView: AnyView(content()))
         hosting.translatesAutoresizingMaskIntoConstraints = true
-        hosting.frame = NSRect(x: 0, y: 0, width: contentWidth, height: contentHeight)
+        hosting.frame = NSRect(x: 0, y: 0, width: contentWidth, height: Self.docHeight(contentHeight))
         scroll.documentView = hosting
 
         controller.scrollView = scroll
@@ -42,11 +42,18 @@ struct HorizontalNSScrollView<Content: View>: NSViewRepresentable {
         controller.scrollView = nsView
         if let hosting = context.coordinator.hosting as? TiledHostingView<AnyView> {
             hosting.rootView = AnyView(content())
-            let newSize = NSSize(width: contentWidth, height: contentHeight)
+            let newSize = NSSize(width: contentWidth, height: Self.docHeight(contentHeight))
             if hosting.frame.size != newSize {
                 hosting.setFrameSize(newSize)
             }
         }
+    }
+
+    /// Reserve vertical space for the legacy horizontal scroller so the document
+    /// view fits inside the clip view without overflowing.
+    private static func docHeight(_ containerHeight: CGFloat) -> CGFloat {
+        let scrollerThickness = NSScroller.scrollerWidth(for: .regular, scrollerStyle: .legacy)
+        return max(0, containerHeight - scrollerThickness)
     }
 
     final class Coordinator {
