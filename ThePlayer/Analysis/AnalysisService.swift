@@ -66,7 +66,8 @@ final class AnalysisService {
 
     static func mergeCachedAnalysis(_ analysis: TrackAnalysis, userEdits: UserEdits?) -> TrackAnalysis {
         guard let edits = userEdits else { return analysis }
-        let mergedSections = edits.sections.isEmpty ? analysis.sections : edits.sections
+        // Analyzer sections are never consulted; user edits are the only source.
+        let mergedSections = edits.sections
         let mergedBpm = edits.bpmOverride ?? analysis.bpm
         let mergedTimeSig = edits.timeSignatureOverride ?? analysis.timeSignature
         let mergedFirstDb = edits.downbeatTimeOverride ?? analysis.firstDownbeatTime
