@@ -273,6 +273,7 @@ final class SectionEditorViewModel {
     }
 
     private func recomputeBeatsForRange(_ range: ClosedRange<Int>) {
+        guard !sections.isEmpty else { return }
         for i in range where sections.indices.contains(i) {
             let s = sections[i]
             var startBeat = 0
