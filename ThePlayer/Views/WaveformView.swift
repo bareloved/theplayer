@@ -492,7 +492,7 @@ struct WaveformView: View {
                         }
                     )
                     .padding(.leading, 4)
-                    .padding(.top, 3)
+                    .padding(.top, 8)
                     .offset(x: sectionX)
                 }
             }
