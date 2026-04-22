@@ -31,6 +31,13 @@ struct SectionLabelBadge: View {
                     DispatchQueue.main.async { fieldFocused = true }
                 }
                 .onExitCommand { isRenaming = false }
+                // Commit when focus leaves the field (click outside, tab, etc.).
+                .onChange(of: fieldFocused) { _, nowFocused in
+                    if !nowFocused && isRenaming {
+                        onCommitRename(draft)
+                        isRenaming = false
+                    }
+                }
             } else {
                 Text(label.isEmpty ? "Untitled" : label)
                     .font(.caption).bold()
