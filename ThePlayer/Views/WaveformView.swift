@@ -130,6 +130,7 @@ struct WaveformView: View {
                             .onChanged { value in
                                 guard totalWidth > 0, duration > 0 else { return }
                                 if !alignDragActive {
+                                    guard NSEvent.modifierFlags.contains(.command) else { return }
                                     alignDragActive = true
                                     alignDragStartFDT = firstDownbeatTime
                                     NSCursor.closedHand.set()
@@ -143,9 +144,10 @@ struct WaveformView: View {
                                 waveformDragOffset = min(max(value.translation.width, -maxDragLeft), maxDragRight)
                             }
                             .onEnded { _ in
-                                guard let startFDT = alignDragStartFDT else {
+                                guard alignDragActive, let startFDT = alignDragStartFDT else {
                                     waveformDragOffset = 0
                                     alignDragActive = false
+                                    alignDragStartFDT = nil
                                     NSCursor.arrow.set()
                                     return
                                 }
