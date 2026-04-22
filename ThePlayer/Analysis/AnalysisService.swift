@@ -13,16 +13,7 @@ struct EssentiaAnalyzerSwift: TrackAnalyzerProtocol {
 
                     progress(0.8)
 
-                    let sections = result.sections.enumerated().map { _, section in
-                        AudioSection(
-                            label: section.label,
-                            startTime: section.startTime,
-                            endTime: section.endTime,
-                            startBeat: Int(section.startBeat),
-                            endBeat: Int(section.endBeat),
-                            colorIndex: Int(section.colorIndex)
-                        )
-                    }
+                    let sections: [AudioSection] = []
 
                     let beats = result.beats.map { $0.floatValue }
                     let peaks = (try? WaveformExtractor.extractPeaks(from: fileURL)) ?? []
