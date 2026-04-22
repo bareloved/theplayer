@@ -91,13 +91,15 @@ final class AnalysisService {
 
         do {
             let key = try AnalysisCache.fileHash(for: fileURL)
-            lastAnalysisKey = key
 
             if let cached = try cache.retrieve(forKey: key) {
                 let edits = try userEdits.retrieve(forKey: key)
                 hasUserEditsForCurrent = edits != nil
                 baseAnalysis = cached
                 lastAnalysis = Self.mergeCachedAnalysis(cached, userEdits: edits)
+                // Assign key LAST so observers keyed on `lastAnalysisKey` see a
+                // fully-populated `lastAnalysis` when they fire.
+                lastAnalysisKey = key
                 progress = 1.0
                 isAnalyzing = false
                 return
@@ -114,6 +116,7 @@ final class AnalysisService {
             hasUserEditsForCurrent = edits != nil
             baseAnalysis = result
             lastAnalysis = Self.mergeCachedAnalysis(result, userEdits: edits)
+            lastAnalysisKey = key
         } catch {
             analysisError = error.localizedDescription
             lastAnalysis = nil
@@ -131,7 +134,6 @@ final class AnalysisService {
         let key: String
         if let providedKey { key = providedKey }
         else { key = try AnalysisCache.fileHash(for: fileURL) }
-        lastAnalysisKey = key
 
         let result = try await analyzer.analyze(fileURL: fileURL) { [weak self] p in
             Task { @MainActor in self?.progress = p }
@@ -141,6 +143,7 @@ final class AnalysisService {
         hasUserEditsForCurrent = edits != nil
         baseAnalysis = result
         lastAnalysis = Self.mergeCachedAnalysis(result, userEdits: edits)
+        lastAnalysisKey = key
         isAnalyzing = false
     }
 
