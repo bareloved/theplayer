@@ -394,10 +394,13 @@ struct WaveformView: View {
     }
 
     private func sectionBands(width: CGFloat, height: CGFloat) -> some View {
-        HStack(spacing: 0) {
+        ZStack(alignment: .topLeading) {
             ForEach(sections) { section in
+                let sectionX = CGFloat(section.startTime / duration) * width
                 let sectionWidth = CGFloat((section.endTime - section.startTime) / duration) * width
                 let isSelected = section.stableId == selectedSectionId
+
+                // Band background
                 Rectangle()
                     .fill(section.color.opacity(isSelected ? 0.25 : 0.1))
                     .overlay(
@@ -405,8 +408,53 @@ struct WaveformView: View {
                             .strokeBorder(section.color, lineWidth: isSelected ? 2 : 0)
                     )
                     .frame(width: sectionWidth, height: height)
+                    .offset(x: sectionX)
+
+                // Label badge (only if the band has room to show it)
+                if sectionWidth >= 20 {
+                    SectionLabelBadge(
+                        label: section.label,
+                        color: section.color,
+                        isSelected: isSelected,
+                        isRenaming: Binding(
+                            get: { pendingSectionRenameId == section.stableId },
+                            set: { if !$0 { pendingSectionRenameId = nil } }
+                        ),
+                        onCommitRename: { newLabel in
+                            sectionsVM?.rename(sectionId: section.stableId, to: newLabel)
+                        },
+                        onTap: { onSelectSection?(section.stableId) },
+                        contextMenuContent: {
+                            AnyView(
+                                Group {
+                                    Button("Rename") { pendingSectionRenameId = section.stableId }
+                                    Menu("Change Color") {
+                                        ForEach(0..<8, id: \.self) { idx in
+                                            Button(action: {
+                                                sectionsVM?.recolor(sectionId: section.stableId, colorIndex: idx)
+                                            }) {
+                                                Text("•").foregroundColor(AudioSection.color(forIndex: idx))
+                                            }
+                                        }
+                                    }
+                                    Divider()
+                                    Button("Delete", role: .destructive) {
+                                        sectionsVM?.delete(sectionId: section.stableId)
+                                        if selectedSectionId == section.stableId {
+                                            onSelectSection?(nil)
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                    )
+                    .padding(.leading, 4)
+                    .padding(.top, 3)
+                    .offset(x: sectionX)
+                }
             }
         }
+        .frame(width: width, height: height, alignment: .topLeading)
     }
 
     @ViewBuilder

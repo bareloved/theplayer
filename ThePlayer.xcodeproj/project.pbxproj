@@ -40,6 +40,7 @@
 		7861515EFBEFE53E2F5D6A96 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8982BCF190C14AE590C2261C /* SettingsView.swift */; };
 		7A083D949ED86A7019CA3554 /* WaveformExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3536351E8625D9CB1C72D8D5 /* WaveformExtractor.swift */; };
 		7C65E2AF2F876FE8EF222194 /* SectionBoundaryHandle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A48686E6C904A6FBA6028FBF /* SectionBoundaryHandle.swift */; };
+		B1BADEF001000000000000A1 /* SectionLabelBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1BADEF002000000000000A2 /* SectionLabelBadge.swift */; };
 		8627B6EB9945F2DE636DC585 /* LibraryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BBB560288245846FECACB7B /* LibraryServiceTests.swift */; };
 		9CF23F9F27AD41DB0F89BCED /* SongEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADD12242074A22EC6EB1E5A /* SongEntry.swift */; };
 		A1FC707F579F83574BEED62C /* PlayerLibraryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19886AAD63D0E49913A39577 /* PlayerLibraryTests.swift */; };
@@ -118,6 +119,7 @@
 		9C79D8D2FE894770473CC4CE /* ThePlayerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThePlayerApp.swift; sourceTree = "<group>"; };
 		A03B07752B72C37B23CFD647 /* LibrarySidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibrarySidebar.swift; sourceTree = "<group>"; };
 		A48686E6C904A6FBA6028FBF /* SectionBoundaryHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionBoundaryHandle.swift; sourceTree = "<group>"; };
+		B1BADEF002000000000000A2 /* SectionLabelBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionLabelBadge.swift; sourceTree = "<group>"; };
 		AB55C97EE8D9174F2C168E60 /* LoopRegionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopRegionTests.swift; sourceTree = "<group>"; };
 		B5977AA4444DB7CCED9E19ED /* AnalysisCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisCacheTests.swift; sourceTree = "<group>"; };
 		BA74B35A7F37F97C50B887B2 /* HorizontalNSScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorizontalNSScrollView.swift; sourceTree = "<group>"; };
@@ -277,6 +279,7 @@
 			isa = PBXGroup;
 			children = (
 				A48686E6C904A6FBA6028FBF /* SectionBoundaryHandle.swift */,
+				B1BADEF002000000000000A2 /* SectionLabelBadge.swift */,
 				FE7A9AEF57B44BAC317C1109 /* SectionsViewModel.swift */,
 				3DD1849C48D0FB2C04509BC8 /* SectionLabelPresets.swift */,
 			);
@@ -428,6 +431,7 @@
 				022C36FCB67CD59CD64513A4 /* Playlist.swift in Sources */,
 				C4974526D99B1B285A028313 /* ResizableDivider.swift in Sources */,
 				7C65E2AF2F876FE8EF222194 /* SectionBoundaryHandle.swift in Sources */,
+				B1BADEF001000000000000A1 /* SectionLabelBadge.swift in Sources */,
 				33FB5D51EA02965FB20F0B81 /* SectionsViewModel.swift in Sources */,
 				C101B804AC3D8771DB30DA84 /* SectionLabelPresets.swift in Sources */,
 				A3617ECD46F2CFFC5E82B380 /* Setlist.swift in Sources */,
