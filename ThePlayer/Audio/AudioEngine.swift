@@ -206,8 +206,6 @@ final class AudioEngine {
     func playLoop() {
         guard let loop = activeLoop, let file = audioFile else { return }
 
-        let gen = seekGeneration
-
         if !engine.isRunning {
             try? engine.start()
         }
@@ -216,13 +214,22 @@ final class AudioEngine {
         let loopGen = seekGeneration
         playerNode.stop()
 
-        let startFrame = AVAudioFramePosition(Double(loop.startTime) * file.fileFormat.sampleRate)
-        let endFrame = AVAudioFramePosition(Double(loop.endTime) * file.fileFormat.sampleRate)
-        let frameCount = AVAudioFrameCount(endFrame - startFrame)
-        guard frameCount > 0 else { return }
-
         playbackOrigin = loop.startTime
         currentTime = loop.startTime
+
+        scheduleLoopIteration(loop: loop, file: file, gen: loopGen)
+        playerNode.play()
+        state = .playing
+        startTimeTracking()
+        notifyTimingChanged()
+    }
+
+    private func scheduleLoopIteration(loop: LoopRegion, file: AVAudioFile, gen: Int) {
+        let sr = file.fileFormat.sampleRate
+        let startFrame = AVAudioFramePosition(Double(loop.startTime) * sr)
+        let endFrame = AVAudioFramePosition(Double(loop.endTime) * sr)
+        guard endFrame > startFrame else { return }
+        let frameCount = AVAudioFrameCount(endFrame - startFrame)
 
         playerNode.scheduleSegment(
             file,
@@ -231,16 +238,11 @@ final class AudioEngine {
             at: nil
         ) { [weak self] in
             Task { @MainActor in
-                guard let self, self.seekGeneration == loopGen else { return }
-                if self.activeLoop != nil {
-                    self.playLoop()
-                }
+                guard let self, self.seekGeneration == gen,
+                      let active = self.activeLoop, active == loop else { return }
+                self.scheduleLoopIteration(loop: loop, file: file, gen: gen)
             }
         }
-        playerNode.play()
-        state = .playing
-        startTimeTracking()
-        notifyTimingChanged()
     }
 
     private func schedulePlayback(from time: Float, file: AVAudioFile) {
@@ -309,8 +311,9 @@ final class AudioEngine {
         // Visual-only look-ahead: user-tunable extra offset on top of the
         // host-clock interpolation. Does NOT affect click scheduling
         // (which uses `preciseNow` and host-time math).
-        let time = playbackOrigin + elapsed + Float(hostDeltaSeconds) * speed
+        let raw = playbackOrigin + elapsed + Float(hostDeltaSeconds) * speed
             - songLatencySeconds + visualLookAheadSeconds * speed
+        let time = wrapWithinLoop(raw)
         if time >= 0 && time <= duration {
             currentTime = time
         }
@@ -321,9 +324,21 @@ final class AudioEngine {
               nodeTime.isSampleTimeValid,
               let playerTime = playerNode.playerTime(forNodeTime: nodeTime) else { return }
         let elapsed = Float(playerTime.sampleTime) / Float(playerTime.sampleRate)
-        let time = playbackOrigin + elapsed
+        let raw = playbackOrigin + elapsed
+        let time = wrapWithinLoop(raw)
         if time >= 0 && time <= duration {
             currentTime = time
         }
+    }
+
+    /// When a loop is active, the playerNode's sampleTime grows monotonically
+    /// across loop iterations (we chain segments without stopping). Map that
+    /// continuously-advancing time back into [loop.startTime, loop.endTime).
+    private func wrapWithinLoop(_ time: Float) -> Float {
+        guard let loop = activeLoop else { return time }
+        let loopDur = loop.endTime - loop.startTime
+        guard loopDur > 0, time >= loop.startTime else { return time }
+        let offset = (time - loop.startTime).truncatingRemainder(dividingBy: loopDur)
+        return loop.startTime + offset
     }
 }
