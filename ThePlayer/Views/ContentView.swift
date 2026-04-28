@@ -19,6 +19,7 @@ struct ContentView: View {
     @State private var sectionsSidebarWidth: CGFloat = 220
     @State private var sectionsVM: SectionsViewModel?
     @State private var selectedSectionId: UUID?
+    @State private var isBoundaryDragging: Bool = false
     @State private var clickTrackPlayer: ClickTrackPlayer?
     @AppStorage("clickTrackEnabled") private var clickEnabled: Bool = false
     @AppStorage("clickTrackVolume") private var clickVolume: Double = 0.5
@@ -136,6 +137,10 @@ struct ContentView: View {
         .onChange(of: loopRegion) { _, newLoop in
             let effective = isLoopEnabled ? newLoop : nil
             audioEngine.setLoop(effective)
+            // While the user is dragging a section boundary, only update the
+            // loop bounds — don't seek or restart playback. Otherwise every
+            // tick yanks the playhead and starts audio mid-edit.
+            guard !isBoundaryDragging else { return }
             if effective != nil {
                 audioEngine.playLoop()
             } else if let region = newLoop {
@@ -282,6 +287,9 @@ struct ContentView: View {
                             selectedSectionId = nil
                             loopRegion = nil
                         }
+                    },
+                    onBoundaryDragChange: { active in
+                        isBoundaryDragging = active
                     }
                 )
 

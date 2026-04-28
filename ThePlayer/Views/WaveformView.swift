@@ -21,6 +21,7 @@ struct WaveformView: View {
     let sectionsVM: SectionsViewModel?
     let selectedSectionId: UUID?
     let onSelectSection: ((UUID?) -> Void)?
+    let onBoundaryDragChange: ((Bool) -> Void)?
 
     @State private var zoomLevel: CGFloat = 1.0
     @State private var scrollOffset: CGFloat = 0
@@ -44,6 +45,8 @@ struct WaveformView: View {
     @State private var pendingSectionRenameId: UUID?
     @State private var cachedGridPositions: [Float] = []
     @State private var cachedBarPositions: Set<Float> = []
+    @State private var isOptionHeld: Bool = false
+    @State private var flagsMonitor: Any?
 
     private static let onsetSnapMaxPx: Double = 30
 
@@ -382,7 +385,20 @@ struct WaveformView: View {
             }
             .padding(8)
         }
-        .onAppear { recomputeGridCaches() }
+        .onAppear {
+            recomputeGridCaches()
+            isOptionHeld = NSEvent.modifierFlags.contains(.option)
+            flagsMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { event in
+                isOptionHeld = event.modifierFlags.contains(.option)
+                return event
+            }
+        }
+        .onDisappear {
+            if let monitor = flagsMonitor {
+                NSEvent.removeMonitor(monitor)
+                flagsMonitor = nil
+            }
+        }
         .onChange(of: bpm) { _, _ in recomputeGridCaches() }
         .onChange(of: duration) { _, _ in recomputeGridCaches() }
         .onChange(of: firstDownbeatTime) { _, _ in recomputeGridCaches() }
@@ -588,13 +604,14 @@ struct WaveformView: View {
                     xPosition: x,
                     height: height,
                     isHovered: false,
-                    onDragChanged: { delta in
-                        let timeDelta = Float(delta / width) * duration
-                        let newTime = section.startTime + timeDelta
+                    isDisabled: isOptionHeld,
+                    onDragChanged: { targetX in
+                        let newTime = Float(targetX / width) * duration
                         let snap = !NSEvent.modifierFlags.contains(.option)
                         vm.moveBoundary(beforeSectionId: section.stableId, toTime: newTime, snapToBeat: snap)
                     },
-                    onDragEnded: { /* persistence handled via vm.onChange */ }
+                    onDragStarted: { onBoundaryDragChange?(true) },
+                    onDragEnded: { onBoundaryDragChange?(false) }
                 )
             }
         }

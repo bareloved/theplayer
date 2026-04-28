@@ -1,15 +1,25 @@
 import SwiftUI
 
 /// A draggable vertical handle positioned at a section boundary.
-/// `xPosition` is the current pixel x; the parent maps drag-translation back to time.
+/// `xPosition` is the current pixel x; the parent maps the reported
+/// absolute target X back to time.
 struct SectionBoundaryHandle: View {
     let xPosition: CGFloat
     let height: CGFloat
     let isHovered: Bool
-    let onDragChanged: (CGFloat) -> Void  // delta in pixels from drag start
+    /// When true the handle does not respond to clicks/drags, so other
+    /// gestures layered on the waveform (e.g. option-drag to create a new
+    /// section) can fire without being intercepted by this handle.
+    let isDisabled: Bool
+    /// Reports the absolute target x position (in the parent's coordinate
+    /// space) the boundary should snap to. Computed from the handle's
+    /// position at drag-start plus the gesture's translation, so it stays
+    /// stable across re-renders that update `xPosition`.
+    let onDragChanged: (CGFloat) -> Void
+    let onDragStarted: () -> Void
     let onDragEnded: () -> Void
 
-    @State private var dragStartX: CGFloat?
+    @State private var dragStartXPosition: CGFloat?
 
     var body: some View {
         Rectangle()
@@ -27,17 +37,21 @@ struct SectionBoundaryHandle: View {
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
-                        if dragStartX == nil { dragStartX = value.startLocation.x }
-                        let delta = value.location.x - (dragStartX ?? value.startLocation.x)
-                        onDragChanged(delta)
+                        if dragStartXPosition == nil {
+                            dragStartXPosition = xPosition
+                            onDragStarted()
+                        }
+                        let startX = dragStartXPosition ?? xPosition
+                        onDragChanged(startX + value.translation.width)
                     }
                     .onEnded { _ in
-                        dragStartX = nil
+                        dragStartXPosition = nil
                         onDragEnded()
                     }
             )
-            .onHover { _ in
-                NSCursor.resizeLeftRight.set()
+            .onHover { hovering in
+                if hovering && !isDisabled { NSCursor.resizeLeftRight.set() }
             }
+            .allowsHitTesting(!isDisabled)
     }
 }
