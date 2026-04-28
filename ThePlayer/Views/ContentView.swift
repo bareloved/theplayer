@@ -138,6 +138,11 @@ struct ContentView: View {
             audioEngine.setLoop(effective)
             if effective != nil {
                 audioEngine.playLoop()
+            } else if let region = newLoop {
+                // Toggle is off but the user just designated a region (e.g., by
+                // clicking a section): jump the playhead there so the click
+                // still feels like navigation.
+                audioEngine.seek(to: region.startTime)
             }
         }
         .onChange(of: isLoopEnabled) { _, enabled in
@@ -249,6 +254,7 @@ struct ContentView: View {
                     duration: audioEngine.duration,
                     currentTime: audioEngine.currentTime,
                     loopRegion: loopRegion,
+                    isLoopEnabled: isLoopEnabled,
                     onSeek: { time in audioEngine.seek(to: time) },
                     onLoopRegionSet: { region in
                         loopRegion = region
@@ -543,7 +549,8 @@ struct ContentView: View {
             audioEngine.pitch += 1
             return true
         case 37: // L
-            if loopRegion != nil { loopRegion = nil }
+            // Mirror the Loop on/off button. No-op when no region exists.
+            if loopRegion != nil { isLoopEnabled.toggle() }
             return true
         case 51: // Delete/Backspace
             if let id = selectedSectionId {

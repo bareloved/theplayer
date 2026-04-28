@@ -12,6 +12,7 @@ struct WaveformView: View {
     let duration: Float
     let currentTime: Float
     let loopRegion: LoopRegion?
+    let isLoopEnabled: Bool
     let onSeek: (Float) -> Void
     let onLoopRegionSet: (LoopRegion) -> Void
     let firstDownbeatTime: Float
@@ -89,7 +90,9 @@ struct WaveformView: View {
                         geoWidth: geo.size.width,
                         bandHeight: bandHeight,
                         zoomLevel: $zoomLevel,
-                        scrollController: scrollController
+                        scrollController: scrollController,
+                        loopRegion: loopRegion,
+                        isLoopEnabled: isLoopEnabled
                     )
 
                     ZStack(alignment: .leading) {
@@ -690,27 +693,13 @@ struct WaveformView: View {
     private func loopOverlay(loop: LoopRegion, width: CGFloat, height: CGFloat) -> some View {
         let startX = CGFloat(loop.startTime / duration) * width
         let endX = CGFloat(loop.endTime / duration) * width
-        return ZStack(alignment: .topLeading) {
-            Rectangle()
-                .fill(.blue.opacity(0.1))
-                .frame(width: endX - startX, height: height)
-
-            Rectangle()
-                .fill(.blue.opacity(0.5))
-                .frame(width: 2, height: height)
-
-            Rectangle()
-                .fill(.blue.opacity(0.5))
-                .frame(width: 2, height: height)
-                .offset(x: endX - startX - 2)
-
-            Text("LOOP")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(.blue)
-                .padding(4)
-        }
-        .offset(x: startX)
-        .allowsHitTesting(false)
+        let tintColor: Color = isLoopEnabled ? .blue : .gray
+        let tintOpacity: Double = isLoopEnabled ? 0.08 : 0.05
+        return Rectangle()
+            .fill(tintColor.opacity(tintOpacity))
+            .frame(width: max(0, endX - startX), height: height)
+            .offset(x: startX)
+            .allowsHitTesting(false)
     }
 
     private func hoverTooltip(time: Float, location: CGPoint) -> some View {

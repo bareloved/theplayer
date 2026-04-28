@@ -16,6 +16,8 @@ struct WaveformRulerBand: View {
     let bandHeight: CGFloat
     @Binding var zoomLevel: CGFloat
     let scrollController: ScrollController
+    let loopRegion: LoopRegion?
+    let isLoopEnabled: Bool
 
     @State private var dragStartZoom: CGFloat?
     @State private var dragAnchorFraction: CGFloat?
@@ -42,6 +44,41 @@ struct WaveformRulerBand: View {
                 drawTicksAndLabels(in: &context, size: size, xRange: xRange)
             }
             .allowsHitTesting(false)
+
+            if let loop = loopRegion, duration > 0 {
+                let startX = CGFloat(loop.startTime / duration) * totalWidth
+                let endX = CGFloat(loop.endTime / duration) * totalWidth
+                let width = max(0, endX - startX)
+                let bracketColor: Color = isLoopEnabled ? .blue : .secondary
+                ZStack(alignment: .topLeading) {
+                    // Thin horizontal bar across the top of the band.
+                    Rectangle()
+                        .fill(bracketColor)
+                        .frame(width: width, height: 2)
+                    // Right-pointing cap at the start.
+                    Path { p in
+                        p.move(to: CGPoint(x: 0, y: 0))
+                        p.addLine(to: CGPoint(x: 7, y: 0))
+                        p.addLine(to: CGPoint(x: 0, y: 7))
+                        p.closeSubpath()
+                    }
+                    .fill(bracketColor)
+                    .frame(width: 7, height: 7)
+                    // Left-pointing cap at the end.
+                    Path { p in
+                        p.move(to: CGPoint(x: 7, y: 0))
+                        p.addLine(to: CGPoint(x: 0, y: 0))
+                        p.addLine(to: CGPoint(x: 7, y: 7))
+                        p.closeSubpath()
+                    }
+                    .fill(bracketColor)
+                    .frame(width: 7, height: 7)
+                    .offset(x: width - 7)
+                }
+                .frame(width: width, height: bandHeight, alignment: .topLeading)
+                .offset(x: startX)
+                .allowsHitTesting(false)
+            }
         }
         .frame(width: totalWidth, height: bandHeight)
     }
