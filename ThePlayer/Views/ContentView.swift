@@ -138,49 +138,41 @@ struct ContentView: View {
             let effective = isLoopEnabled ? newLoop : nil
             audioEngine.setLoop(effective)
             // While the user is dragging a section boundary, only update the
-            // loop bounds — don't seek or restart playback. Otherwise every
-            // tick yanks the playhead and starts audio mid-edit.
+            // loop bounds — don't seek. Otherwise every tick yanks the playhead.
             guard !isBoundaryDragging else { return }
-            if effective != nil {
-                audioEngine.playLoop()
-            } else if let region = newLoop {
-                // Toggle is off but the user just designated a region (e.g., by
+            if !isLoopEnabled, let region = newLoop {
+                // Loop disabled but the user just designated a region (e.g. by
                 // clicking a section): jump the playhead there so the click
                 // still feels like navigation.
                 audioEngine.seek(to: region.startTime)
             }
+            // If isLoopEnabled is true, setLoop() above re-armed the loop
+            // in place. We deliberately do NOT seek to loop.startTime —
+            // playback continues; the loop wraps when its end is reached.
         }
         .onChange(of: isLoopEnabled) { _, enabled in
-            if enabled, let region = loopRegion {
-                audioEngine.setLoop(region)
-                audioEngine.playLoop()
-            } else {
-                audioEngine.setLoop(nil)
-            }
+            audioEngine.setLoop(enabled ? loopRegion : nil)
         }
         .onAppear {
             installKeyMonitor()
             if clickTrackPlayer == nil {
                 let ctp = ClickTrackPlayer(audioEngine: audioEngine)
-                ctp.isEnabled = clickEnabled
                 ctp.volume = Float(clickVolume)
                 clickTrackPlayer = ctp
-                audioEngine.onTimingChanged = {
-                    rescheduleClicks()
-                }
+                pushClickAnalysis()
+                ctp.isEnabled = clickEnabled
             }
         }
         .onDisappear { removeKeyMonitor() }
         .onChange(of: clickEnabled) { _, newValue in
             clickTrackPlayer?.isEnabled = newValue
-            rescheduleClicks()
         }
         .onChange(of: clickVolume) { _, newValue in
             clickTrackPlayer?.volume = Float(newValue)
         }
-        .onChange(of: analysisService.lastAnalysis?.bpm) { _, _ in rescheduleClicks() }
-        .onChange(of: analysisService.lastAnalysis?.firstDownbeatTime) { _, _ in rescheduleClicks() }
-        .onChange(of: analysisService.lastAnalysis?.timeSignature) { _, _ in rescheduleClicks() }
+        .onChange(of: analysisService.lastAnalysis?.bpm) { _, _ in pushClickAnalysis() }
+        .onChange(of: analysisService.lastAnalysis?.firstDownbeatTime) { _, _ in pushClickAnalysis() }
+        .onChange(of: analysisService.lastAnalysis?.timeSignature) { _, _ in pushClickAnalysis() }
         .onChange(of: analysisService.lastAnalysisKey) { _, newKey in
             guard newKey != nil, let analysis = analysisService.lastAnalysis else {
                 sectionsVM = nil
@@ -341,21 +333,20 @@ struct ContentView: View {
         }
     }
 
-    private func rescheduleClicks() {
+    /// Push the current analysis snapshot into the click scheduler. Slot in
+    /// when bpm / first-downbeat / time-signature change. Speed changes are
+    /// picked up live by the scheduler's refill tick — no call needed here.
+    private func pushClickAnalysis() {
         guard let player = clickTrackPlayer else { return }
-        guard audioEngine.isPlaying,
-              clickEnabled,
-              let analysis = analysisService.lastAnalysis,
+        guard let analysis = analysisService.lastAnalysis,
               !analysis.beats.isEmpty else {
-            player.stop()
+            player.updateAnalysis(bpm: 0, firstDownbeatTime: 0, beatsPerBar: 4)
             return
         }
-        let firstDownbeat = analysis.firstDownbeatTime
-        player.reschedule(
+        player.updateAnalysis(
             bpm: analysis.bpm,
-            firstDownbeatTime: firstDownbeat,
-            beatsPerBar: analysis.timeSignature.beatsPerBar,
-            speed: audioEngine.speed
+            firstDownbeatTime: analysis.firstDownbeatTime,
+            beatsPerBar: analysis.timeSignature.beatsPerBar
         )
     }
 

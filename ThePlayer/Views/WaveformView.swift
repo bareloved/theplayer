@@ -618,63 +618,20 @@ struct WaveformView: View {
     }
 
     private func waveformBars(width: CGFloat, height: CGFloat) -> some View {
-        TiledCanvas(totalWidth: width, height: height) { context, size, xRange in
-            guard !peaks.isEmpty else { return }
-            let midY = size.height / 2
-            let n = peaks.count
-
-            // Cap segments at peak count — never exceed available data.
-            // Smoothness comes from rendering peaks as a continuous filled
-            // envelope, not from drawing more bars.
-            let segments = max(1, min(Int(size.width), n))
-            let peakPerSegment = CGFloat(n) / CGFloat(segments)
-            let segmentWidth = size.width / CGFloat(segments)
-
-            let playedX = duration > 0 ? CGFloat(currentTime / duration) * size.width : 0
-
-            let firstSeg = max(0, Int(floor(xRange.lowerBound / segmentWidth)) - 1)
-            let lastSeg = min(segments, Int(ceil(xRange.upperBound / segmentWidth)) + 1)
-            guard lastSeg > firstSeg else { return }
-
-            // Sample (x, halfHeight) for each visible segment.
-            var samples: [(x: CGFloat, half: CGFloat)] = []
-            samples.reserveCapacity(lastSeg - firstSeg)
-            for s in firstSeg..<lastSeg {
-                let x = (CGFloat(s) + 0.5) * segmentWidth
-                var pk: Float = 0
-                if peakPerSegment >= 1 {
-                    let fromIdx = Int(CGFloat(s) * peakPerSegment)
-                    let toIdx = min(n, max(fromIdx + 1, Int(CGFloat(s + 1) * peakPerSegment)))
-                    for i in fromIdx..<toIdx { pk = max(pk, peaks[i]) }
-                } else {
-                    let pIdx = (CGFloat(s) + 0.5) * peakPerSegment
-                    let i0 = max(0, min(n - 1, Int(pIdx)))
-                    let i1 = min(n - 1, i0 + 1)
-                    let frac = Float(pIdx - CGFloat(i0))
-                    pk = peaks[i0] * (1 - frac) + peaks[i1] * frac
+        // Played-overlay width depends on currentTime, but lives OUTSIDE the
+        // bar-rendering Canvas — so the gray and blue envelope tiles are not
+        // re-rasterized on every 60 Hz playhead tick. Only the cheap mask
+        // rectangle's width changes; SwiftUI's compositor adjusts the clip
+        // region without rebuilding the underlying tile textures.
+        let playedX = duration > 0 ? CGFloat(currentTime / duration) * width : 0
+        return ZStack(alignment: .leading) {
+            WaveformBarsLayer(peaks: peaks, totalWidth: width, height: height, color: Color.gray.opacity(0.5))
+                .equatable()
+            WaveformBarsLayer(peaks: peaks, totalWidth: width, height: height, color: .blue)
+                .equatable()
+                .mask(alignment: .leading) {
+                    Rectangle().frame(width: max(0, playedX), height: height)
                 }
-                samples.append((x, CGFloat(pk) * size.height * 0.48))
-            }
-
-            // One closed envelope: top edge left→right, bottom edge right→left.
-            var env = Path()
-            env.move(to: CGPoint(x: samples[0].x, y: midY - samples[0].half))
-            for s in samples.dropFirst() {
-                env.addLine(to: CGPoint(x: s.x, y: midY - s.half))
-            }
-            for s in samples.reversed() {
-                env.addLine(to: CGPoint(x: s.x, y: midY + s.half))
-            }
-            env.closeSubpath()
-
-            context.fill(env, with: .color(.gray.opacity(0.5)))
-            // Played overlay: fill the same envelope clipped to [0, playedX].
-            if playedX > xRange.lowerBound {
-                context.drawLayer { layer in
-                    layer.clip(to: Path(CGRect(x: 0, y: 0, width: playedX, height: size.height)))
-                    layer.fill(env, with: .color(.blue))
-                }
-            }
         }
         .allowsHitTesting(false)
     }
@@ -748,6 +705,72 @@ struct WaveformView: View {
         let mins = Int(seconds) / 60
         let secs = Int(seconds) % 60
         return "\(mins):\(String(format: "%02d", secs))"
+    }
+}
+
+/// Stable bar layer extracted from `WaveformView` so SwiftUI's diff can skip
+/// re-rendering the heavy tiled Canvas when only `currentTime` changes in the
+/// parent. With `.equatable()`, SwiftUI compares props memberwise — and since
+/// peaks/width/height/color don't change per playhead tick, the underlying
+/// `TiledCanvas` tiles keep their cached textures.
+struct WaveformBarsLayer: View, Equatable {
+    let peaks: [Float]
+    let totalWidth: CGFloat
+    let height: CGFloat
+    let color: Color
+
+    static func == (lhs: WaveformBarsLayer, rhs: WaveformBarsLayer) -> Bool {
+        lhs.totalWidth == rhs.totalWidth &&
+        lhs.height == rhs.height &&
+        lhs.color == rhs.color &&
+        lhs.peaks == rhs.peaks   // Array == short-circuits on buffer-identity (COW)
+    }
+
+    var body: some View {
+        TiledCanvas(totalWidth: totalWidth, height: height) { context, size, xRange in
+            guard !peaks.isEmpty else { return }
+            let midY = size.height / 2
+            let n = peaks.count
+
+            let segments = max(1, min(Int(size.width), n))
+            let peakPerSegment = CGFloat(n) / CGFloat(segments)
+            let segmentWidth = size.width / CGFloat(segments)
+
+            let firstSeg = max(0, Int(floor(xRange.lowerBound / segmentWidth)) - 1)
+            let lastSeg = min(segments, Int(ceil(xRange.upperBound / segmentWidth)) + 1)
+            guard lastSeg > firstSeg else { return }
+
+            var samples: [(x: CGFloat, half: CGFloat)] = []
+            samples.reserveCapacity(lastSeg - firstSeg)
+            for s in firstSeg..<lastSeg {
+                let x = (CGFloat(s) + 0.5) * segmentWidth
+                var pk: Float = 0
+                if peakPerSegment >= 1 {
+                    let fromIdx = Int(CGFloat(s) * peakPerSegment)
+                    let toIdx = min(n, max(fromIdx + 1, Int(CGFloat(s + 1) * peakPerSegment)))
+                    for i in fromIdx..<toIdx { pk = max(pk, peaks[i]) }
+                } else {
+                    let pIdx = (CGFloat(s) + 0.5) * peakPerSegment
+                    let i0 = max(0, min(n - 1, Int(pIdx)))
+                    let i1 = min(n - 1, i0 + 1)
+                    let frac = Float(pIdx - CGFloat(i0))
+                    pk = peaks[i0] * (1 - frac) + peaks[i1] * frac
+                }
+                samples.append((x, CGFloat(pk) * size.height * 0.48))
+            }
+
+            var env = Path()
+            env.move(to: CGPoint(x: samples[0].x, y: midY - samples[0].half))
+            for s in samples.dropFirst() {
+                env.addLine(to: CGPoint(x: s.x, y: midY - s.half))
+            }
+            for s in samples.reversed() {
+                env.addLine(to: CGPoint(x: s.x, y: midY + s.half))
+            }
+            env.closeSubpath()
+
+            context.fill(env, with: .color(color))
+        }
     }
 }
 
