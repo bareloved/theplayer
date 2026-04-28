@@ -40,6 +40,8 @@ struct WaveformView: View {
     @State private var sectionDragStartTime: Float?
     @State private var sectionDragCurrentTime: Float?
     @State private var pendingSectionRenameId: UUID?
+    @State private var cachedGridPositions: [Float] = []
+    @State private var cachedBarPositions: Set<Float> = []
 
     private static let onsetSnapMaxPx: Double = 30
 
@@ -126,15 +128,6 @@ struct WaveformView: View {
                             .offset(x: waveformDragOffset)
                         downbeatIndicator(width: totalWidth, height: waveHeight)
 
-                        if let onset = highlightedOnset, duration > 0 {
-                            let x = CGFloat(onset / duration) * totalWidth
-                            Rectangle()
-                                .fill(Color.accentColor.opacity(0.5))
-                                .frame(width: 1, height: waveHeight)
-                                .offset(x: x)
-                                .allowsHitTesting(false)
-                        }
-
                         if let vm = sectionsVM {
                             boundaryHandles(viewModel: vm, width: totalWidth, height: waveHeight)
                                 .offset(x: waveformDragOffset)
@@ -145,8 +138,15 @@ struct WaveformView: View {
                                 .offset(x: waveformDragOffset)
                         }
 
-                        if let time = hoverTime, let loc = hoverLocation {
-                            hoverTooltip(time: time, location: loc)
+                        if let time = hoverTime, let loc = hoverLocation, duration > 0 {
+                            let displayTime = snapToGrid ? nearestBeatTime(to: time) : time
+                            let hoverX = CGFloat(displayTime / duration) * totalWidth
+                            Rectangle()
+                                .fill(Color.accentColor.opacity(0.6))
+                                .frame(width: 1, height: waveHeight)
+                                .position(x: hoverX, y: waveHeight / 2)
+                                .allowsHitTesting(false)
+                            hoverTooltip(time: displayTime, location: CGPoint(x: hoverX, y: loc.y))
                         }
 
                         // Section label badges are rendered LAST so they sit on
@@ -252,9 +252,15 @@ struct WaveformView: View {
                         let fraction = Float(location.x / totalWidth)
                         let time = fraction * duration
                         if isSettingLoop {
-                            onLoopPointSet(time)
+                            // Snap loop endpoints to the visible bar grid (the
+                            // same grid the user sees), nearest boundary. Beat
+                            // snap landed mid-bar; floor/ceil jumped a full bar
+                            // ahead/behind the clicked one.
+                            let snapped = snapToGrid ? nearestGridTime(to: time) : time
+                            onLoopPointSet(snapped)
                         } else {
-                            onSeek(snapToGrid ? nearestGridTime(to: time) : time)
+                            let snapped = snapToGrid ? nearestBeatTime(to: time) : time
+                            onSeek(snapped)
                         }
                     }
                     .contextMenu {
@@ -338,6 +344,18 @@ struct WaveformView: View {
                     .allowsHitTesting(false)
             }
         }
+        .onAppear { recomputeGridCaches() }
+        .onChange(of: bpm) { _, _ in recomputeGridCaches() }
+        .onChange(of: duration) { _, _ in recomputeGridCaches() }
+        .onChange(of: firstDownbeatTime) { _, _ in recomputeGridCaches() }
+        .onChange(of: timeSignature) { _, _ in recomputeGridCaches() }
+        .onChange(of: snapDivision) { _, _ in recomputeGridCaches() }
+        .onChange(of: beats) { _, _ in recomputeGridCaches() }
+    }
+
+    private func recomputeGridCaches() {
+        cachedGridPositions = gridPositions
+        cachedBarPositions = barPositions
     }
 
     /// Largest grid position ≤ `t`, or `t` itself if no grid is available or `t` precedes the grid.
@@ -371,6 +389,18 @@ struct WaveformView: View {
             }
         }
         return best
+    }
+
+    /// Nearest beat time to `t`. Uses BPM-derived beat positions (independent of
+    /// the bar-level `snapDivision`), so seek/hover snap feels musical.
+    private func nearestBeatTime(to t: Float) -> Float {
+        guard bpm > 0, duration > 0 else { return t }
+        let beatDuration: Float = 60.0 / bpm
+        guard beatDuration > 0 else { return t }
+        let origin: Float = firstDownbeatTime
+        let n = ((t - origin) / beatDuration).rounded()
+        let snapped = origin + n * beatDuration
+        return min(max(snapped, 0), duration)
     }
 
     /// Grid positions based on current snap division
@@ -407,24 +437,32 @@ struct WaveformView: View {
     }
 
     private func barLines(width: CGFloat, height: CGFloat) -> some View {
-        TiledCanvas(totalWidth: width, height: height) { context, size, xRange in
+        // Snapshot once per view evaluation; closures below capture by value
+        // so the per-tile redraw doesn't recompute either.
+        let grid = cachedGridPositions
+        let bars = cachedBarPositions
+        return TiledCanvas(totalWidth: width, height: height) { context, size, xRange in
             guard duration > 0 else { return }
             let pad: CGFloat = 2
 
-            for gridTime in gridPositions {
+            // Build one combined path per stroke style, fill each once.
+            var barPath = Path()
+            var beatPath = Path()
+            for gridTime in grid {
                 let x = CGFloat(gridTime / duration) * size.width
                 if x < xRange.lowerBound - pad || x > xRange.upperBound + pad { continue }
                 let rounded = (gridTime * 100).rounded() / 100
-                let isBar = barPositions.contains(rounded)
-
-                var path = Path()
-                path.move(to: CGPoint(x: x, y: 0))
-                path.addLine(to: CGPoint(x: x, y: size.height))
-
-                let opacity: CGFloat = isBar ? 0.45 : 0.2
-                let lw: CGFloat = isBar ? 1.5 : 0.75
-                context.stroke(path, with: .color(.white.opacity(opacity)), lineWidth: lw)
+                let isBar = bars.contains(rounded)
+                if isBar {
+                    barPath.move(to: CGPoint(x: x, y: 0))
+                    barPath.addLine(to: CGPoint(x: x, y: size.height))
+                } else {
+                    beatPath.move(to: CGPoint(x: x, y: 0))
+                    beatPath.addLine(to: CGPoint(x: x, y: size.height))
+                }
             }
+            context.stroke(beatPath, with: .color(.white.opacity(0.2)), lineWidth: 0.75)
+            context.stroke(barPath, with: .color(.white.opacity(0.45)), lineWidth: 1.5)
         }
         .allowsHitTesting(false)
     }
@@ -530,33 +568,57 @@ struct WaveformView: View {
             let midY = size.height / 2
             let n = peaks.count
 
-            // Draw at most one rect per peak (when zoomed in) or one per pixel
-            // (when zoomed out) — whichever is smaller. Prevents stretched
-            // staircase at high zoom and caps the draw count at low zoom.
+            // Cap segments at peak count — never exceed available data.
+            // Smoothness comes from rendering peaks as a continuous filled
+            // envelope, not from drawing more bars.
             let segments = max(1, min(Int(size.width), n))
             let peakPerSegment = CGFloat(n) / CGFloat(segments)
             let segmentWidth = size.width / CGFloat(segments)
 
             let playedX = duration > 0 ? CGFloat(currentTime / duration) * size.width : 0
 
-            // Only iterate segments that fall inside this tile's x-range.
             let firstSeg = max(0, Int(floor(xRange.lowerBound / segmentWidth)) - 1)
             let lastSeg = min(segments, Int(ceil(xRange.upperBound / segmentWidth)) + 1)
+            guard lastSeg > firstSeg else { return }
+
+            // Sample (x, halfHeight) for each visible segment.
+            var samples: [(x: CGFloat, half: CGFloat)] = []
+            samples.reserveCapacity(lastSeg - firstSeg)
             for s in firstSeg..<lastSeg {
-                let x = CGFloat(s) * segmentWidth
-                let fromIdx = Int(CGFloat(s) * peakPerSegment)
-                let toIdx = min(n, max(fromIdx + 1, Int(CGFloat(s + 1) * peakPerSegment)))
+                let x = (CGFloat(s) + 0.5) * segmentWidth
                 var pk: Float = 0
-                for i in fromIdx..<toIdx { pk = max(pk, peaks[i]) }
-                let halfBar = CGFloat(pk) * size.height * 0.48
-                let rect = CGRect(
-                    x: x,
-                    y: midY - halfBar,
-                    width: max(segmentWidth, 0.5),
-                    height: halfBar * 2
-                )
-                let color: Color = (x < playedX) ? .blue : .gray.opacity(0.5)
-                context.fill(Path(rect), with: .color(color))
+                if peakPerSegment >= 1 {
+                    let fromIdx = Int(CGFloat(s) * peakPerSegment)
+                    let toIdx = min(n, max(fromIdx + 1, Int(CGFloat(s + 1) * peakPerSegment)))
+                    for i in fromIdx..<toIdx { pk = max(pk, peaks[i]) }
+                } else {
+                    let pIdx = (CGFloat(s) + 0.5) * peakPerSegment
+                    let i0 = max(0, min(n - 1, Int(pIdx)))
+                    let i1 = min(n - 1, i0 + 1)
+                    let frac = Float(pIdx - CGFloat(i0))
+                    pk = peaks[i0] * (1 - frac) + peaks[i1] * frac
+                }
+                samples.append((x, CGFloat(pk) * size.height * 0.48))
+            }
+
+            // One closed envelope: top edge left→right, bottom edge right→left.
+            var env = Path()
+            env.move(to: CGPoint(x: samples[0].x, y: midY - samples[0].half))
+            for s in samples.dropFirst() {
+                env.addLine(to: CGPoint(x: s.x, y: midY - s.half))
+            }
+            for s in samples.reversed() {
+                env.addLine(to: CGPoint(x: s.x, y: midY + s.half))
+            }
+            env.closeSubpath()
+
+            context.fill(env, with: .color(.gray.opacity(0.5)))
+            // Played overlay: fill the same envelope clipped to [0, playedX].
+            if playedX > xRange.lowerBound {
+                context.drawLayer { layer in
+                    layer.clip(to: Path(CGRect(x: 0, y: 0, width: playedX, height: size.height)))
+                    layer.fill(env, with: .color(.blue))
+                }
             }
         }
         .allowsHitTesting(false)
@@ -618,16 +680,21 @@ struct WaveformView: View {
 
     private func pendingLoopMarker(start: Float, width: CGFloat, height: CGFloat) -> some View {
         let x = duration > 0 ? CGFloat(start / duration) * width : 0
-        return VStack(spacing: 2) {
-            Text("A")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(.orange)
-            Rectangle()
-                .fill(.orange)
-                .frame(width: 2, height: height)
-        }
-        .offset(x: x)
-        .allowsHitTesting(false)
+        // Anchor on the 2px line; overlay the "A" label so the line stays
+        // pixel-aligned with `x`. A wrapping VStack would center the line
+        // inside the wider text frame and shift it a few px off-grid.
+        return Rectangle()
+            .fill(.orange)
+            .frame(width: 2, height: height)
+            .overlay(alignment: .top) {
+                Text("A")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.orange)
+                    .fixedSize()
+                    .offset(y: -12)
+            }
+            .offset(x: x)
+            .allowsHitTesting(false)
     }
 
     private func hoverTooltip(time: Float, location: CGPoint) -> some View {

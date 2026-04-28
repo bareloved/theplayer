@@ -29,6 +29,42 @@ struct ContentView: View {
         return sectionsVM?.sections.first(where: { $0.stableId == id })
     }
 
+    private var sectionsSidebar: some View {
+        SidebarView(
+            sections: sectionsVM?.sections ?? [],
+            bpm: analysisService.lastAnalysis?.bpm,
+            timeSignature: analysisService.lastAnalysis?.timeSignature ?? .fourFour,
+            duration: audioEngine.duration,
+            sampleRate: audioEngine.sampleRate,
+            onSectionTap: { section in
+                selectedSectionId = section.stableId
+                loopRegion = LoopRegion.from(section: section)
+            },
+            onRename: { id, newLabel in
+                sectionsVM?.rename(sectionId: id, to: newLabel)
+            },
+            onDelete: { id in
+                sectionsVM?.delete(sectionId: id)
+                if selectedSectionId == id {
+                    selectedSectionId = nil
+                    loopRegion = nil
+                }
+            },
+            selectedSection: Binding(
+                get: { self.selectedSection },
+                set: { newValue in
+                    if let section = newValue {
+                        self.selectedSectionId = section.stableId
+                        self.loopRegion = LoopRegion.from(section: section)
+                    } else {
+                        self.selectedSectionId = nil
+                        self.loopRegion = nil
+                    }
+                }
+            )
+        )
+    }
+
     var body: some View {
         HStack(spacing: 0) {
             // Left: Library sidebar
@@ -40,6 +76,13 @@ struct ContentView: View {
                     },
                     onSetlistSongSelect: { song, setlistId, index in
                         loadSongFromLibrary(song)
+                    },
+                    onReanalyze: { song in
+                        guard song.fileExists else { return }
+                        let url = URL(fileURLWithPath: song.filePath)
+                        Task {
+                            try? await analysisService.reanalyze(fileURL: url)
+                        }
                     },
                     currentSongPath: audioEngine.fileURL?.path
                 )
@@ -61,37 +104,8 @@ struct ContentView: View {
             // Right: Sections sidebar
             if showSectionsSidebar && audioEngine.state != .empty {
                 ResizableDivider(dimension: $sectionsSidebarWidth, minSize: 160, maxSize: 400, isLeading: false)
-
-                SidebarView(
-                    sections: sectionsVM?.sections ?? [],
-                    bpm: analysisService.lastAnalysis?.bpm,
-                    timeSignature: analysisService.lastAnalysis?.timeSignature ?? .fourFour,
-                    duration: audioEngine.duration,
-                    sampleRate: audioEngine.sampleRate,
-                    onSectionTap: { section in
-                        selectedSectionId = section.stableId
-                        let loop = LoopRegion.from(section: section)
-                        loopRegion = loop
-                        audioEngine.setLoop(loop)
-                        audioEngine.playLoop()
-                    },
-                    selectedSection: Binding(
-                        get: { self.selectedSection },
-                        set: { newValue in
-                            if let section = newValue {
-                                self.selectedSectionId = section.stableId
-                                let loop = LoopRegion.from(section: section)
-                                self.loopRegion = loop
-                                self.audioEngine.setLoop(loop)
-                            } else {
-                                self.selectedSectionId = nil
-                                self.loopRegion = nil
-                                self.audioEngine.setLoop(nil)
-                            }
-                        }
-                    )
-                )
-                .frame(width: sectionsSidebarWidth)
+                sectionsSidebar
+                    .frame(width: sectionsSidebarWidth)
             }
         }
         .frame(minWidth: 800, minHeight: 500)
@@ -122,7 +136,7 @@ struct ContentView: View {
         }
         .onChange(of: loopRegion) { _, newLoop in
             audioEngine.setLoop(newLoop)
-            if let newLoop, audioEngine.isPlaying {
+            if newLoop != nil {
                 audioEngine.playLoop()
             }
         }
@@ -165,13 +179,11 @@ struct ContentView: View {
                 let loop = LoopRegion.from(section: section)
                 if loopRegion != loop {
                     loopRegion = loop
-                    audioEngine.setLoop(loop)
                 }
             } else {
                 // Section no longer exists — clear loop + selection.
                 selectedSectionId = nil
                 loopRegion = nil
-                audioEngine.setLoop(nil)
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .openAudioFile)) { notification in
@@ -245,20 +257,15 @@ struct ContentView: View {
                         if let id = newId,
                            let section = vm.sections.first(where: { $0.stableId == id }) {
                             if selectedSectionId == id {
-                                // Toggle off
                                 selectedSectionId = nil
                                 loopRegion = nil
-                                audioEngine.setLoop(nil)
                             } else {
                                 selectedSectionId = id
-                                let loop = LoopRegion.from(section: section)
-                                loopRegion = loop
-                                audioEngine.setLoop(loop)
+                                loopRegion = LoopRegion.from(section: section)
                             }
                         } else {
                             selectedSectionId = nil
                             loopRegion = nil
-                            audioEngine.setLoop(nil)
                         }
                     }
                 )
@@ -460,12 +467,9 @@ struct ContentView: View {
             let loopStart = min(start, time)
             let loopEnd = max(start, time)
             guard loopEnd - loopStart > 0.1 else { return } // minimum loop length
-            let loop = LoopRegion(startTime: loopStart, endTime: loopEnd)
-            loopRegion = loop
             pendingLoopStart = nil
             isSettingLoop = false
-            audioEngine.setLoop(loop)
-            audioEngine.playLoop()
+            loopRegion = LoopRegion(startTime: loopStart, endTime: loopEnd)
         } else {
             pendingLoopStart = time
         }

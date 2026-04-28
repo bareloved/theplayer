@@ -4,6 +4,7 @@ struct LibrarySidebar: View {
     @Bindable var libraryService: LibraryService
     let onSongSelect: (SongEntry) -> Void
     let onSetlistSongSelect: (SongEntry, UUID, Int) -> Void
+    let onReanalyze: (SongEntry) -> Void
     let currentSongPath: String?  // file path of currently loaded song
 
     @State private var newSetlistName = ""
@@ -25,7 +26,7 @@ struct LibrarySidebar: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(recent) { song in
-                            SongRow(song: song, libraryService: libraryService, onSelect: { onSongSelect(song) })
+                            SongRow(song: song, libraryService: libraryService, onSelect: { onSongSelect(song) }, onReanalyze: { onReanalyze(song) })
                         }
                     }
                 } header: {
@@ -189,13 +190,15 @@ struct LibrarySidebar: View {
                 playlist: playlist,
                 libraryService: libraryService,
                 onSongSelect: onSongSelect,
+                onReanalyze: onReanalyze,
                 currentSongPath: currentSongPath
             )
         case .smart(let kind):
             SmartPlaylistView(
                 kind: kind,
                 libraryService: libraryService,
-                onSongSelect: onSongSelect
+                onSongSelect: onSongSelect,
+                onReanalyze: onReanalyze
             )
         }
     }
@@ -238,6 +241,7 @@ private struct SongRow: View {
     let song: SongEntry
     let libraryService: LibraryService
     let onSelect: () -> Void
+    let onReanalyze: () -> Void
 
     @State private var isRenaming = false
     @State private var renameText = ""
@@ -279,6 +283,10 @@ private struct SongRow: View {
                 renameText = song.title
                 isRenaming = true
             }
+            Button("Reanalyze") {
+                onReanalyze()
+            }
+            .disabled(!song.fileExists)
             Divider()
             if !libraryService.library.setlists.isEmpty {
                 Menu("Add to Setlist...") {
@@ -373,6 +381,7 @@ private struct PlaylistDetailView: View {
     let playlist: Playlist
     @Bindable var libraryService: LibraryService
     let onSongSelect: (SongEntry) -> Void
+    let onReanalyze: (SongEntry) -> Void
     var currentSongPath: String?
 
     var body: some View {
@@ -391,7 +400,7 @@ private struct PlaylistDetailView: View {
 
             let songs = playlist.songIds.compactMap { libraryService.library.song(byId: $0) }
             ForEach(songs) { song in
-                SongRow(song: song, libraryService: libraryService, onSelect: { onSongSelect(song) })
+                SongRow(song: song, libraryService: libraryService, onSelect: { onSongSelect(song) }, onReanalyze: { onReanalyze(song) })
             }
         }
         .listStyle(.sidebar)
@@ -405,6 +414,7 @@ private struct SmartPlaylistView: View {
     let kind: SetlistDestination.SmartKind
     @Bindable var libraryService: LibraryService
     let onSongSelect: (SongEntry) -> Void
+    let onReanalyze: (SongEntry) -> Void
 
     var body: some View {
         List {
@@ -418,7 +428,7 @@ private struct SmartPlaylistView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(songs) { song in
-                    SongRow(song: song, libraryService: libraryService, onSelect: { onSongSelect(song) })
+                    SongRow(song: song, libraryService: libraryService, onSelect: { onSongSelect(song) }, onReanalyze: { onReanalyze(song) })
                 }
             }
         }

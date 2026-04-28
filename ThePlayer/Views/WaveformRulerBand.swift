@@ -17,13 +17,13 @@ struct WaveformRulerBand: View {
     @Binding var zoomLevel: CGFloat
     let scrollController: ScrollController
 
-    private enum DragMode { case undecided, zoom, pan }
-
-    @State private var dragMode: DragMode = .undecided
     @State private var dragStartZoom: CGFloat?
     @State private var dragAnchorFraction: CGFloat?
     @State private var dragCursorXInViewport: CGFloat?
-    @State private var dragStartScrollOriginX: CGFloat?
+    /// Cursor x in screen coords at activation. Drives the pan component in
+    /// screen space so scroll-origin updates don't feed back into
+    /// `value.translation.width` and cause horizontal jitter.
+    @State private var dragStartScreenX: CGFloat?
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -49,64 +49,53 @@ struct WaveformRulerBand: View {
     private var zoomDrag: some Gesture {
         DragGesture(minimumDistance: 2, coordinateSpace: .local)
             .onChanged { value in
-                if dragMode == .undecided {
+                if dragStartZoom == nil {
                     let dx = abs(value.translation.width)
                     let dy = abs(value.translation.height)
                     guard max(dx, dy) >= 3 else { return }
-                    dragMode = dx > dy ? .pan : .zoom
 
-                    if dragMode == .zoom {
-                        dragStartZoom = zoomLevel
-                        let startContentX = value.startLocation.x
-                        let totalAtStart = geoWidth * zoomLevel
-                        dragAnchorFraction = totalAtStart > 0 ? startContentX / totalAtStart : 0
-                        dragCursorXInViewport = startContentX - scrollController.scrollOriginX
-                    } else {
-                        dragStartScrollOriginX = scrollController.scrollOriginX
-                        NSCursor.closedHand.set()
-                    }
+                    let startContentX = value.startLocation.x
+                    let totalAtStart = geoWidth * zoomLevel
+                    dragStartZoom = zoomLevel
+                    dragAnchorFraction = totalAtStart > 0 ? startContentX / totalAtStart : 0
+                    dragCursorXInViewport = startContentX - scrollController.scrollOriginX
+                    dragStartScreenX = NSEvent.mouseLocation.x
+                    NSCursor.closedHand.set()
                 }
 
-                switch dragMode {
-                case .pan:
-                    guard let startOrigin = dragStartScrollOriginX else { return }
-                    let maxOrigin = max(0, totalWidth - geoWidth)
-                    let newOrigin = min(max(startOrigin - value.translation.width, 0), maxOrigin)
-                    scrollController.setScrollOriginX(newOrigin)
-                case .zoom:
-                    guard
-                        let startZoom = dragStartZoom,
-                        let anchor = dragAnchorFraction,
-                        let cursorX = dragCursorXInViewport,
-                        geoWidth > 0
-                    else { return }
+                guard
+                    let startZoom = dragStartZoom,
+                    let anchor = dragAnchorFraction,
+                    let cursorX = dragCursorXInViewport,
+                    let startScreenX = dragStartScreenX,
+                    geoWidth > 0
+                else { return }
 
-                    let newZoom = WaveformZoomMath.zoomFromDrag(
-                        startZoom: startZoom,
-                        translationY: value.translation.height
-                    )
-                    zoomLevel = newZoom
-
-                    let newOrigin = WaveformZoomMath.scrollOriginForAnchor(
-                        anchorFraction: anchor,
-                        cursorXInViewport: cursorX,
-                        geoWidth: geoWidth,
-                        newZoom: newZoom
-                    )
-                    DispatchQueue.main.async {
-                        scrollController.setScrollOriginX(newOrigin)
-                    }
-                case .undecided:
-                    break
-                }
+                let newZoom = WaveformZoomMath.zoomFromDrag(
+                    startZoom: startZoom,
+                    translationY: value.translation.height
+                )
+                let newTotal = geoWidth * newZoom
+                let anchorOrigin = WaveformZoomMath.scrollOriginForAnchor(
+                    anchorFraction: anchor,
+                    cursorXInViewport: cursorX,
+                    geoWidth: geoWidth,
+                    newZoom: newZoom
+                )
+                let panDx = NSEvent.mouseLocation.x - startScreenX
+                let maxOrigin = max(0, newTotal - geoWidth)
+                let newOrigin = min(max(anchorOrigin - panDx, 0), maxOrigin)
+                // Atomic resize+scroll before SwiftUI publishes the new zoom —
+                // avoids the 1-frame mismatch that caused jitter while dragging.
+                scrollController.setContentWidthAndScrollOriginX(newTotal, newOrigin.rounded())
+                zoomLevel = newZoom
             }
             .onEnded { _ in
-                if dragMode == .pan { NSCursor.openHand.set() }
-                dragMode = .undecided
+                if dragStartZoom != nil { NSCursor.openHand.set() }
                 dragStartZoom = nil
                 dragAnchorFraction = nil
                 dragCursorXInViewport = nil
-                dragStartScrollOriginX = nil
+                dragStartScreenX = nil
             }
     }
 

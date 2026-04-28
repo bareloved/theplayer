@@ -70,6 +70,22 @@ final class ScrollController: ObservableObject {
         scrollView?.reflectScrolledClipView(clip)
     }
 
+    /// Resize the document view to `width` AND set the horizontal scroll origin in
+    /// a single synchronous AppKit pass. Used by drag-to-zoom so the doc resize
+    /// and origin update can't fall on different frames (which causes jitter).
+    func setContentWidthAndScrollOriginX(_ width: CGFloat, _ x: CGFloat) {
+        guard let scrollView, let doc = scrollView.documentView else { return }
+        let h = doc.frame.size.height
+        if abs(doc.frame.size.width - width) > 0.5 {
+            doc.setFrameSize(NSSize(width: width, height: h))
+        }
+        let clip = scrollView.contentView
+        var origin = clip.bounds.origin
+        origin.x = x
+        clip.setBoundsOrigin(origin)
+        scrollView.reflectScrolledClipView(clip)
+    }
+
     var scrollOriginX: CGFloat {
         scrollView?.contentView.bounds.origin.x ?? 0
     }

@@ -113,22 +113,45 @@ using namespace essentia::standard;
             delete odSpectrum;
             delete onsetDetection;
 
-            // Peak-pick the detection function into onset times.
+            // Peak-pick the detection function with a LOCAL adaptive threshold
+            // (mean + k*std over a sliding window). Essentia's built-in `Onsets`
+            // uses a global moving threshold which is dominated by loud sections,
+            // suppressing every onset in quieter intros/outros. A local threshold
+            // tracks dynamics so quiet sections get a quiet floor.
             std::vector<Real> rawOnsets;
             if (!detectionFunction.empty()) {
-                Algorithm* onsets = factory.create("Onsets",
-                    "frameRate", 44100.0 / (Real)onsetHopSize);
-                // Onsets expects a TNT::Array2D<Real> with rows = detectors, cols = frames.
-                TNT::Array2D<Real> detectionMatrix(1, (int)detectionFunction.size());
-                for (int i = 0; i < (int)detectionFunction.size(); i++) {
-                    detectionMatrix[0][i] = detectionFunction[i];
+                const Real frameRate = 44100.0 / (Real)onsetHopSize;
+                const int windowFrames = (int)std::round(1.0 * frameRate);   // ±1s local window
+                const int minGapFrames = (int)std::round(0.050 * frameRate); // 50ms min inter-onset
+                const Real kStd = 1.0;                                       // peak must exceed mean + k*std
+                const Real absFloor = 5.0;                                   // absolute floor (kills silence)
+
+                const int n = (int)detectionFunction.size();
+                int lastOnsetIdx = -minGapFrames;
+                for (int i = 1; i < n - 1; i++) {
+                    Real v = detectionFunction[i];
+                    if (v < absFloor) continue;
+                    // Local maximum check.
+                    if (v <= detectionFunction[i - 1] || v < detectionFunction[i + 1]) continue;
+                    // Local mean + std over [i-W, i+W].
+                    int lo = std::max(0, i - windowFrames);
+                    int hi = std::min(n, i + windowFrames + 1);
+                    double sum = 0, sumSq = 0;
+                    int cnt = hi - lo;
+                    for (int j = lo; j < hi; j++) {
+                        double x = detectionFunction[j];
+                        sum += x;
+                        sumSq += x * x;
+                    }
+                    double mean = sum / (double)cnt;
+                    double var = std::max(0.0, sumSq / (double)cnt - mean * mean);
+                    double stdv = std::sqrt(var);
+                    double threshold = mean + kStd * stdv;
+                    if ((double)v < threshold) continue;
+                    if (i - lastOnsetIdx < minGapFrames) continue;
+                    rawOnsets.push_back((Real)i / frameRate);
+                    lastOnsetIdx = i;
                 }
-                std::vector<Real> weights; weights.push_back(1.0);
-                onsets->input("detections").set(detectionMatrix);
-                onsets->input("weights").set(weights);
-                onsets->output("onsets").set(rawOnsets);
-                onsets->compute();
-                delete onsets;
             }
 
             // Refine each onset to the local short-term RMS peak within ±10ms.

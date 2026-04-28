@@ -7,6 +7,8 @@ struct SidebarView: View {
     let duration: Float
     let sampleRate: Double
     let onSectionTap: (AudioSection) -> Void
+    var onRename: ((UUID, String) -> Void)? = nil
+    var onDelete: ((UUID) -> Void)? = nil
 
     @Binding var selectedSection: AudioSection?
 
@@ -35,7 +37,9 @@ struct SidebarView: View {
                                 index: index + 1,
                                 beatsPerBar: timeSignature.beatsPerBar,
                                 isSelected: selectedSection == section,
-                                onTap: { onSectionTap(section) }
+                                onTap: { onSectionTap(section) },
+                                onRename: onRename.map { cb in { cb(section.stableId, $0) } },
+                                onDelete: onDelete.map { cb in { cb(section.stableId) } }
                             )
                         }
                     }
@@ -87,36 +91,89 @@ private struct SectionRow: View {
     let beatsPerBar: Int
     let isSelected: Bool
     let onTap: () -> Void
+    let onRename: ((String) -> Void)?
+    let onDelete: (() -> Void)?
+
+    @State private var isRenaming = false
+    @State private var renameText = ""
+    @FocusState private var renameFocused: Bool
 
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 8) {
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(section.color)
-                    .frame(width: 4)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(section.label)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-
-                    Text("\(formatTime(section.startTime)) – \(formatTime(section.endTime)) · \(section.barCount(beatsPerBar: beatsPerBar)) bars")
+        Group {
+            if isRenaming {
+                HStack(spacing: 8) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(section.color)
+                        .frame(width: 4)
+                    TextField("Label", text: $renameText)
+                        .textFieldStyle(.roundedBorder)
+                        .focused($renameFocused)
+                        .onSubmit { commitRename() }
+                        .onExitCommand { isRenaming = false }
+                        .onChange(of: renameFocused) { _, focused in
+                            if !focused && isRenaming { commitRename() }
+                        }
+                    Text("\(index)")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.tertiary)
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .onAppear {
+                    renameText = section.label
+                    DispatchQueue.main.async { renameFocused = true }
+                }
+            } else {
+                Button(action: onTap) {
+                    HStack(spacing: 8) {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(section.color)
+                            .frame(width: 4)
 
-                Spacer()
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(section.label)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
 
-                Text("\(index)")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                            Text("\(formatTime(section.startTime)) – \(formatTime(section.endTime)) · \(section.barCount(beatsPerBar: beatsPerBar)) bars")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Text("\(index)")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(isSelected ? section.color.opacity(0.15) : .clear)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .contextMenu {
+                    if onRename != nil {
+                        Button("Rename...") {
+                            renameText = section.label
+                            isRenaming = true
+                        }
+                    }
+                    if let onDelete {
+                        Divider()
+                        Button("Delete", role: .destructive) { onDelete() }
+                    }
+                }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(isSelected ? section.color.opacity(0.15) : .clear)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+    }
+
+    private func commitRename() {
+        let trimmed = renameText.trimmingCharacters(in: .whitespaces)
+        if !trimmed.isEmpty, trimmed != section.label {
+            onRename?(trimmed)
+        }
+        isRenaming = false
     }
 
     private func formatTime(_ seconds: Float) -> String {
