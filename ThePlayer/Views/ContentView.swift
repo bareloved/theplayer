@@ -308,7 +308,7 @@ struct ContentView: View {
             TransportBar(
                 audioEngine: audioEngine,
                 loopRegion: $loopRegion,
-                isSettingLoop: $isSettingLoop,
+                isLoopEnabled: $isLoopEnabled,
                 snapToGrid: $snapToGrid,
                 snapDivision: $snapDivision,
                 isInSetlist: libraryService.activeSetlistId != nil,

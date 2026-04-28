@@ -3,12 +3,13 @@ import SwiftUI
 struct TransportBar: View {
     @Bindable var audioEngine: AudioEngine
     @Binding var loopRegion: LoopRegion?
-    @Binding var isSettingLoop: Bool
+    @Binding var isLoopEnabled: Bool
     @Binding var snapToGrid: Bool
     @Binding var snapDivision: SnapDivision
     let isInSetlist: Bool
     let onNextInSetlist: () -> Void
     let timingControls: AnyView?
+    @State private var showEmptyHint: Bool = false
 
     var body: some View {
         VStack(spacing: 8) {
@@ -22,12 +23,18 @@ struct TransportBar: View {
     /// Top row — utility controls (A-B, Snap, Bars picker). Centered.
     private var utilityRow: some View {
         HStack(spacing: 12) {
-            Button(action: toggleLoopMode) {
-                Label(isSettingLoop ? "Click waveform..." : "A-B", systemImage: "repeat")
+            Button(action: toggleLoopEnabled) {
+                Label("Loop", systemImage: "repeat")
                     .font(.caption)
             }
             .buttonStyle(.bordered)
-            .tint(isSettingLoop ? .orange : (loopRegion != nil ? .blue : .secondary))
+            .tint(loopRegion != nil && isLoopEnabled ? .blue : .secondary)
+            .help("Shift+drag waveform to set loop")
+            .popover(isPresented: $showEmptyHint, arrowEdge: .top) {
+                Text("Shift+drag the waveform to set a loop")
+                    .font(.caption)
+                    .padding(8)
+            }
 
             Button(action: { snapToGrid.toggle() }) {
                 Label("Snap", systemImage: "grid")
@@ -119,12 +126,15 @@ struct TransportBar: View {
         }
     }
 
-    private func toggleLoopMode() {
-        if loopRegion != nil {
-            loopRegion = nil
-            isSettingLoop = false
-        } else {
-            isSettingLoop = true
+    private func toggleLoopEnabled() {
+        if loopRegion == nil {
+            // No region yet — show a transient hint and auto-dismiss after 2s.
+            showEmptyHint = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                showEmptyHint = false
+            }
+            return
         }
+        isLoopEnabled.toggle()
     }
 }
