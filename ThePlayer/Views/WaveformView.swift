@@ -16,6 +16,7 @@ struct WaveformView: View {
     let pendingLoopStart: Float?
     let onSeek: (Float) -> Void
     let onLoopPointSet: (Float) -> Void
+    let onLoopRegionSet: (LoopRegion) -> Void
     let firstDownbeatTime: Float
     let timeSignature: TimeSignature
     let onSetDownbeat: ((Float) -> Void)?
@@ -39,6 +40,9 @@ struct WaveformView: View {
     @State private var sectionDragActive: Bool = false
     @State private var sectionDragStartTime: Float?
     @State private var sectionDragCurrentTime: Float?
+    @State private var loopDragActive: Bool = false
+    @State private var loopDragStartTime: Float?
+    @State private var loopDragCurrentTime: Float?
     @State private var pendingSectionRenameId: UUID?
     @State private var cachedGridPositions: [Float] = []
     @State private var cachedBarPositions: Set<Float> = []
@@ -109,6 +113,25 @@ struct WaveformView: View {
                                 .overlay(
                                     Rectangle()
                                         .strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                                )
+                                .frame(width: width, height: waveHeight)
+                                .offset(x: leftX)
+                        }
+                        if loopDragActive,
+                           let s = loopDragStartTime,
+                           let e = loopDragCurrentTime {
+                            let lo = min(s, e)
+                            let hi = max(s, e)
+                            let snappedLo: Float = snapToGrid ? gridFloor(lo) : lo
+                            let snappedHi: Float = snapToGrid ? gridCeil(hi) : hi
+                            let leftX = max(0, CGFloat(snappedLo / duration) * totalWidth)
+                            let rightX = min(totalWidth, CGFloat(snappedHi / duration) * totalWidth)
+                            let width = max(0, rightX - leftX)
+                            Rectangle()
+                                .fill(Color.blue.opacity(0.18))
+                                .overlay(
+                                    Rectangle()
+                                        .strokeBorder(Color.blue, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
                                 )
                                 .frame(width: width, height: waveHeight)
                                 .offset(x: leftX)
@@ -201,6 +224,42 @@ struct WaveformView: View {
                                 alignDragActive = false
                                 alignDragStartFDT = nil
                                 NSCursor.arrow.set()
+                            }
+                    )
+                    .simultaneousGesture(
+                        // minimumDistance: 8 keeps stationary clicks from triggering this
+                        // gesture so plain-click seek still works.
+                        DragGesture(minimumDistance: 8, coordinateSpace: .local)
+                            .onChanged { value in
+                                guard totalWidth > 0, duration > 0 else { return }
+                                if !loopDragActive {
+                                    guard NSEvent.modifierFlags.contains(.shift) else { return }
+                                    if NSEvent.modifierFlags.contains(.option) { return }
+                                    if NSEvent.modifierFlags.contains(.command) { return }
+                                    loopDragActive = true
+                                    loopDragStartTime = Float(value.startLocation.x / totalWidth) * duration
+                                    NSCursor.crosshair.set()
+                                }
+                                loopDragCurrentTime = Float(value.location.x / totalWidth) * duration
+                            }
+                            .onEnded { value in
+                                defer {
+                                    loopDragActive = false
+                                    loopDragStartTime = nil
+                                    loopDragCurrentTime = nil
+                                    NSCursor.arrow.set()
+                                }
+                                guard loopDragActive,
+                                      let startT = loopDragStartTime else { return }
+                                let dx = value.location.x - value.startLocation.x
+                                guard abs(dx) >= 8 else { return }
+                                let rawEnd = Float(value.location.x / totalWidth) * duration
+                                let lo = min(startT, rawEnd)
+                                let hi = max(startT, rawEnd)
+                                let snappedLo = snapToGrid ? gridFloor(lo) : lo
+                                let snappedHi = snapToGrid ? gridCeil(hi) : hi
+                                guard snappedHi - snappedLo > 0.1 else { return }
+                                onLoopRegionSet(LoopRegion(startTime: snappedLo, endTime: snappedHi))
                             }
                     )
                     .simultaneousGesture(

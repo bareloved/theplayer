@@ -255,6 +255,10 @@ struct ContentView: View {
                     pendingLoopStart: pendingLoopStart,
                     onSeek: { time in audioEngine.seek(to: time) },
                     onLoopPointSet: { time in handleLoopPoint(time) },
+                    onLoopRegionSet: { region in
+                        loopRegion = region
+                        isLoopEnabled = true
+                    },
                     firstDownbeatTime: analysisService.lastAnalysis?.firstDownbeatTime ?? 0,
                     timeSignature: analysisService.lastAnalysis?.timeSignature ?? .fourFour,
                     onSetDownbeat: { time in
