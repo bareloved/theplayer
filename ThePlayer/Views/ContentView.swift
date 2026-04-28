@@ -6,6 +6,7 @@ struct ContentView: View {
     @Bindable var analysisService: AnalysisService
     @Bindable var libraryService: LibraryService
     @State private var loopRegion: LoopRegion?
+    @State private var isLoopEnabled: Bool = true
     @State private var isTargeted = false
     @State private var isSettingLoop = false
     @State private var pendingLoopStart: Float?
@@ -135,9 +136,18 @@ struct ContentView: View {
             }
         }
         .onChange(of: loopRegion) { _, newLoop in
-            audioEngine.setLoop(newLoop)
-            if newLoop != nil {
+            let effective = isLoopEnabled ? newLoop : nil
+            audioEngine.setLoop(effective)
+            if effective != nil {
                 audioEngine.playLoop()
+            }
+        }
+        .onChange(of: isLoopEnabled) { _, enabled in
+            if enabled, let region = loopRegion {
+                audioEngine.setLoop(region)
+                audioEngine.playLoop()
+            } else {
+                audioEngine.setLoop(nil)
             }
         }
         .onAppear {
