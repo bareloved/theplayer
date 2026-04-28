@@ -50,6 +50,7 @@ struct WaveformRulerBand: View {
                 let endX = CGFloat(loop.endTime / duration) * totalWidth
                 let width = max(0, endX - startX)
                 let bracketColor: Color = isLoopEnabled ? .blue : .secondary
+                let capSize: CGFloat = 12
                 ZStack(alignment: .topLeading) {
                     // Thin horizontal bar across the top of the band.
                     Rectangle()
@@ -58,22 +59,22 @@ struct WaveformRulerBand: View {
                     // Right-pointing cap at the start.
                     Path { p in
                         p.move(to: CGPoint(x: 0, y: 0))
-                        p.addLine(to: CGPoint(x: 7, y: 0))
-                        p.addLine(to: CGPoint(x: 0, y: 7))
+                        p.addLine(to: CGPoint(x: capSize, y: 0))
+                        p.addLine(to: CGPoint(x: 0, y: capSize))
                         p.closeSubpath()
                     }
                     .fill(bracketColor)
-                    .frame(width: 7, height: 7)
+                    .frame(width: capSize, height: capSize)
                     // Left-pointing cap at the end.
                     Path { p in
-                        p.move(to: CGPoint(x: 7, y: 0))
+                        p.move(to: CGPoint(x: capSize, y: 0))
                         p.addLine(to: CGPoint(x: 0, y: 0))
-                        p.addLine(to: CGPoint(x: 7, y: 7))
+                        p.addLine(to: CGPoint(x: capSize, y: capSize))
                         p.closeSubpath()
                     }
                     .fill(bracketColor)
-                    .frame(width: 7, height: 7)
-                    .offset(x: width - 7)
+                    .frame(width: capSize, height: capSize)
+                    .offset(x: width - capSize)
                 }
                 .frame(width: width, height: bandHeight, alignment: .topLeading)
                 .offset(x: startX)
