@@ -8,8 +8,6 @@ struct ContentView: View {
     @State private var loopRegion: LoopRegion?
     @State private var isLoopEnabled: Bool = true
     @State private var isTargeted = false
-    @State private var isSettingLoop = false
-    @State private var pendingLoopStart: Float?
     @State private var snapToGrid = true
     @State private var snapDivision: SnapDivision = .oneBar
     @State private var loadError: String?
@@ -251,10 +249,7 @@ struct ContentView: View {
                     duration: audioEngine.duration,
                     currentTime: audioEngine.currentTime,
                     loopRegion: loopRegion,
-                    isSettingLoop: isSettingLoop,
-                    pendingLoopStart: pendingLoopStart,
                     onSeek: { time in audioEngine.seek(to: time) },
-                    onLoopPointSet: { time in handleLoopPoint(time) },
                     onLoopRegionSet: { region in
                         loopRegion = region
                         isLoopEnabled = true
@@ -476,19 +471,6 @@ struct ContentView: View {
         }
     }
 
-    private func handleLoopPoint(_ time: Float) {
-        if let start = pendingLoopStart {
-            let loopStart = min(start, time)
-            let loopEnd = max(start, time)
-            guard loopEnd - loopStart > 0.1 else { return } // minimum loop length
-            pendingLoopStart = nil
-            isSettingLoop = false
-            loopRegion = LoopRegion(startTime: loopStart, endTime: loopEnd)
-        } else {
-            pendingLoopStart = time
-        }
-    }
-
     private func installKeyMonitor() {
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             if handleKeyEvent(event) { return nil }
@@ -572,8 +554,6 @@ struct ContentView: View {
         case 53: // Escape
             loopRegion = nil
             selectedSectionId = nil
-            pendingLoopStart = nil
-            isSettingLoop = false
             return true
         default:
             break

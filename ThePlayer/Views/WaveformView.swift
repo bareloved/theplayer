@@ -12,10 +12,7 @@ struct WaveformView: View {
     let duration: Float
     let currentTime: Float
     let loopRegion: LoopRegion?
-    let isSettingLoop: Bool
-    let pendingLoopStart: Float?
     let onSeek: (Float) -> Void
-    let onLoopPointSet: (Float) -> Void
     let onLoopRegionSet: (LoopRegion) -> Void
     let firstDownbeatTime: Float
     let timeSignature: TimeSignature
@@ -153,11 +150,6 @@ struct WaveformView: View {
 
                         if let vm = sectionsVM {
                             boundaryHandles(viewModel: vm, width: totalWidth, height: waveHeight)
-                                .offset(x: waveformDragOffset)
-                        }
-
-                        if let start = pendingLoopStart {
-                            pendingLoopMarker(start: start, width: totalWidth, height: waveHeight)
                                 .offset(x: waveformDragOffset)
                         }
 
@@ -310,17 +302,8 @@ struct WaveformView: View {
                     .onTapGesture { location in
                         let fraction = Float(location.x / totalWidth)
                         let time = fraction * duration
-                        if isSettingLoop {
-                            // Snap loop endpoints to the visible bar grid (the
-                            // same grid the user sees), nearest boundary. Beat
-                            // snap landed mid-bar; floor/ceil jumped a full bar
-                            // ahead/behind the clicked one.
-                            let snapped = snapToGrid ? nearestGridTime(to: time) : time
-                            onLoopPointSet(snapped)
-                        } else {
-                            let snapped = snapToGrid ? nearestBeatTime(to: time) : time
-                            onSeek(snapped)
-                        }
+                        let snapped = snapToGrid ? nearestBeatTime(to: time) : time
+                        onSeek(snapped)
                     }
                     .contextMenu {
                         let nearest = nearestOnset(at: mouseLocation, totalWidth: totalWidth)
@@ -395,13 +378,6 @@ struct WaveformView: View {
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
             }
             .padding(8)
-        }
-        .overlay {
-            if isSettingLoop {
-                RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(.orange, lineWidth: 2)
-                    .allowsHitTesting(false)
-            }
         }
         .onAppear { recomputeGridCaches() }
         .onChange(of: bpm) { _, _ in recomputeGridCaches() }
@@ -735,25 +711,6 @@ struct WaveformView: View {
         }
         .offset(x: startX)
         .allowsHitTesting(false)
-    }
-
-    private func pendingLoopMarker(start: Float, width: CGFloat, height: CGFloat) -> some View {
-        let x = duration > 0 ? CGFloat(start / duration) * width : 0
-        // Anchor on the 2px line; overlay the "A" label so the line stays
-        // pixel-aligned with `x`. A wrapping VStack would center the line
-        // inside the wider text frame and shift it a few px off-grid.
-        return Rectangle()
-            .fill(.orange)
-            .frame(width: 2, height: height)
-            .overlay(alignment: .top) {
-                Text("A")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.orange)
-                    .fixedSize()
-                    .offset(y: -12)
-            }
-            .offset(x: x)
-            .allowsHitTesting(false)
     }
 
     private func hoverTooltip(time: Float, location: CGPoint) -> some View {
