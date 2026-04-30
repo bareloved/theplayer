@@ -9,7 +9,6 @@ struct ContentView: View {
     @State private var isLoopEnabled: Bool = true
     @State private var isTargeted = false
     @State private var snapToGrid = true
-    @State private var snapDivision: SnapDivision = .oneBar
     @State private var loadError: String?
     @State private var showErrorAlert = false
     @State private var keyMonitor: Any?
@@ -310,7 +309,6 @@ struct ContentView: View {
                 loopRegion: $loopRegion,
                 isLoopEnabled: $isLoopEnabled,
                 snapToGrid: $snapToGrid,
-                snapDivision: $snapDivision,
                 isInSetlist: libraryService.activeSetlistId != nil,
                 onNextInSetlist: { advanceSetlist() },
                 timingControls: AnyView(

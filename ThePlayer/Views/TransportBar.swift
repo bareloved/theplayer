@@ -5,7 +5,6 @@ struct TransportBar: View {
     @Binding var loopRegion: LoopRegion?
     @Binding var isLoopEnabled: Bool
     @Binding var snapToGrid: Bool
-    @Binding var snapDivision: SnapDivision
     let isInSetlist: Bool
     let onNextInSetlist: () -> Void
     let timingControls: AnyView?
@@ -20,7 +19,7 @@ struct TransportBar: View {
         .padding(.vertical, 12)
     }
 
-    /// Top row — utility controls (A-B, Snap, Bars picker). Centered.
+    /// Top row — utility controls (A-B, Snap). Centered.
     private var utilityRow: some View {
         HStack(spacing: 12) {
             Button(action: toggleLoopEnabled) {
@@ -42,18 +41,10 @@ struct TransportBar: View {
             }
             .buttonStyle(.bordered)
             .tint(snapToGrid ? .purple : .secondary)
-
-            Picker("Bars", selection: $snapDivision) {
-                ForEach(SnapDivision.allCases) { div in
-                    Text(div.shortLabel).tag(div)
-                }
-            }
-            .pickerStyle(.menu)
-            .fixedSize()
-            .font(.caption)
-            .opacity(snapToGrid ? 1 : 0)
-            .disabled(!snapToGrid)
-            .allowsHitTesting(snapToGrid)
+            .help("""
+                Snap on:  ←/→ 1 bar · ⇧ 2 · ⌥ 4 · ⌘ 8 · ⌘⇧ 16
+                Snap off: ←/→ 1 s · ⇧ 2 s · ⌥ 5 s · ⌘ 15 s · ⌘⇧ 30 s
+                """)
 
             if isInSetlist {
                 Button(action: onNextInSetlist) {
