@@ -24,6 +24,8 @@ struct LibrarySidebar: View {
     @State private var searchPinned: Bool = false
     @State private var scrollOffset: CGFloat = 0
     @State private var isEditing: Bool = false
+    @State private var selectedSetlistIds: Set<UUID> = []
+    @State private var selectedPlaylistIds: Set<UUID> = []
     @AppStorage("librarySidebarSort") private var sortRaw: String = LibrarySortMode.recent.rawValue
     @AppStorage("librarySidebarSetlistsExpanded") private var setlistsExpanded: Bool = true
     @AppStorage("librarySidebarPlaylistsExpanded") private var playlistsExpanded: Bool = true
@@ -37,12 +39,21 @@ struct LibrarySidebar: View {
         return LibraryFiltering.filter(songs: sorted, query: query)
     }
 
+    private var totalSelected: Int { selectedSetlistIds.count + selectedPlaylistIds.count }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 header
                 PullToRevealSearch(query: $query, scrollOffset: scrollOffset, pinned: $searchPinned)
                 scroll
+                if isEditing { editActionBar }
+            }
+            .onChange(of: isEditing) { _, editing in
+                if !editing {
+                    selectedSetlistIds.removeAll()
+                    selectedPlaylistIds.removeAll()
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: .openLibraryPicker)) { _ in
                 searchPinned = true
@@ -138,27 +149,20 @@ struct LibrarySidebar: View {
         DisclosureGroup(isExpanded: $setlistsExpanded) {
             VStack(spacing: 0) {
                 ForEach(libraryService.library.setlists) { setlist in
-                    NavigationLink(value: SetlistDestination.setlist(setlist)) {
-                        LibraryItemRow(
-                            iconSystemName: "music.note.list",
-                            iconColor: .blue,
-                            title: setlist.name,
-                            subtitle: "\(setlist.songIds.count) Items"
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .contextMenu { setlistContextMenu(setlist) }
+                    setlistRow(setlist)
                     Divider().padding(.leading, 56)
                 }
-                Button(action: { isAddingSetlist = true }) {
-                    Label("New Setlist", systemImage: "plus")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.vertical, 8)
-                        .padding(.leading, 16)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                if !isEditing {
+                    Button(action: { isAddingSetlist = true }) {
+                        Label("New Setlist", systemImage: "plus")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.vertical, 8)
+                            .padding(.leading, 16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
         } label: {
             sectionHeader(title: "Setlists")
@@ -167,35 +171,144 @@ struct LibrarySidebar: View {
         .accentColor(.secondary)
     }
 
+    @ViewBuilder
+    private func setlistRow(_ setlist: Setlist) -> some View {
+        if isEditing {
+            Button {
+                toggleSelection(of: setlist.id, in: &selectedSetlistIds)
+            } label: {
+                editableRow(
+                    selected: selectedSetlistIds.contains(setlist.id),
+                    iconSystemName: "music.note.list",
+                    iconColor: .blue,
+                    title: setlist.name,
+                    subtitle: "\(setlist.songIds.count) Items"
+                )
+            }
+            .buttonStyle(.plain)
+        } else {
+            NavigationLink(value: SetlistDestination.setlist(setlist)) {
+                LibraryItemRow(
+                    iconSystemName: "music.note.list",
+                    iconColor: .blue,
+                    title: setlist.name,
+                    subtitle: "\(setlist.songIds.count) Items"
+                )
+            }
+            .buttonStyle(.plain)
+            .contextMenu { setlistContextMenu(setlist) }
+        }
+    }
+
     private var playlistsSection: some View {
         DisclosureGroup(isExpanded: $playlistsExpanded) {
             VStack(spacing: 0) {
                 ForEach(libraryService.library.playlists) { playlist in
-                    NavigationLink(value: SetlistDestination.playlist(playlist)) {
-                        LibraryItemRow(
-                            iconSystemName: "music.note",
-                            iconColor: .purple,
-                            title: playlist.name,
-                            subtitle: "\(playlist.songIds.count) Items"
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .contextMenu { playlistContextMenu(playlist) }
+                    playlistRow(playlist)
                     Divider().padding(.leading, 56)
                 }
-                Button(action: { isAddingPlaylist = true }) {
-                    Label("New Playlist", systemImage: "plus")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.vertical, 8)
-                        .padding(.leading, 16)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                if !isEditing {
+                    Button(action: { isAddingPlaylist = true }) {
+                        Label("New Playlist", systemImage: "plus")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.vertical, 8)
+                            .padding(.leading, 16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
         } label: {
             sectionHeader(title: "Playlists")
         }
+    }
+
+    @ViewBuilder
+    private func playlistRow(_ playlist: Playlist) -> some View {
+        if isEditing {
+            Button {
+                toggleSelection(of: playlist.id, in: &selectedPlaylistIds)
+            } label: {
+                editableRow(
+                    selected: selectedPlaylistIds.contains(playlist.id),
+                    iconSystemName: "music.note",
+                    iconColor: .purple,
+                    title: playlist.name,
+                    subtitle: "\(playlist.songIds.count) Items"
+                )
+            }
+            .buttonStyle(.plain)
+        } else {
+            NavigationLink(value: SetlistDestination.playlist(playlist)) {
+                LibraryItemRow(
+                    iconSystemName: "music.note",
+                    iconColor: .purple,
+                    title: playlist.name,
+                    subtitle: "\(playlist.songIds.count) Items"
+                )
+            }
+            .buttonStyle(.plain)
+            .contextMenu { playlistContextMenu(playlist) }
+        }
+    }
+
+    private func editableRow(
+        selected: Bool,
+        iconSystemName: String,
+        iconColor: Color,
+        title: String,
+        subtitle: String?
+    ) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                .font(.title3)
+                .foregroundStyle(selected ? Color.accentColor : .secondary)
+            Image(systemName: iconSystemName)
+                .font(.title3)
+                .foregroundStyle(iconColor)
+                .frame(width: 24, alignment: .center)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.body)
+                if let subtitle, !subtitle.isEmpty {
+                    Text(subtitle).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
+    }
+
+    private func toggleSelection(of id: UUID, in set: inout Set<UUID>) {
+        if set.contains(id) { set.remove(id) } else { set.insert(id) }
+    }
+
+    private var editActionBar: some View {
+        HStack(spacing: 12) {
+            Button(role: .destructive) {
+                if !selectedSetlistIds.isEmpty {
+                    libraryService.deleteSetlists(ids: Array(selectedSetlistIds))
+                    selectedSetlistIds.removeAll()
+                }
+                if !selectedPlaylistIds.isEmpty {
+                    libraryService.deletePlaylists(ids: Array(selectedPlaylistIds))
+                    selectedPlaylistIds.removeAll()
+                }
+            } label: {
+                Text(totalSelected == 0 ? "Delete" : "Delete \(totalSelected)")
+            }
+            .disabled(totalSelected == 0)
+
+            Spacer()
+
+            Button("Done") { isEditing = false }
+                .keyboardShortcut(.escape, modifiers: [])
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(.background.secondary)
     }
 
     // MARK: Helpers
