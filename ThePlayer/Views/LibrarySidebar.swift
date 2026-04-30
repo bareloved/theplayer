@@ -16,7 +16,6 @@ struct LibrarySidebar: View {
     @AppStorage("librarySidebarSort") private var sortRaw: String = LibrarySortMode.recent.rawValue
     @AppStorage("librarySidebarSetlistsExpanded") private var setlistsExpanded: Bool = true
     @AppStorage("librarySidebarPlaylistsExpanded") private var playlistsExpanded: Bool = true
-    @AppStorage("librarySidebarSmartExpanded") private var smartExpanded: Bool = true
     @FocusState private var searchFocused: Bool
 
     private var sort: LibrarySortMode {
@@ -185,16 +184,6 @@ struct LibrarySidebar: View {
                     Text("Playlists")
                 }
 
-                Section(isExpanded: $smartExpanded) {
-                    NavigationLink(value: SetlistDestination.smart(.mostPracticed)) {
-                        Label("Most Practiced", systemImage: "star.fill")
-                    }
-                    NavigationLink(value: SetlistDestination.smart(.needsWork)) {
-                        Label("Needs Work", systemImage: "exclamationmark.triangle")
-                    }
-                } header: {
-                    Text("Smart")
-                }
             }
             .listStyle(.sidebar)
             .onReceive(NotificationCenter.default.publisher(for: .openLibraryPicker)) { _ in
@@ -236,13 +225,6 @@ struct LibrarySidebar: View {
                 onReanalyze: onReanalyze,
                 currentSongPath: currentSongPath
             )
-        case .smart(let kind):
-            SmartPlaylistView(
-                kind: kind,
-                libraryService: libraryService,
-                onSongSelect: onSongSelect,
-                onReanalyze: onReanalyze
-            )
         }
     }
 
@@ -253,12 +235,6 @@ struct LibrarySidebar: View {
 private enum SetlistDestination: Hashable {
     case setlist(Setlist)
     case playlist(Playlist)
-    case smart(SmartKind)
-
-    enum SmartKind: Hashable {
-        case mostPracticed
-        case needsWork
-    }
 }
 
 // MARK: - Song Row
@@ -457,39 +433,3 @@ private struct PlaylistDetailView: View {
     }
 }
 
-// MARK: - Smart Playlist
-
-private struct SmartPlaylistView: View {
-    let kind: SetlistDestination.SmartKind
-    @Bindable var libraryService: LibraryService
-    let onSongSelect: (SongEntry) -> Void
-    let onReanalyze: (SongEntry) -> Void
-
-    var body: some View {
-        List {
-            Section {
-                Text(kind == .mostPracticed ? "Most Practiced" : "Needs Work")
-                    .font(.title2.bold())
-                    .padding(.vertical, 4)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-            }
-
-            let songs: [SongEntry] = switch kind {
-            case .mostPracticed: libraryService.library.mostPracticed()
-            case .needsWork: libraryService.library.needsWork()
-            }
-
-            if songs.isEmpty {
-                Text("No songs yet")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(songs) { song in
-                    SongRow(song: song, libraryService: libraryService, onSelect: { onSongSelect(song) }, onReanalyze: { onReanalyze(song) })
-                }
-            }
-        }
-        .listStyle(.sidebar)
-        .navigationTitle("")
-    }
-}
