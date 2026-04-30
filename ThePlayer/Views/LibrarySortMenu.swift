@@ -4,6 +4,7 @@ import SwiftUI
 /// checkmarks. Used in the top-right of the library sidebar header.
 struct LibrarySortMenu: View {
     @Binding var sortRaw: String
+    @Binding var showFolders: Bool
 
     var body: some View {
         Menu {
@@ -11,6 +12,17 @@ struct LibrarySortMenu: View {
                 option(.recent, label: "Recent", systemImage: "clock")
                 option(.alphabetical, label: "Alphabetical", systemImage: "textformat")
                 option(.recentlyAdded, label: "Recently added", systemImage: "calendar.badge.plus")
+            }
+            Section("Grouping") {
+                Button {
+                    showFolders.toggle()
+                } label: {
+                    if showFolders {
+                        Label("Show Folders", systemImage: "checkmark")
+                    } else {
+                        Label("Show Folders", systemImage: "folder")
+                    }
+                }
             }
         } label: {
             Image(systemName: "ellipsis")

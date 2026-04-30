@@ -29,6 +29,7 @@ struct LibrarySidebar: View {
     @AppStorage("librarySidebarSort") private var sortRaw: String = LibrarySortMode.recent.rawValue
     @AppStorage("librarySidebarSetlistsExpanded") private var setlistsExpanded: Bool = true
     @AppStorage("librarySidebarPlaylistsExpanded") private var playlistsExpanded: Bool = true
+    @AppStorage("librarySidebarShowFolders") private var showFolders: Bool = true
 
     private var sort: LibrarySortMode {
         LibrarySortMode(rawValue: sortRaw) ?? .recent
@@ -81,7 +82,7 @@ struct LibrarySidebar: View {
             Text("Library").font(.largeTitle.bold())
             Spacer()
             HStack(spacing: 0) {
-                LibrarySortMenu(sortRaw: $sortRaw)
+                LibrarySortMenu(sortRaw: $sortRaw, showFolders: $showFolders)
                 Divider().frame(height: 18)
                 Button(action: { isEditing.toggle() }) {
                     Image(systemName: isEditing ? "checkmark" : "list.bullet")
@@ -148,11 +149,43 @@ struct LibrarySidebar: View {
     private var setlistsSection: some View {
         DisclosureGroup(isExpanded: $setlistsExpanded) {
             VStack(spacing: 0) {
-                ForEach(libraryService.library.setlists) { setlist in
-                    setlistRow(setlist)
-                    Divider().padding(.leading, 56)
+                if showFolders {
+                    ForEach(libraryService.library.setlistFolders) { folder in
+                        FolderDisclosureRow(
+                            folder: folder,
+                            iconColor: .blue,
+                            content: {
+                                ForEach(libraryService.library.setlists.filter { $0.folderId == folder.id }) { setlist in
+                                    setlistRow(setlist).padding(.leading, 24)
+                                    Divider().padding(.leading, 80)
+                                }
+                            },
+                            onRename: { libraryService.renameSetlistFolder(id: folder.id, name: $0) },
+                            onDelete: { libraryService.deleteSetlistFolder(id: folder.id) }
+                        )
+                        Divider().padding(.leading, 56)
+                    }
+                    ForEach(libraryService.library.setlists.filter { $0.folderId == nil }) { setlist in
+                        setlistRow(setlist)
+                        Divider().padding(.leading, 56)
+                    }
+                } else {
+                    ForEach(libraryService.library.setlists) { setlist in
+                        setlistRow(setlist)
+                        Divider().padding(.leading, 56)
+                    }
                 }
-                if !isEditing {
+                if isEditing {
+                    Button(action: { promptNewFolder(kind: .setlist) }) {
+                        Label("New Folder", systemImage: "folder.badge.plus")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.vertical, 8)
+                            .padding(.leading, 16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+                } else {
                     Button(action: { isAddingSetlist = true }) {
                         Label("New Setlist", systemImage: "plus")
                             .font(.caption)
@@ -203,11 +236,43 @@ struct LibrarySidebar: View {
     private var playlistsSection: some View {
         DisclosureGroup(isExpanded: $playlistsExpanded) {
             VStack(spacing: 0) {
-                ForEach(libraryService.library.playlists) { playlist in
-                    playlistRow(playlist)
-                    Divider().padding(.leading, 56)
+                if showFolders {
+                    ForEach(libraryService.library.playlistFolders) { folder in
+                        FolderDisclosureRow(
+                            folder: folder,
+                            iconColor: .purple,
+                            content: {
+                                ForEach(libraryService.library.playlists.filter { $0.folderId == folder.id }) { playlist in
+                                    playlistRow(playlist).padding(.leading, 24)
+                                    Divider().padding(.leading, 80)
+                                }
+                            },
+                            onRename: { libraryService.renamePlaylistFolder(id: folder.id, name: $0) },
+                            onDelete: { libraryService.deletePlaylistFolder(id: folder.id) }
+                        )
+                        Divider().padding(.leading, 56)
+                    }
+                    ForEach(libraryService.library.playlists.filter { $0.folderId == nil }) { playlist in
+                        playlistRow(playlist)
+                        Divider().padding(.leading, 56)
+                    }
+                } else {
+                    ForEach(libraryService.library.playlists) { playlist in
+                        playlistRow(playlist)
+                        Divider().padding(.leading, 56)
+                    }
                 }
-                if !isEditing {
+                if isEditing {
+                    Button(action: { promptNewFolder(kind: .playlist) }) {
+                        Label("New Folder", systemImage: "folder.badge.plus")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.vertical, 8)
+                            .padding(.leading, 16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+                } else {
                     Button(action: { isAddingPlaylist = true }) {
                         Label("New Playlist", systemImage: "plus")
                             .font(.caption)
@@ -221,6 +286,27 @@ struct LibrarySidebar: View {
             }
         } label: {
             sectionHeader(title: "Playlists")
+        }
+    }
+
+    private enum FolderKind { case setlist, playlist }
+
+    private func promptNewFolder(kind: FolderKind) {
+        let alert = NSAlert()
+        alert.messageText = kind == .setlist ? "New setlist folder" : "New playlist folder"
+        alert.addButton(withTitle: "Create")
+        alert.addButton(withTitle: "Cancel")
+        let field = NSTextField(string: "")
+        field.placeholderString = "Folder name"
+        field.frame = NSRect(x: 0, y: 0, width: 240, height: 22)
+        alert.accessoryView = field
+        if alert.runModal() == .alertFirstButtonReturn {
+            let trimmed = field.stringValue.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { return }
+            switch kind {
+            case .setlist: libraryService.createSetlistFolder(name: trimmed)
+            case .playlist: libraryService.createPlaylistFolder(name: trimmed)
+            }
         }
     }
 
@@ -301,6 +387,26 @@ struct LibrarySidebar: View {
             }
             .disabled(totalSelected == 0)
 
+            Menu {
+                Button("Root (no folder)") { moveSelected(toFolder: nil) }
+                if !libraryService.library.setlistFolders.isEmpty
+                    || !libraryService.library.playlistFolders.isEmpty {
+                    Divider()
+                }
+                ForEach(libraryService.library.setlistFolders) { folder in
+                    Button(folder.name) { moveSelectedSetlists(toFolder: folder.id) }
+                        .disabled(selectedSetlistIds.isEmpty)
+                }
+                ForEach(libraryService.library.playlistFolders) { folder in
+                    Button(folder.name) { moveSelectedPlaylists(toFolder: folder.id) }
+                        .disabled(selectedPlaylistIds.isEmpty)
+                }
+            } label: {
+                Text("Move to…")
+            }
+            .disabled(totalSelected == 0)
+            .fixedSize()
+
             Spacer()
 
             Button("Done") { isEditing = false }
@@ -309,6 +415,25 @@ struct LibrarySidebar: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .background(.background.secondary)
+    }
+
+    private func moveSelected(toFolder folderId: UUID?) {
+        moveSelectedSetlists(toFolder: folderId)
+        moveSelectedPlaylists(toFolder: folderId)
+    }
+
+    private func moveSelectedSetlists(toFolder folderId: UUID?) {
+        for id in selectedSetlistIds {
+            libraryService.moveSetlist(id: id, toFolder: folderId)
+        }
+        selectedSetlistIds.removeAll()
+    }
+
+    private func moveSelectedPlaylists(toFolder folderId: UUID?) {
+        for id in selectedPlaylistIds {
+            libraryService.movePlaylist(id: id, toFolder: folderId)
+        }
+        selectedPlaylistIds.removeAll()
     }
 
     // MARK: Helpers
@@ -408,6 +533,60 @@ private enum SetlistDestination: Hashable {
 }
 
 // MARK: - Reusable rows
+
+/// A folder row that remembers its expanded/collapsed state per-folder UUID
+/// in `UserDefaults`.
+struct FolderDisclosureRow<Content: View>: View {
+    let folder: LibraryFolder
+    let iconColor: Color
+    @ViewBuilder let content: () -> Content
+    let onRename: (String) -> Void
+    let onDelete: () -> Void
+
+    @State private var isExpanded: Bool = true
+
+    private var key: String { "libraryFolderExpanded.\(folder.id.uuidString)" }
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $isExpanded) {
+            content()
+        } label: {
+            LibraryItemRow(
+                iconSystemName: "folder.fill",
+                iconColor: iconColor,
+                title: folder.name,
+                subtitle: nil,
+                showsChevron: false
+            )
+            .contextMenu {
+                Button("Rename Folder…") { promptRename() }
+                Button("Delete Folder", role: .destructive) { onDelete() }
+            }
+        }
+        .onAppear {
+            if let stored = UserDefaults.standard.object(forKey: key) as? Bool {
+                isExpanded = stored
+            }
+        }
+        .onChange(of: isExpanded) { _, newValue in
+            UserDefaults.standard.set(newValue, forKey: key)
+        }
+    }
+
+    private func promptRename() {
+        let alert = NSAlert()
+        alert.messageText = "Rename folder"
+        alert.addButton(withTitle: "Save")
+        alert.addButton(withTitle: "Cancel")
+        let field = NSTextField(string: folder.name)
+        field.frame = NSRect(x: 0, y: 0, width: 240, height: 22)
+        alert.accessoryView = field
+        if alert.runModal() == .alertFirstButtonReturn {
+            let trimmed = field.stringValue.trimmingCharacters(in: .whitespaces)
+            if !trimmed.isEmpty { onRename(trimmed) }
+        }
+    }
+}
 
 /// Generic row used for setlists, playlists, and folders. forScore-style:
 /// icon on the left, title + subtitle stacked, optional trailing chevron.
