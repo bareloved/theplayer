@@ -31,4 +31,107 @@ final class JumpMathTests: XCTestCase {
         XCTAssertEqual(JumpMath.nextSecondTime(from: t, direction: .forward, seconds: 15, duration: dur), 65, accuracy: 0.0001)
         XCTAssertEqual(JumpMath.nextSecondTime(from: t, direction: .forward, seconds: 30, duration: dur), 80, accuracy: 0.0001)
     }
+
+    // MARK: - nextBarTime
+    // bpm=240, beatsPerBar=4, firstBeat=0  →  barWidth = 60/240 * 4 = 1.0 s.
+    // Bar lines at 0, 1, 2, 3, ...
+
+    private let bpmFixture: Float = 240
+    private let bpbFixture: Int = 4
+
+    func testBarForwardFromOnGridFourBars() throws {
+        let result = try XCTUnwrap(JumpMath.nextBarTime(from: 3.0, direction: .forward, bars: 4,
+                                 bpm: bpmFixture, beatsPerBar: bpbFixture,
+                                 firstBeatTime: 0, duration: 100))
+        XCTAssertEqual(result, 7.0, accuracy: 0.0001)
+    }
+
+    func testBarForwardFromMidBarFourBars() throws {
+        let result = try XCTUnwrap(JumpMath.nextBarTime(from: 3.4, direction: .forward, bars: 4,
+                                 bpm: bpmFixture, beatsPerBar: bpbFixture,
+                                 firstBeatTime: 0, duration: 100))
+        XCTAssertEqual(result, 7.0, accuracy: 0.0001)
+    }
+
+    func testBarBackwardFromOnGridFourBarsClamps() throws {
+        // 3.0 - 4 bars = -1.0 → clamped to 0.
+        let result = try XCTUnwrap(JumpMath.nextBarTime(from: 3.0, direction: .backward, bars: 4,
+                                 bpm: bpmFixture, beatsPerBar: bpbFixture,
+                                 firstBeatTime: 0, duration: 100))
+        XCTAssertEqual(result, 0.0, accuracy: 0.0001)
+    }
+
+    func testBarBackwardFromMidBarFourBars() throws {
+        let result = try XCTUnwrap(JumpMath.nextBarTime(from: 3.4, direction: .backward, bars: 4,
+                                 bpm: bpmFixture, beatsPerBar: bpbFixture,
+                                 firstBeatTime: 0, duration: 100))
+        XCTAssertEqual(result, 0.0, accuracy: 0.0001)
+    }
+
+    func testBarForwardOneBarFromOnGridMoves() throws {
+        // A press always moves you, even when on-grid.
+        let result = try XCTUnwrap(JumpMath.nextBarTime(from: 3.0, direction: .forward, bars: 1,
+                                 bpm: bpmFixture, beatsPerBar: bpbFixture,
+                                 firstBeatTime: 0, duration: 100))
+        XCTAssertEqual(result, 4.0, accuracy: 0.0001)
+    }
+
+    func testBarBackwardOneBarFromOnGridMoves() throws {
+        let result = try XCTUnwrap(JumpMath.nextBarTime(from: 3.0, direction: .backward, bars: 1,
+                                 bpm: bpmFixture, beatsPerBar: bpbFixture,
+                                 firstBeatTime: 0, duration: 100))
+        XCTAssertEqual(result, 2.0, accuracy: 0.0001)
+    }
+
+    func testBarReturnsNilWhenBpmInvalid() {
+        XCTAssertNil(
+            JumpMath.nextBarTime(from: 3.0, direction: .forward, bars: 1,
+                                 bpm: 0, beatsPerBar: bpbFixture,
+                                 firstBeatTime: 0, duration: 100)
+        )
+    }
+
+    func testBarReturnsNilWhenBeatsPerBarInvalid() {
+        XCTAssertNil(
+            JumpMath.nextBarTime(from: 3.0, direction: .forward, bars: 1,
+                                 bpm: bpmFixture, beatsPerBar: 0,
+                                 firstBeatTime: 0, duration: 100)
+        )
+    }
+
+    func testBarReturnsNilWhenBarsInvalid() {
+        XCTAssertNil(
+            JumpMath.nextBarTime(from: 3.0, direction: .forward, bars: 0,
+                                 bpm: bpmFixture, beatsPerBar: bpbFixture,
+                                 firstBeatTime: 0, duration: 100)
+        )
+    }
+
+    func testBarClampsAtEndOfDuration() throws {
+        let result = try XCTUnwrap(JumpMath.nextBarTime(from: 95.0, direction: .forward, bars: 16,
+                                 bpm: bpmFixture, beatsPerBar: bpbFixture,
+                                 firstBeatTime: 0, duration: 100))
+        XCTAssertEqual(result, 100.0, accuracy: 0.0001)
+    }
+
+    func testBarAllShortcutValuesFromMidBar() throws {
+        // From 10.4: forward bars=1 → 11, =2 → 12, =4 → 14, =8 → 18, =16 → 26.
+        let cases: [(Int, Float)] = [(1, 11), (2, 12), (4, 14), (8, 18), (16, 26)]
+        for (bars, expected) in cases {
+            let result = try XCTUnwrap(JumpMath.nextBarTime(from: 10.4, direction: .forward, bars: bars,
+                                         bpm: bpmFixture, beatsPerBar: bpbFixture,
+                                         firstBeatTime: 0, duration: 100),
+                                       "bars=\(bars)")
+            XCTAssertEqual(result, expected, accuracy: 0.0001, "bars=\(bars)")
+        }
+    }
+
+    func testBarRespectsNonZeroFirstBeat() throws {
+        // firstBeat=0.25, bars at 0.25, 1.25, 2.25, 3.25...
+        // From 1.5 forward bars=1 → 2.25.
+        let result = try XCTUnwrap(JumpMath.nextBarTime(from: 1.5, direction: .forward, bars: 1,
+                                 bpm: bpmFixture, beatsPerBar: bpbFixture,
+                                 firstBeatTime: 0.25, duration: 100))
+        XCTAssertEqual(result, 2.25, accuracy: 0.0001)
+    }
 }
