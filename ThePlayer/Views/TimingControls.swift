@@ -38,7 +38,7 @@ struct TimingControls: View {
                         .underline(true, color: .secondary)
                 }
                 .buttonStyle(.plain)
-                .help("Click to type a BPM value")
+                .fastTooltip("Click to type a BPM value")
                 .contextMenu {
                     Button("Reset to auto-detected", action: onResetBpm).disabled(!hasBpmOverride)
                 }
@@ -48,10 +48,10 @@ struct TimingControls: View {
             }
             Button("−1") { onSetBpm(bpm - 1) }
                 .buttonStyle(.bordered).controlSize(.mini)
-                .help("Decrease BPM by 1")
+                .fastTooltip("Decrease BPM by 1")
             Button("+1") { onSetBpm(bpm + 1) }
                 .buttonStyle(.bordered).controlSize(.mini)
-                .help("Increase BPM by 1")
+                .fastTooltip("Increase BPM by 1")
             Button("÷2") { onSetBpm(bpm / 2) }
                 .buttonStyle(.bordered).controlSize(.mini)
             Button("×2") { onSetBpm(bpm * 2) }
@@ -78,7 +78,7 @@ struct TimingControls: View {
             }
             .buttonStyle(.bordered).controlSize(.mini)
             .tint(isClickEnabled ? Color.orange : nil)
-            .help(isClickEnabled ? "Disable click track" : "Enable click track")
+            .fastTooltip(isClickEnabled ? "Disable click track" : "Enable click track")
 
             if isClickEnabled {
                 Slider(value: $clickVolume, in: 0...1)

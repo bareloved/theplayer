@@ -114,13 +114,13 @@ struct ContentView: View {
                 Button(action: { showLibrarySidebar.toggle() }) {
                     Image(systemName: "sidebar.left")
                 }
-                .help("Toggle Library")
+                .fastTooltip("Toggle Library")
             }
             ToolbarItemGroup(placement: .primaryAction) {
                 Button(action: { showSectionsSidebar.toggle() }) {
                     Image(systemName: "sidebar.right")
                 }
-                .help("Toggle Sections")
+                .fastTooltip("Toggle Sections")
             }
         }
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
