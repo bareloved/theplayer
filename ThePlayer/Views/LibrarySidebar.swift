@@ -147,7 +147,7 @@ struct LibrarySidebar: View {
                         onSelect: { onSongSelect(song) },
                         onReanalyze: { onReanalyze(song) }
                     )
-                    Divider().padding(.leading, 56)
+                    Divider()
                 }
             }
         }
@@ -164,22 +164,22 @@ struct LibrarySidebar: View {
                             content: {
                                 ForEach(libraryService.library.setlists.filter { $0.folderId == folder.id }) { setlist in
                                     setlistRow(setlist).padding(.leading, 24)
-                                    Divider().padding(.leading, 80)
+                                    Divider()
                                 }
                             },
                             onRename: { libraryService.renameSetlistFolder(id: folder.id, name: $0) },
                             onDelete: { libraryService.deleteSetlistFolder(id: folder.id) }
                         )
-                        Divider().padding(.leading, 56)
+                        Divider()
                     }
                     ForEach(libraryService.library.setlists.filter { $0.folderId == nil }) { setlist in
                         setlistRow(setlist)
-                        Divider().padding(.leading, 56)
+                        Divider()
                     }
                 } else {
                     ForEach(libraryService.library.setlists) { setlist in
                         setlistRow(setlist)
-                        Divider().padding(.leading, 56)
+                        Divider()
                     }
                 }
                 if isEditing {
@@ -247,22 +247,22 @@ struct LibrarySidebar: View {
                             content: {
                                 ForEach(libraryService.library.playlists.filter { $0.folderId == folder.id }) { playlist in
                                     playlistRow(playlist).padding(.leading, 24)
-                                    Divider().padding(.leading, 80)
+                                    Divider()
                                 }
                             },
                             onRename: { libraryService.renamePlaylistFolder(id: folder.id, name: $0) },
                             onDelete: { libraryService.deletePlaylistFolder(id: folder.id) }
                         )
-                        Divider().padding(.leading, 56)
+                        Divider()
                     }
                     ForEach(libraryService.library.playlists.filter { $0.folderId == nil }) { playlist in
                         playlistRow(playlist)
-                        Divider().padding(.leading, 56)
+                        Divider()
                     }
                 } else {
                     ForEach(libraryService.library.playlists) { playlist in
                         playlistRow(playlist)
-                        Divider().padding(.leading, 56)
+                        Divider()
                     }
                 }
                 if isEditing {
@@ -364,7 +364,7 @@ struct LibrarySidebar: View {
             Spacer()
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 12)
         .contentShape(Rectangle())
     }
 
@@ -687,7 +687,7 @@ struct LibraryItemRow: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 12)
         .contentShape(Rectangle())
     }
 }
@@ -795,7 +795,7 @@ private struct SetlistDetailView: View {
                                 .padding(.vertical, 8)
                         }
                         .buttonStyle(.plain)
-                        Divider().padding(.leading, 56)
+                        Divider()
                     }
 
                     let songs = setlist.songIds.enumerated().compactMap { index, id -> (Int, SongEntry)? in
@@ -814,7 +814,7 @@ private struct SetlistDetailView: View {
                             },
                             onReanalyze: {}
                         )
-                        Divider().padding(.leading, 56)
+                        Divider()
                     }
                 }
             }
@@ -863,7 +863,7 @@ private struct PlaylistDetailView: View {
                                 .padding(.vertical, 8)
                         }
                         .buttonStyle(.plain)
-                        Divider().padding(.leading, 56)
+                        Divider()
                     }
 
                     let songs = playlist.songIds.compactMap { libraryService.library.song(byId: $0) }
@@ -875,7 +875,7 @@ private struct PlaylistDetailView: View {
                             onSelect: { onSongSelect(song) },
                             onReanalyze: { onReanalyze(song) }
                         )
-                        Divider().padding(.leading, 56)
+                        Divider()
                     }
                 }
             }
