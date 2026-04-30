@@ -1,5 +1,26 @@
+import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
+
+extension Notification.Name {
+    static let openLibraryPicker = Notification.Name("openLibraryPicker")
+    static let openAddSongsPanel = Notification.Name("openAddSongsPanel")
+}
+
+private struct OpaqueToolbar: ViewModifier {
+    func body(content: Content) -> some View {
+        content.toolbarBackground(.visible, for: .windowToolbar)
+    }
+}
+
+private struct AddSongsPanelTrigger: ViewModifier {
+    let action: () -> Void
+    func body(content: Content) -> some View {
+        content.onReceive(NotificationCenter.default.publisher(for: .openAddSongsPanel)) { _ in
+            action()
+        }
+    }
+}
 
 struct ContentView: View {
     @Bindable var audioEngine: AudioEngine
@@ -9,18 +30,18 @@ struct ContentView: View {
     @State private var isLoopEnabled: Bool = true
     @State private var isTargeted = false
     @State private var snapToGrid = true
-    @State private var snapDivision: SnapDivision = .oneBar
     @State private var loadError: String?
     @State private var showErrorAlert = false
     @State private var keyMonitor: Any?
     @State private var showLibrarySidebar = true
     @State private var showSectionsSidebar = true
-    @State private var librarySidebarWidth: CGFloat = 220
-    @State private var sectionsSidebarWidth: CGFloat = 220
+    @AppStorage("librarySidebarWidth") private var librarySidebarWidth: Double = 220
+    @AppStorage("sectionsSidebarWidth") private var sectionsSidebarWidth: Double = 220
     @State private var sectionsVM: SectionsViewModel?
     @State private var selectedSectionId: UUID?
     @State private var isBoundaryDragging: Bool = false
     @State private var clickTrackPlayer: ClickTrackPlayer?
+    @State private var keyboardMonitor: KeyboardJumpMonitor?
     @AppStorage("clickTrackEnabled") private var clickEnabled: Bool = false
     @AppStorage("clickTrackVolume") private var clickVolume: Double = 0.5
 
@@ -109,23 +130,25 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 800, minHeight: 500)
+        .modifier(OpaqueToolbar())
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Button(action: { showLibrarySidebar.toggle() }) {
                     Image(systemName: "sidebar.left")
                 }
-                .help("Toggle Library")
+                .fastTooltip("Toggle Library")
             }
             ToolbarItemGroup(placement: .primaryAction) {
                 Button(action: { showSectionsSidebar.toggle() }) {
                     Image(systemName: "sidebar.right")
                 }
-                .help("Toggle Sections")
+                .fastTooltip("Toggle Sections")
             }
         }
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
             handleDrop(providers)
         }
+        .modifier(AddSongsPanelTrigger(action: presentAddSongsPanel))
         .overlay {
             if isTargeted {
                 RoundedRectangle(cornerRadius: 12)
@@ -162,8 +185,23 @@ struct ContentView: View {
                 pushClickAnalysis()
                 ctp.isEnabled = clickEnabled
             }
+            if keyboardMonitor == nil {
+                let monitor = KeyboardJumpMonitor(audioEngine: audioEngine) {
+                    JumpContext(
+                        snapToGrid: snapToGrid,
+                        analysis: analysisService.lastAnalysis,
+                        duration: audioEngine.duration
+                    )
+                }
+                monitor.start()
+                keyboardMonitor = monitor
+            }
         }
-        .onDisappear { removeKeyMonitor() }
+        .onDisappear {
+            removeKeyMonitor()
+            keyboardMonitor?.stop()
+            keyboardMonitor = nil
+        }
         .onChange(of: clickEnabled) { _, newValue in
             clickTrackPlayer?.isEnabled = newValue
         }
@@ -247,7 +285,6 @@ struct ContentView: View {
                     onsets: analysisService.lastAnalysis?.onsets ?? [],
                     bpm: analysisService.lastAnalysis?.bpm ?? 0,
                     snapToGrid: snapToGrid,
-                    snapDivision: snapDivision,
                     duration: audioEngine.duration,
                     currentTime: audioEngine.currentTime,
                     loopRegion: loopRegion,
@@ -311,7 +348,6 @@ struct ContentView: View {
                 loopRegion: $loopRegion,
                 isLoopEnabled: $isLoopEnabled,
                 snapToGrid: $snapToGrid,
-                snapDivision: $snapDivision,
                 isInSetlist: libraryService.activeSetlistId != nil,
                 onNextInSetlist: { advanceSetlist() },
                 timingControls: AnyView(
@@ -404,15 +440,67 @@ struct ContentView: View {
     }
 
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
-        guard let provider = providers.first else { return false }
-        provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier) { item, _ in
-            guard let data = item as? Data,
-                  let url = URL(dataRepresentation: data, relativeTo: nil) else { return }
-            Task { @MainActor in
-                openFile(url: url)
+        Task { @MainActor in
+            var urls: [URL] = []
+            for provider in providers {
+                if let url = await loadDroppedURL(from: provider) {
+                    urls.append(url)
+                }
             }
+            guard !urls.isEmpty else { return }
+            // Single audio file dropped → preserve today's "open it" behavior.
+            if urls.count == 1, !isDirectory(urls[0]) {
+                openFile(url: urls[0])
+                return
+            }
+            await importPaths(urls)
         }
         return true
+    }
+
+    private func loadDroppedURL(from provider: NSItemProvider) async -> URL? {
+        await withCheckedContinuation { cont in
+            provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier) { item, _ in
+                if let data = item as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) {
+                    cont.resume(returning: url)
+                } else {
+                    cont.resume(returning: nil)
+                }
+            }
+        }
+    }
+
+    private func isDirectory(_ url: URL) -> Bool {
+        var isDir: ObjCBool = false
+        FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
+        return isDir.boolValue
+    }
+
+    private func presentAddSongsPanel() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = true
+        panel.allowedContentTypes = [.audio]
+        panel.prompt = "Add"
+        if panel.runModal() == .OK {
+            let urls = panel.urls
+            Task { await importPaths(urls) }
+        }
+    }
+
+    private func importPaths(_ urls: [URL]) async {
+        var expanded: [URL] = []
+        for url in urls {
+            if isDirectory(url) {
+                for await audio in FolderImporter.enumerateAudioFiles(at: url) {
+                    expanded.append(audio)
+                }
+            } else {
+                expanded.append(url)
+            }
+        }
+        _ = await libraryService.addSongs(urls: expanded)
     }
 
     func openFile(url: URL) {
@@ -423,13 +511,17 @@ struct ContentView: View {
             loadError = nil
             NSDocumentController.shared.noteNewRecentDocumentURL(url)
             let fallbackTitle = url.deletingPathExtension().lastPathComponent
-            libraryService.addSong(
-                filePath: url.path,
-                title: audioEngine.title.isEmpty ? fallbackTitle : audioEngine.title,
-                artist: audioEngine.artist,
-                bpm: analysisService.lastAnalysis?.bpm ?? 0,
-                duration: audioEngine.duration
-            )
+            let capturedDuration = audioEngine.duration
+            Task { @MainActor in
+                let resolved = await audioEngine.loadEmbeddedMetadata(url: url)
+                libraryService.addSong(
+                    filePath: url.path,
+                    title: resolved.title.isEmpty ? fallbackTitle : resolved.title,
+                    artist: resolved.artist,
+                    bpm: analysisService.lastAnalysis?.bpm ?? 0,
+                    duration: capturedDuration
+                )
+            }
             Task {
                 await analysisService.analyze(fileURL: url)
             }
@@ -509,32 +601,6 @@ struct ContentView: View {
         case 49: // Space
             audioEngine.togglePlayPause()
             return true
-        case 123: // Left arrow
-            if snapToGrid {
-                let positions = getSnapPositions()
-                if !positions.isEmpty {
-                    let prev = positions.last(where: { $0 < audioEngine.currentTime - 0.05 })
-                    audioEngine.seek(to: max(prev ?? 0, 0))
-                } else {
-                    audioEngine.skipBackward()
-                }
-            } else {
-                audioEngine.skipBackward()
-            }
-            return true
-        case 124: // Right arrow
-            if snapToGrid {
-                let positions = getSnapPositions()
-                if !positions.isEmpty {
-                    let next = positions.first(where: { $0 > audioEngine.currentTime + 0.05 })
-                    audioEngine.seek(to: min(next ?? audioEngine.duration, audioEngine.duration))
-                } else {
-                    audioEngine.skipForward()
-                }
-            } else {
-                audioEngine.skipForward()
-            }
-            return true
         case 126: // Up arrow
             audioEngine.speed += 0.05
             return true
@@ -574,20 +640,6 @@ struct ContentView: View {
         }
 
         return false
-    }
-
-    private func getSnapPositions() -> [Float] {
-        let analysis = analysisService.lastAnalysis
-        let bpb = analysis?.timeSignature.beatsPerBar ?? 4
-        let beats = analysis?.beats ?? []
-        let firstBeatTime: Float? = analysis?.firstDownbeatTime
-        return snapDivision.snapPositions(
-            beats: beats,
-            bpm: analysis?.bpm ?? 0,
-            duration: audioEngine.duration,
-            beatsPerBar: bpb,
-            firstBeatTime: firstBeatTime
-        )
     }
 
     private func jumpToSection(_ index: Int) {

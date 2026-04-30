@@ -16,6 +16,14 @@ struct ThePlayerApp: App {
                     openFilePanel()
                 }
                 .keyboardShortcut("o")
+                Button("Search Library") {
+                    NotificationCenter.default.post(name: .openLibraryPicker, object: nil)
+                }
+                .keyboardShortcut("l", modifiers: .command)
+                Button("Add Songs…") {
+                    NotificationCenter.default.post(name: .openAddSongsPanel, object: nil)
+                }
+                .keyboardShortcut("o", modifiers: [.command, .shift])
             }
             CommandGroup(replacing: .undoRedo) {
                 Button("Undo") {

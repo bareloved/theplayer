@@ -8,7 +8,6 @@ struct WaveformView: View {
     let onsets: [Float]
     let bpm: Float
     let snapToGrid: Bool
-    let snapDivision: SnapDivision
     let duration: Float
     let currentTime: Float
     let loopRegion: LoopRegion?
@@ -403,7 +402,6 @@ struct WaveformView: View {
         .onChange(of: duration) { _, _ in recomputeGridCaches() }
         .onChange(of: firstDownbeatTime) { _, _ in recomputeGridCaches() }
         .onChange(of: timeSignature) { _, _ in recomputeGridCaches() }
-        .onChange(of: snapDivision) { _, _ in recomputeGridCaches() }
         .onChange(of: beats) { _, _ in recomputeGridCaches() }
     }
 
@@ -446,7 +444,7 @@ struct WaveformView: View {
     }
 
     /// Nearest beat time to `t`. Uses BPM-derived beat positions (independent of
-    /// the bar-level `snapDivision`), so seek/hover snap feels musical.
+    /// the bar grid), so seek/hover snap feels musical.
     private func nearestBeatTime(to t: Float) -> Float {
         guard bpm > 0, duration > 0 else { return t }
         let beatDuration: Float = 60.0 / bpm
@@ -457,9 +455,9 @@ struct WaveformView: View {
         return min(max(snapped, 0), duration)
     }
 
-    /// Grid positions based on current snap division
+    /// Bar-line grid positions (always 1 bar — no longer user-configurable).
     private var gridPositions: [Float] {
-        snapDivision.snapPositions(
+        JumpMath.barSnapPositions(
             beats: beats, bpm: bpm, duration: duration,
             beatsPerBar: timeSignature.beatsPerBar,
             firstBeatTime: firstDownbeatTime

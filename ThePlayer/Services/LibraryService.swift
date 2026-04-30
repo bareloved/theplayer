@@ -1,5 +1,12 @@
+import AVFoundation
 import Foundation
 import Observation
+
+struct LibraryImportResult: Equatable {
+    var added: Int = 0
+    var skippedDuplicate: Int = 0
+    var failed: Int = 0
+}
 
 @Observable
 final class LibraryService {
@@ -102,8 +109,8 @@ final class LibraryService {
     // MARK: - Setlists
 
     @discardableResult
-    func createSetlist(name: String) -> Setlist {
-        let setlist = Setlist(name: name)
+    func createSetlist(name: String, description: String? = nil) -> Setlist {
+        let setlist = Setlist(name: name, description: description)
         library.setlists.append(setlist)
         save()
         return setlist
@@ -148,8 +155,8 @@ final class LibraryService {
     // MARK: - Playlists
 
     @discardableResult
-    func createPlaylist(name: String) -> Playlist {
-        let playlist = Playlist(name: name)
+    func createPlaylist(name: String, description: String? = nil) -> Playlist {
+        let playlist = Playlist(name: name, description: description)
         library.playlists.append(playlist)
         save()
         return playlist
@@ -179,6 +186,118 @@ final class LibraryService {
     func removeSongFromPlaylist(songId: UUID, playlistId: UUID) {
         guard let index = library.playlists.firstIndex(where: { $0.id == playlistId }) else { return }
         library.playlists[index].songIds.removeAll(where: { $0 == songId })
+        library.playlists[index].updatedAt = Date()
+        save()
+    }
+
+    func reorderPlaylist(playlistId: UUID, songIds: [UUID]) {
+        guard let index = library.playlists.firstIndex(where: { $0.id == playlistId }) else { return }
+        library.playlists[index].songIds = songIds
+        library.playlists[index].updatedAt = Date()
+        save()
+    }
+
+    // MARK: - Bulk operations
+
+    func reorderSetlists(_ orderedIds: [UUID]) {
+        let byId = Dictionary(uniqueKeysWithValues: library.setlists.map { ($0.id, $0) })
+        library.setlists = orderedIds.compactMap { byId[$0] }
+        save()
+    }
+
+    func reorderPlaylists(_ orderedIds: [UUID]) {
+        let byId = Dictionary(uniqueKeysWithValues: library.playlists.map { ($0.id, $0) })
+        library.playlists = orderedIds.compactMap { byId[$0] }
+        save()
+    }
+
+    func deleteSongsFromSetlist(setlistId: UUID, songIds: [UUID]) {
+        guard let index = library.setlists.firstIndex(where: { $0.id == setlistId }) else { return }
+        let toRemove = Set(songIds)
+        library.setlists[index].songIds.removeAll { toRemove.contains($0) }
+        library.setlists[index].updatedAt = Date()
+        save()
+    }
+
+    func deleteSongsFromPlaylist(playlistId: UUID, songIds: [UUID]) {
+        guard let index = library.playlists.firstIndex(where: { $0.id == playlistId }) else { return }
+        let toRemove = Set(songIds)
+        library.playlists[index].songIds.removeAll { toRemove.contains($0) }
+        library.playlists[index].updatedAt = Date()
+        save()
+    }
+
+    func deleteSetlists(ids: [UUID]) {
+        let toRemove = Set(ids)
+        library.setlists.removeAll { toRemove.contains($0.id) }
+        if let active = activeSetlistId, toRemove.contains(active) { activeSetlistId = nil }
+        save()
+    }
+
+    func deletePlaylists(ids: [UUID]) {
+        let toRemove = Set(ids)
+        library.playlists.removeAll { toRemove.contains($0.id) }
+        save()
+    }
+
+    // MARK: - Folders
+
+    @discardableResult
+    func createSetlistFolder(name: String) -> LibraryFolder {
+        let folder = LibraryFolder(name: name)
+        library.setlistFolders.append(folder)
+        save()
+        return folder
+    }
+
+    @discardableResult
+    func createPlaylistFolder(name: String) -> LibraryFolder {
+        let folder = LibraryFolder(name: name)
+        library.playlistFolders.append(folder)
+        save()
+        return folder
+    }
+
+    func renameSetlistFolder(id: UUID, name: String) {
+        guard let index = library.setlistFolders.firstIndex(where: { $0.id == id }) else { return }
+        library.setlistFolders[index].name = name
+        save()
+    }
+
+    func renamePlaylistFolder(id: UUID, name: String) {
+        guard let index = library.playlistFolders.firstIndex(where: { $0.id == id }) else { return }
+        library.playlistFolders[index].name = name
+        save()
+    }
+
+    /// Removes the folder; any setlists currently inside it move back to root
+    /// (`folderId = nil`).
+    func deleteSetlistFolder(id: UUID) {
+        for i in library.setlists.indices where library.setlists[i].folderId == id {
+            library.setlists[i].folderId = nil
+        }
+        library.setlistFolders.removeAll { $0.id == id }
+        save()
+    }
+
+    func deletePlaylistFolder(id: UUID) {
+        for i in library.playlists.indices where library.playlists[i].folderId == id {
+            library.playlists[i].folderId = nil
+        }
+        library.playlistFolders.removeAll { $0.id == id }
+        save()
+    }
+
+    func moveSetlist(id: UUID, toFolder folderId: UUID?) {
+        guard let index = library.setlists.firstIndex(where: { $0.id == id }) else { return }
+        library.setlists[index].folderId = folderId
+        library.setlists[index].updatedAt = Date()
+        save()
+    }
+
+    func movePlaylist(id: UUID, toFolder folderId: UUID?) {
+        guard let index = library.playlists.firstIndex(where: { $0.id == id }) else { return }
+        library.playlists[index].folderId = folderId
         library.playlists[index].updatedAt = Date()
         save()
     }
@@ -216,5 +335,44 @@ final class LibraryService {
         } catch {
             print("LibraryService: save failed — \(error.localizedDescription)")
         }
+    }
+
+    // MARK: - Batch import
+
+    /// Batch-adds many files. Reads embedded metadata per file (falling back to
+    /// the filename when missing), defers a single `save()` to the end. Existing
+    /// path duplicates are counted, not re-added.
+    func addSongs(urls: [URL]) async -> LibraryImportResult {
+        var result = LibraryImportResult()
+        for url in urls {
+            if Task.isCancelled { break }
+            if library.songByPath(url.path) != nil {
+                result.skippedDuplicate += 1
+                continue
+            }
+            let (title, artist) = await Self.readMetadata(url: url)
+            let fallback = url.deletingPathExtension().lastPathComponent
+            let song = SongEntry(
+                filePath: url.path,
+                title: title.isEmpty ? fallback : title,
+                artist: artist,
+                bpm: 0,
+                duration: 0
+            )
+            library.songs.append(song)
+            result.added += 1
+        }
+        save()
+        return result
+    }
+
+    private static func readMetadata(url: URL) async -> (title: String, artist: String) {
+        let asset = AVURLAsset(url: url)
+        guard let metadata = try? await asset.load(.commonMetadata) else { return ("", "") }
+        let title = (try? await AVMetadataItem.metadataItems(from: metadata, filteredByIdentifier: .commonIdentifierTitle)
+            .first?.load(.stringValue)) ?? nil
+        let artist = (try? await AVMetadataItem.metadataItems(from: metadata, filteredByIdentifier: .commonIdentifierArtist)
+            .first?.load(.stringValue)) ?? nil
+        return (title ?? "", artist ?? "")
     }
 }
