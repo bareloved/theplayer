@@ -8,7 +8,7 @@ struct ResizableDivider: View {
     var isLeading: Bool = true  // true = divider is on the right edge of left panel
     /// Pixels reserved at the top so the visible separator line doesn't run up
     /// into the window toolbar/title area.
-    var topInset: CGFloat = 28
+    var topInset: CGFloat = 60
 
     @State private var isDragging = false
     @State private var startDimension: CGFloat = 0
