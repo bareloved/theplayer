@@ -190,6 +190,56 @@ final class LibraryService {
         save()
     }
 
+    func reorderPlaylist(playlistId: UUID, songIds: [UUID]) {
+        guard let index = library.playlists.firstIndex(where: { $0.id == playlistId }) else { return }
+        library.playlists[index].songIds = songIds
+        library.playlists[index].updatedAt = Date()
+        save()
+    }
+
+    // MARK: - Bulk operations
+
+    func reorderSetlists(_ orderedIds: [UUID]) {
+        let byId = Dictionary(uniqueKeysWithValues: library.setlists.map { ($0.id, $0) })
+        library.setlists = orderedIds.compactMap { byId[$0] }
+        save()
+    }
+
+    func reorderPlaylists(_ orderedIds: [UUID]) {
+        let byId = Dictionary(uniqueKeysWithValues: library.playlists.map { ($0.id, $0) })
+        library.playlists = orderedIds.compactMap { byId[$0] }
+        save()
+    }
+
+    func deleteSongsFromSetlist(setlistId: UUID, songIds: [UUID]) {
+        guard let index = library.setlists.firstIndex(where: { $0.id == setlistId }) else { return }
+        let toRemove = Set(songIds)
+        library.setlists[index].songIds.removeAll { toRemove.contains($0) }
+        library.setlists[index].updatedAt = Date()
+        save()
+    }
+
+    func deleteSongsFromPlaylist(playlistId: UUID, songIds: [UUID]) {
+        guard let index = library.playlists.firstIndex(where: { $0.id == playlistId }) else { return }
+        let toRemove = Set(songIds)
+        library.playlists[index].songIds.removeAll { toRemove.contains($0) }
+        library.playlists[index].updatedAt = Date()
+        save()
+    }
+
+    func deleteSetlists(ids: [UUID]) {
+        let toRemove = Set(ids)
+        library.setlists.removeAll { toRemove.contains($0.id) }
+        if let active = activeSetlistId, toRemove.contains(active) { activeSetlistId = nil }
+        save()
+    }
+
+    func deletePlaylists(ids: [UUID]) {
+        let toRemove = Set(ids)
+        library.playlists.removeAll { toRemove.contains($0.id) }
+        save()
+    }
+
     // MARK: - Setlist Playback
 
     func nextSetlistSong() -> SongEntry? {

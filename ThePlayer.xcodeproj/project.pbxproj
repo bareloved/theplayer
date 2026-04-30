@@ -11,6 +11,7 @@
 		170566C85314AC4A2FEB46DE /* TrackAnalysisTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F1524C5706C8153F2068B56 /* TrackAnalysisTests.swift */; };
 		1B6E7AF1AECFA2FC479F6173 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CF874CC40CAC2840728EE0DD /* Assets.xcassets */; };
 		1BF155F60B68A0A65B4FF1DA /* MetronomeUp.wav in Resources */ = {isa = PBXBuildFile; fileRef = CD730D3BA5523CB776870988 /* MetronomeUp.wav */; };
+		1C5DE807C46A46A80E403F04 /* LibraryServiceReorderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 215C05E55CB3CCC61B774E81 /* LibraryServiceReorderTests.swift */; };
 		1DD288275F6BB9DFFD015A75 /* MockAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1418E829CD79C1526A9FC406 /* MockAnalyzer.swift */; };
 		1E810386C675EE56EAF188E4 /* AnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AC8A6737F3381B560711A8A /* AnalysisService.swift */; };
 		1F9961EF9ED6550FACD636EE /* TiledHostingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D20613A7FD76F2EB5126DFE /* TiledHostingView.swift */; };
@@ -21,6 +22,7 @@
 		34FF45C280143157A0857F52 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2186B684F94740C4334F974F /* ContentView.swift */; };
 		3A4562BC8654BD495DE7A77C /* LoopRegion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AB80366F01A6405A511CD73 /* LoopRegion.swift */; };
 		3B3606F64ACDF745EBCA9F0B /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500D286F761A41D53CCF8686 /* SidebarView.swift */; };
+		3EA85EAEDD5C2A208DA2285D /* LibraryServiceBulkDeleteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF06C8D6CBB17B025936501C /* LibraryServiceBulkDeleteTests.swift */; };
 		4028603B18FBAA929F339EB0 /* TransportBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E87A69A0986B002C10713F7 /* TransportBar.swift */; };
 		43D8281A22B8B2527EAC848C /* AnalysisServiceMergeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 961C24BA4EF6CA9EDE1D6BD5 /* AnalysisServiceMergeTests.swift */; };
 		4464985946445D51A232FF7F /* AnalysisCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2AB0ECA2C744F843C33BCDC /* AnalysisCache.swift */; };
@@ -101,6 +103,7 @@
 		1AB80366F01A6405A511CD73 /* LoopRegion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopRegion.swift; sourceTree = "<group>"; };
 		1D20613A7FD76F2EB5126DFE /* TiledHostingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiledHostingView.swift; sourceTree = "<group>"; };
 		1F0AF6260E51CB39C12AF537 /* MetronomeDown.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = MetronomeDown.wav; sourceTree = "<group>"; };
+		215C05E55CB3CCC61B774E81 /* LibraryServiceReorderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryServiceReorderTests.swift; sourceTree = "<group>"; };
 		2186B684F94740C4334F974F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		25E6BE5FCB69D04322BDEA0A /* ThePlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThePlayerTests.swift; sourceTree = "<group>"; };
 		26BF9246DAC36B848385421B /* UserEditsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserEditsStoreTests.swift; sourceTree = "<group>"; };
@@ -154,6 +157,7 @@
 		D176EE181B6CB24E1860C08E /* ThePlayerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ThePlayerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D33D6E4513A8CE2D29BA9839 /* SectionEditorViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionEditorViewModelTests.swift; sourceTree = "<group>"; };
 		DA142BCABBA3999837117912 /* WaveformRulerBand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformRulerBand.swift; sourceTree = "<group>"; };
+		DF06C8D6CBB17B025936501C /* LibraryServiceBulkDeleteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryServiceBulkDeleteTests.swift; sourceTree = "<group>"; };
 		E2281083B564F3EF05507AAE /* FastTooltip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FastTooltip.swift; sourceTree = "<group>"; };
 		E7F5FB15393827B148F5B073 /* LibraryServiceImportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryServiceImportTests.swift; sourceTree = "<group>"; };
 		EA53DE84D432C4AB70548FC7 /* NewCollectionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewCollectionSheet.swift; sourceTree = "<group>"; };
@@ -245,7 +249,9 @@
 				62250A562DC6BF1B7B29094B /* FolderImporterTests.swift */,
 				632C41B73329494E45266981 /* JumpMathTests.swift */,
 				A2CF2463A3359CE1AB26334F /* LibraryFilteringTests.swift */,
+				DF06C8D6CBB17B025936501C /* LibraryServiceBulkDeleteTests.swift */,
 				E7F5FB15393827B148F5B073 /* LibraryServiceImportTests.swift */,
+				215C05E55CB3CCC61B774E81 /* LibraryServiceReorderTests.swift */,
 				4BBB560288245846FECACB7B /* LibraryServiceTests.swift */,
 				AB55C97EE8D9174F2C168E60 /* LoopRegionTests.swift */,
 				51EA60733C4664BD4C3178D3 /* OnsetPickerTests.swift */,
@@ -440,7 +446,9 @@
 				64187B3128F30C7C87073714 /* FolderImporterTests.swift in Sources */,
 				68155E7CB9583454B92D5EE0 /* JumpMathTests.swift in Sources */,
 				DB5D89D2C767307B9A74CFA6 /* LibraryFilteringTests.swift in Sources */,
+				3EA85EAEDD5C2A208DA2285D /* LibraryServiceBulkDeleteTests.swift in Sources */,
 				DAC0A530217FA587063DF35B /* LibraryServiceImportTests.swift in Sources */,
+				1C5DE807C46A46A80E403F04 /* LibraryServiceReorderTests.swift in Sources */,
 				8627B6EB9945F2DE636DC585 /* LibraryServiceTests.swift in Sources */,
 				A44ABC5715449232881FEF2A /* LoopRegionTests.swift in Sources */,
 				2F4C2D3D08E1E046CA75B68F /* OnsetPickerTests.swift in Sources */,
@@ -532,7 +540,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleShortVersionString\": \"0.5\", \"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"0.5\", \"LSMinimumSystemVersion\": \"14.0\"]";
+				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"0.5\", \"CFBundleShortVersionString\": \"0.5\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleDisplayName\": \"The Player\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -639,7 +647,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleShortVersionString\": \"0.5\", \"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"0.5\", \"LSMinimumSystemVersion\": \"14.0\"]";
+				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"0.5\", \"CFBundleShortVersionString\": \"0.5\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleDisplayName\": \"The Player\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
