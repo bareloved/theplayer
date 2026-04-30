@@ -35,8 +35,8 @@ struct ContentView: View {
     @State private var keyMonitor: Any?
     @State private var showLibrarySidebar = true
     @State private var showSectionsSidebar = true
-    @State private var librarySidebarWidth: CGFloat = 220
-    @State private var sectionsSidebarWidth: CGFloat = 220
+    @AppStorage("librarySidebarWidth") private var librarySidebarWidth: Double = 220
+    @AppStorage("sectionsSidebarWidth") private var sectionsSidebarWidth: Double = 220
     @State private var sectionsVM: SectionsViewModel?
     @State private var selectedSectionId: UUID?
     @State private var isBoundaryDragging: Bool = false

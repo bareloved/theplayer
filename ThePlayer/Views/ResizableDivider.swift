@@ -2,16 +2,16 @@ import SwiftUI
 
 /// A draggable divider that resizes an adjacent panel, like Finder's sidebar edge.
 struct ResizableDivider: View {
-    @Binding var dimension: CGFloat
-    let minSize: CGFloat
-    let maxSize: CGFloat
+    @Binding var dimension: Double
+    let minSize: Double
+    let maxSize: Double
     var isLeading: Bool = true  // true = divider is on the right edge of left panel
     /// Pixels reserved at the top so the visible separator line doesn't run up
     /// into the window toolbar/title area.
     var topInset: CGFloat = 60
 
     @State private var isDragging = false
-    @State private var startDimension: CGFloat = 0
+    @State private var startDimension: Double = 0
 
     var body: some View {
         Rectangle()
@@ -40,7 +40,7 @@ struct ResizableDivider: View {
                             isDragging = true
                             startDimension = dimension
                         }
-                        let delta = isLeading ? value.translation.width : -value.translation.width
+                        let delta = Double(isLeading ? value.translation.width : -value.translation.width)
                         dimension = min(max(startDimension + delta, minSize), maxSize)
                     }
                     .onEnded { _ in
