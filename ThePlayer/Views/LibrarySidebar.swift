@@ -394,8 +394,8 @@ struct LibrarySidebar: View {
     }
 
     private var editActionBar: some View {
-        HStack(spacing: 12) {
-            Button(role: .destructive) {
+        HStack(spacing: 14) {
+            iconButton(systemName: "trash", tint: .red, badge: totalSelected) {
                 if !selectedSetlistIds.isEmpty {
                     libraryService.deleteSetlists(ids: Array(selectedSetlistIds))
                     selectedSetlistIds.removeAll()
@@ -404,16 +404,15 @@ struct LibrarySidebar: View {
                     libraryService.deletePlaylists(ids: Array(selectedPlaylistIds))
                     selectedPlaylistIds.removeAll()
                 }
-            } label: {
-                Text(totalSelected == 0 ? "Delete" : "Delete \(totalSelected)")
             }
             .disabled(totalSelected == 0)
+            .help(totalSelected == 0 ? "Delete" : "Delete \(totalSelected)")
 
             Menu {
                 Button("Root (no folder)") { moveSelected(toFolder: nil) }
                 if !libraryService.library.setlistFolders.isEmpty
                     || !libraryService.library.playlistFolders.isEmpty {
-                    Divider().padding(.horizontal, 16)
+                    Divider()
                 }
                 ForEach(libraryService.library.setlistFolders) { folder in
                     Button(folder.name) { moveSelectedSetlists(toFolder: folder.id) }
@@ -424,19 +423,52 @@ struct LibrarySidebar: View {
                         .disabled(selectedPlaylistIds.isEmpty)
                 }
             } label: {
-                Text("Move to…")
+                iconLabel(systemName: "folder", tint: .primary)
             }
-            .disabled(totalSelected == 0)
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
             .fixedSize()
+            .disabled(totalSelected == 0)
+            .help("Move to folder")
 
             Spacer()
 
-            Button("Done") { isEditing = false }
-                .keyboardShortcut(.escape, modifiers: [])
+            iconButton(systemName: "checkmark.circle.fill", tint: .accentColor, badge: 0) {
+                isEditing = false
+            }
+            .keyboardShortcut(.escape, modifiers: [])
+            .help("Done")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .background(.background.secondary)
+    }
+
+    private func iconLabel(systemName: String, tint: Color) -> some View {
+        Image(systemName: systemName)
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(tint)
+            .frame(width: 28, height: 28)
+            .contentShape(Rectangle())
+    }
+
+    @ViewBuilder
+    private func iconButton(systemName: String, tint: Color, badge: Int, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            ZStack(alignment: .topTrailing) {
+                iconLabel(systemName: systemName, tint: tint)
+                if badge > 0 {
+                    Text("\(badge)")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 1)
+                        .background(Color.red, in: Capsule())
+                        .offset(x: 4, y: -2)
+                }
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     private func moveSelected(toFolder folderId: UUID?) {
