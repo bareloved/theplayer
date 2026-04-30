@@ -20,6 +20,7 @@ struct ContentView: View {
     @State private var selectedSectionId: UUID?
     @State private var isBoundaryDragging: Bool = false
     @State private var clickTrackPlayer: ClickTrackPlayer?
+    @State private var keyboardMonitor: KeyboardJumpMonitor?
     @AppStorage("clickTrackEnabled") private var clickEnabled: Bool = false
     @AppStorage("clickTrackVolume") private var clickVolume: Double = 0.5
 
@@ -161,8 +162,23 @@ struct ContentView: View {
                 pushClickAnalysis()
                 ctp.isEnabled = clickEnabled
             }
+            if keyboardMonitor == nil {
+                let monitor = KeyboardJumpMonitor(audioEngine: audioEngine) {
+                    JumpContext(
+                        snapToGrid: snapToGrid,
+                        analysis: analysisService.lastAnalysis,
+                        duration: audioEngine.duration
+                    )
+                }
+                monitor.start()
+                keyboardMonitor = monitor
+            }
         }
-        .onDisappear { removeKeyMonitor() }
+        .onDisappear {
+            removeKeyMonitor()
+            keyboardMonitor?.stop()
+            keyboardMonitor = nil
+        }
         .onChange(of: clickEnabled) { _, newValue in
             clickTrackPlayer?.isEnabled = newValue
         }
