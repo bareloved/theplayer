@@ -36,6 +36,7 @@
 		6EA5666C03AF054F8A798A8A /* LibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F97DBB529000EB77AB53A26 /* LibraryService.swift */; };
 		744B9A1F169EB3005CFCFCBA /* JumpMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA89531AC2C827AF0F485FE /* JumpMath.swift */; };
 		752D179CDF08655ACB7F930F /* HorizontalNSScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA74B35A7F37F97C50B887B2 /* HorizontalNSScrollView.swift */; };
+		75B60A49392185768B9974A6 /* LibraryFiltering.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFEBB58633A455534A131F08 /* LibraryFiltering.swift */; };
 		785D10F3EC93D4386E6E18F9 /* AudioSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AB8B7EC78716DFB858C2274 /* AudioSection.swift */; };
 		7861515EFBEFE53E2F5D6A96 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8982BCF190C14AE590C2261C /* SettingsView.swift */; };
 		7A083D949ED86A7019CA3554 /* WaveformExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3536351E8625D9CB1C72D8D5 /* WaveformExtractor.swift */; };
@@ -59,12 +60,14 @@
 		CAD3D2C0E3CD0C4850EFE74C /* ThePlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E6BE5FCB69D04322BDEA0A /* ThePlayerTests.swift */; };
 		D07083A6D6B037EBF0FBFA0F /* SectionEditorViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33D6E4513A8CE2D29BA9839 /* SectionEditorViewModelTests.swift */; };
 		D6D9A4F59AC6FC828DD2AF52 /* TimingControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = F22690D1FF10B6E1709707B6 /* TimingControls.swift */; };
+		DB5D89D2C767307B9A74CFA6 /* LibraryFilteringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2CF2463A3359CE1AB26334F /* LibraryFilteringTests.swift */; };
 		E4E2D630F2F95D928349B515 /* TimeSignatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A5476FE5A910E95D19415E /* TimeSignatureTests.swift */; };
 		E501FB1442821A07F832D30E /* WaveformRulerBand.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA142BCABBA3999837117912 /* WaveformRulerBand.swift */; };
 		E89668FE9E4738CC28475BCE /* TimeSignature.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2CED90042F451C490FE4468 /* TimeSignature.swift */; };
 		E961C393569D82BC0011A993 /* EssentiaAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 80465283817407589D4C9CAE /* EssentiaAnalyzer.mm */; };
 		E9E5CE8A32EC4A4C6BD27FC4 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15F32C86DE7BF5020059DDBD /* WaveformView.swift */; };
 		EE2D1717BDCB33510BC9D140 /* WaveformExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B90B39E3821807779A9F94D /* WaveformExtractorTests.swift */; };
+		F1DFDA1F103D4B1487F2234A /* NewCollectionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA53DE84D432C4AB70548FC7 /* NewCollectionSheet.swift */; };
 		F8CB917C7FE9FC7B86A0CD55 /* MetronomeDown.wav in Resources */ = {isa = PBXBuildFile; fileRef = 1F0AF6260E51CB39C12AF537 /* MetronomeDown.wav */; };
 		FA4E61AC6A7BC183DF97D905 /* ThePlayerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C79D8D2FE894770473CC4CE /* ThePlayerApp.swift */; };
 		FD2097AFCF4105C1759A8DE7 /* AudioEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCDBF2BE926B571A91E88911 /* AudioEngine.swift */; };
@@ -125,9 +128,11 @@
 		9BA89531AC2C827AF0F485FE /* JumpMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JumpMath.swift; sourceTree = "<group>"; };
 		9C79D8D2FE894770473CC4CE /* ThePlayerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThePlayerApp.swift; sourceTree = "<group>"; };
 		A03B07752B72C37B23CFD647 /* LibrarySidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibrarySidebar.swift; sourceTree = "<group>"; };
+		A2CF2463A3359CE1AB26334F /* LibraryFilteringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryFilteringTests.swift; sourceTree = "<group>"; };
 		A48686E6C904A6FBA6028FBF /* SectionBoundaryHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionBoundaryHandle.swift; sourceTree = "<group>"; };
 		AB55C97EE8D9174F2C168E60 /* LoopRegionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopRegionTests.swift; sourceTree = "<group>"; };
 		AD28BBF988542FAB5A10F613 /* SectionsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionsViewModel.swift; sourceTree = "<group>"; };
+		AFEBB58633A455534A131F08 /* LibraryFiltering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryFiltering.swift; sourceTree = "<group>"; };
 		B48FEF0306610EAA5B906733 /* SectionLabelBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionLabelBadge.swift; sourceTree = "<group>"; };
 		B5977AA4444DB7CCED9E19ED /* AnalysisCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisCacheTests.swift; sourceTree = "<group>"; };
 		BA74B35A7F37F97C50B887B2 /* HorizontalNSScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorizontalNSScrollView.swift; sourceTree = "<group>"; };
@@ -142,6 +147,7 @@
 		D33D6E4513A8CE2D29BA9839 /* SectionEditorViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionEditorViewModelTests.swift; sourceTree = "<group>"; };
 		DA142BCABBA3999837117912 /* WaveformRulerBand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformRulerBand.swift; sourceTree = "<group>"; };
 		E2281083B564F3EF05507AAE /* FastTooltip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FastTooltip.swift; sourceTree = "<group>"; };
+		EA53DE84D432C4AB70548FC7 /* NewCollectionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewCollectionSheet.swift; sourceTree = "<group>"; };
 		EA9B0495E1332E265855B195 /* ClickTrackPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickTrackPlayer.swift; sourceTree = "<group>"; };
 		EBAFA19FD76857DF511CB74A /* TrackAnalyzerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackAnalyzerProtocol.swift; sourceTree = "<group>"; };
 		F22690D1FF10B6E1709707B6 /* TimingControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimingControls.swift; sourceTree = "<group>"; };
@@ -227,6 +233,7 @@
 				961C24BA4EF6CA9EDE1D6BD5 /* AnalysisServiceMergeTests.swift */,
 				521777D67BC2502BC0D6E99F /* AudioEngineTests.swift */,
 				632C41B73329494E45266981 /* JumpMathTests.swift */,
+				A2CF2463A3359CE1AB26334F /* LibraryFilteringTests.swift */,
 				4BBB560288245846FECACB7B /* LibraryServiceTests.swift */,
 				AB55C97EE8D9174F2C168E60 /* LoopRegionTests.swift */,
 				51EA60733C4664BD4C3178D3 /* OnsetPickerTests.swift */,
@@ -251,6 +258,14 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		641CD4AF920A6CB0189A8B44 /* Library */ = {
+			isa = PBXGroup;
+			children = (
+				AFEBB58633A455534A131F08 /* LibraryFiltering.swift */,
+			);
+			path = Library;
+			sourceTree = "<group>";
+		};
 		6544C4598EF0BEC802A1AA71 /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -258,6 +273,7 @@
 				E2281083B564F3EF05507AAE /* FastTooltip.swift */,
 				BA74B35A7F37F97C50B887B2 /* HorizontalNSScrollView.swift */,
 				A03B07752B72C37B23CFD647 /* LibrarySidebar.swift */,
+				EA53DE84D432C4AB70548FC7 /* NewCollectionSheet.swift */,
 				7B221A466D1D4C84FEC6EC64 /* OnsetPicker.swift */,
 				593AB2B4DACBC6FD4D8B2392 /* ResizableDivider.swift */,
 				8982BCF190C14AE590C2261C /* SettingsView.swift */,
@@ -306,6 +322,7 @@
 				9C79D8D2FE894770473CC4CE /* ThePlayerApp.swift */,
 				3FC996C3A287D846CF1BD689 /* Analysis */,
 				25DB8F84A04631400078BFE6 /* Audio */,
+				641CD4AF920A6CB0189A8B44 /* Library */,
 				33C1FC8CCFBF9FC11DA9C91D /* Models */,
 				02B95F5A4A8DD91C33471F95 /* Services */,
 				6544C4598EF0BEC802A1AA71 /* Views */,
@@ -406,6 +423,7 @@
 				43D8281A22B8B2527EAC848C /* AnalysisServiceMergeTests.swift in Sources */,
 				2791E14F3AC460B2BEE28B85 /* AudioEngineTests.swift in Sources */,
 				68155E7CB9583454B92D5EE0 /* JumpMathTests.swift in Sources */,
+				DB5D89D2C767307B9A74CFA6 /* LibraryFilteringTests.swift in Sources */,
 				8627B6EB9945F2DE636DC585 /* LibraryServiceTests.swift in Sources */,
 				A44ABC5715449232881FEF2A /* LoopRegionTests.swift in Sources */,
 				2F4C2D3D08E1E046CA75B68F /* OnsetPickerTests.swift in Sources */,
@@ -436,10 +454,12 @@
 				752D179CDF08655ACB7F930F /* HorizontalNSScrollView.swift in Sources */,
 				744B9A1F169EB3005CFCFCBA /* JumpMath.swift in Sources */,
 				AC88B0D2A4BA4D308AC07D49 /* KeyboardJumpMonitor.swift in Sources */,
+				75B60A49392185768B9974A6 /* LibraryFiltering.swift in Sources */,
 				6EA5666C03AF054F8A798A8A /* LibraryService.swift in Sources */,
 				5E5720A7B16935AA06E9FF91 /* LibrarySidebar.swift in Sources */,
 				3A4562BC8654BD495DE7A77C /* LoopRegion.swift in Sources */,
 				1DD288275F6BB9DFFD015A75 /* MockAnalyzer.swift in Sources */,
+				F1DFDA1F103D4B1487F2234A /* NewCollectionSheet.swift in Sources */,
 				6ADC5C03C186AFD6A6500E34 /* OnsetPicker.swift in Sources */,
 				6DC4215F33F35BA2B290157B /* PlayerLibrary.swift in Sources */,
 				022C36FCB67CD59CD64513A4 /* Playlist.swift in Sources */,
@@ -492,7 +512,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleDisplayName\": \"The Player\", \"CFBundleShortVersionString\": \"0.5\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleVersion\": \"0.5\"]";
+				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"0.5\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"0.5\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -599,7 +619,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleDisplayName\": \"The Player\", \"CFBundleShortVersionString\": \"0.5\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleVersion\": \"0.5\"]";
+				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"0.5\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"0.5\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
