@@ -240,6 +240,68 @@ final class LibraryService {
         save()
     }
 
+    // MARK: - Folders
+
+    @discardableResult
+    func createSetlistFolder(name: String) -> LibraryFolder {
+        let folder = LibraryFolder(name: name)
+        library.setlistFolders.append(folder)
+        save()
+        return folder
+    }
+
+    @discardableResult
+    func createPlaylistFolder(name: String) -> LibraryFolder {
+        let folder = LibraryFolder(name: name)
+        library.playlistFolders.append(folder)
+        save()
+        return folder
+    }
+
+    func renameSetlistFolder(id: UUID, name: String) {
+        guard let index = library.setlistFolders.firstIndex(where: { $0.id == id }) else { return }
+        library.setlistFolders[index].name = name
+        save()
+    }
+
+    func renamePlaylistFolder(id: UUID, name: String) {
+        guard let index = library.playlistFolders.firstIndex(where: { $0.id == id }) else { return }
+        library.playlistFolders[index].name = name
+        save()
+    }
+
+    /// Removes the folder; any setlists currently inside it move back to root
+    /// (`folderId = nil`).
+    func deleteSetlistFolder(id: UUID) {
+        for i in library.setlists.indices where library.setlists[i].folderId == id {
+            library.setlists[i].folderId = nil
+        }
+        library.setlistFolders.removeAll { $0.id == id }
+        save()
+    }
+
+    func deletePlaylistFolder(id: UUID) {
+        for i in library.playlists.indices where library.playlists[i].folderId == id {
+            library.playlists[i].folderId = nil
+        }
+        library.playlistFolders.removeAll { $0.id == id }
+        save()
+    }
+
+    func moveSetlist(id: UUID, toFolder folderId: UUID?) {
+        guard let index = library.setlists.firstIndex(where: { $0.id == id }) else { return }
+        library.setlists[index].folderId = folderId
+        library.setlists[index].updatedAt = Date()
+        save()
+    }
+
+    func movePlaylist(id: UUID, toFolder folderId: UUID?) {
+        guard let index = library.playlists.firstIndex(where: { $0.id == id }) else { return }
+        library.playlists[index].folderId = folderId
+        library.playlists[index].updatedAt = Date()
+        save()
+    }
+
     // MARK: - Setlist Playback
 
     func nextSetlistSong() -> SongEntry? {

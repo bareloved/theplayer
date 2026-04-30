@@ -7,13 +7,15 @@ struct Setlist: Codable, Identifiable, Equatable, Hashable {
     var songIds: [UUID]
     var createdAt: Date
     var updatedAt: Date
+    var folderId: UUID?
 
-    init(name: String, description: String? = nil, songIds: [UUID] = []) {
+    init(name: String, description: String? = nil, songIds: [UUID] = [], folderId: UUID? = nil) {
         self.id = UUID()
         self.name = name
         self.description = description
         self.songIds = songIds
         self.createdAt = Date()
         self.updatedAt = Date()
+        self.folderId = folderId
     }
 }
