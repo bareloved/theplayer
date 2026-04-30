@@ -7,6 +7,12 @@ extension Notification.Name {
     static let openAddSongsPanel = Notification.Name("openAddSongsPanel")
 }
 
+private struct OpaqueToolbar: ViewModifier {
+    func body(content: Content) -> some View {
+        content.toolbarBackground(.visible, for: .windowToolbar)
+    }
+}
+
 private struct AddSongsPanelTrigger: ViewModifier {
     let action: () -> Void
     func body(content: Content) -> some View {
@@ -124,6 +130,7 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 800, minHeight: 500)
+        .modifier(OpaqueToolbar())
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Button(action: { showLibrarySidebar.toggle() }) {
