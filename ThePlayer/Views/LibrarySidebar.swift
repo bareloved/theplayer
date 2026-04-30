@@ -26,6 +26,7 @@ struct LibrarySidebar: View {
     @State private var isEditing: Bool = false
     @State private var selectedSetlistIds: Set<UUID> = []
     @State private var selectedPlaylistIds: Set<UUID> = []
+    @State private var selectedSongIds: Set<UUID> = []
     @AppStorage("librarySidebarSort") private var sortRaw: String = LibrarySortMode.recent.rawValue
     @AppStorage("librarySidebarSetlistsExpanded") private var setlistsExpanded: Bool = true
     @AppStorage("librarySidebarPlaylistsExpanded") private var playlistsExpanded: Bool = true
@@ -40,7 +41,9 @@ struct LibrarySidebar: View {
         return LibraryFiltering.filter(songs: sorted, query: query)
     }
 
-    private var totalSelected: Int { selectedSetlistIds.count + selectedPlaylistIds.count }
+    private var totalSelected: Int {
+        selectedSetlistIds.count + selectedPlaylistIds.count + selectedSongIds.count
+    }
 
     var body: some View {
         NavigationStack {
@@ -61,6 +64,7 @@ struct LibrarySidebar: View {
                 if !editing {
                     selectedSetlistIds.removeAll()
                     selectedPlaylistIds.removeAll()
+                    selectedSongIds.removeAll()
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .openLibraryPicker)) { _ in
@@ -143,13 +147,7 @@ struct LibrarySidebar: View {
                 emptyHint("No songs match \"\(query)\".")
             } else {
                 ForEach(visibleSongs) { song in
-                    SongItemRow(
-                        song: song,
-                        libraryService: libraryService,
-                        isCurrent: song.filePath == currentSongPath,
-                        onSelect: { onSongSelect(song) },
-                        onReanalyze: { onReanalyze(song) }
-                    )
+                    songListRow(song)
                     Divider().padding(.horizontal, 16)
                 }
             }
@@ -208,6 +206,54 @@ struct LibrarySidebar: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func songListRow(_ song: SongEntry) -> some View {
+        if isEditing {
+            Button {
+                toggleSelection(of: song.id, in: &selectedSongIds)
+            } label: {
+                editableSongRow(
+                    song: song,
+                    selected: selectedSongIds.contains(song.id),
+                    isCurrent: song.filePath == currentSongPath
+                )
+            }
+            .buttonStyle(.plain)
+        } else {
+            SongItemRow(
+                song: song,
+                libraryService: libraryService,
+                isCurrent: song.filePath == currentSongPath,
+                onSelect: { onSongSelect(song) },
+                onReanalyze: { onReanalyze(song) }
+            )
+        }
+    }
+
+    private func editableSongRow(song: SongEntry, selected: Bool, isCurrent: Bool) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                .font(.title3)
+                .foregroundStyle(selected ? Color.accentColor : .secondary)
+            Text(song.title.isEmpty ? "Unknown Title" : song.title)
+                .font(.body)
+                .foregroundStyle(isCurrent ? Color.accentColor : Color.primary)
+                .lineLimit(1)
+            Spacer()
+            if !song.fileExists {
+                Text("Missing")
+                    .font(.caption)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(.orange.opacity(0.2), in: RoundedRectangle(cornerRadius: 4))
+                    .foregroundStyle(.orange)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
     }
 
     @ViewBuilder
@@ -404,6 +450,10 @@ struct LibrarySidebar: View {
                     libraryService.deletePlaylists(ids: Array(selectedPlaylistIds))
                     selectedPlaylistIds.removeAll()
                 }
+                for songId in selectedSongIds {
+                    libraryService.deleteSong(songId: songId)
+                }
+                selectedSongIds.removeAll()
             }
             .disabled(totalSelected == 0)
             .help(totalSelected == 0 ? "Delete" : "Delete \(totalSelected)")
