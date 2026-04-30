@@ -16,7 +16,7 @@ struct ThePlayerApp: App {
                     openFilePanel()
                 }
                 .keyboardShortcut("o")
-                Button("Open from Library…") {
+                Button("Search Library") {
                     NotificationCenter.default.post(name: .openLibraryPicker, object: nil)
                 }
                 .keyboardShortcut("l", modifiers: .command)

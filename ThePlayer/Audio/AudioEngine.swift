@@ -146,29 +146,37 @@ final class AudioEngine {
         currentTime = 0
         state = .loaded
 
-        loadMetadata(url: url)
+        // Reset to filename immediately so any synchronous reader can never
+        // observe the previously-loaded file's title/artist.
+        title = url.deletingPathExtension().lastPathComponent
+        artist = ""
     }
 
-    private func loadMetadata(url: URL) {
+    /// Reads embedded title/artist from the file's metadata, updates the
+    /// engine's published `title`/`artist`, and returns the resolved values.
+    /// Awaitable so callers (e.g. saving to the library) can avoid racing
+    /// against the previous file's metadata.
+    func loadEmbeddedMetadata(url: URL) async -> (title: String, artist: String) {
         let asset = AVURLAsset(url: url)
-        Task {
-            let metadata = try? await asset.load(.commonMetadata)
-            guard let metadata else {
-                await MainActor.run {
-                    title = url.deletingPathExtension().lastPathComponent
-                    artist = ""
-                }
-                return
-            }
+        let fallbackTitle = url.deletingPathExtension().lastPathComponent
+        let resolvedTitle: String
+        let resolvedArtist: String
+        if let metadata = try? await asset.load(.commonMetadata) {
             let loadedTitle = try? await AVMetadataItem.metadataItems(from: metadata, filteredByIdentifier: .commonIdentifierTitle)
                 .first?.load(.stringValue)
             let loadedArtist = try? await AVMetadataItem.metadataItems(from: metadata, filteredByIdentifier: .commonIdentifierArtist)
                 .first?.load(.stringValue)
-            await MainActor.run {
-                title = loadedTitle ?? url.deletingPathExtension().lastPathComponent
-                artist = loadedArtist ?? ""
-            }
+            resolvedTitle = (loadedTitle ?? nil) ?? fallbackTitle
+            resolvedArtist = (loadedArtist ?? nil) ?? ""
+        } else {
+            resolvedTitle = fallbackTitle
+            resolvedArtist = ""
         }
+        await MainActor.run {
+            self.title = resolvedTitle
+            self.artist = resolvedArtist
+        }
+        return (resolvedTitle, resolvedArtist)
     }
 
     func play() {

@@ -7,6 +7,15 @@ extension Notification.Name {
     static let openAddSongsPanel = Notification.Name("openAddSongsPanel")
 }
 
+private struct AddSongsPanelTrigger: ViewModifier {
+    let action: () -> Void
+    func body(content: Content) -> some View {
+        content.onReceive(NotificationCenter.default.publisher(for: .openAddSongsPanel)) { _ in
+            action()
+        }
+    }
+}
+
 struct ContentView: View {
     @Bindable var audioEngine: AudioEngine
     @Bindable var analysisService: AnalysisService
@@ -27,7 +36,6 @@ struct ContentView: View {
     @State private var isBoundaryDragging: Bool = false
     @State private var clickTrackPlayer: ClickTrackPlayer?
     @State private var keyboardMonitor: KeyboardJumpMonitor?
-    @State private var isPickerOpen = false
     @AppStorage("clickTrackEnabled") private var clickEnabled: Bool = false
     @AppStorage("clickTrackVolume") private var clickVolume: Double = 0.5
 
@@ -133,13 +141,7 @@ struct ContentView: View {
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
             handleDrop(providers)
         }
-        .modifier(LibraryPickerHost(
-            libraryService: libraryService,
-            currentSongPath: audioEngine.fileURL?.path,
-            isPickerOpen: $isPickerOpen,
-            onOpenSong: { song in loadSongFromLibrary(song) },
-            onAddSongsRequested: { presentAddSongsPanel() }
-        ))
+        .modifier(AddSongsPanelTrigger(action: presentAddSongsPanel))
         .overlay {
             if isTargeted {
                 RoundedRectangle(cornerRadius: 12)
