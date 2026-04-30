@@ -693,14 +693,11 @@ struct FolderDisclosureRow<Content: View>: View {
             Button {
                 withAnimation(.easeInOut(duration: 0.18)) { isExpanded.toggle() }
             } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "circle")
-                        .font(.title3)
-                        .foregroundStyle(.clear)
+                HStack(spacing: 12) {
                     Image(systemName: "folder.fill")
                         .font(.title3)
                         .foregroundStyle(iconColor)
-                        .frame(width: 24, alignment: .center)
+                        .frame(width: 32, alignment: .center)
                     Text(folder.name).font(.body)
                     Spacer()
                     Image(systemName: "chevron.right")
@@ -756,16 +753,11 @@ struct LibraryItemRow: View {
     var showsChevron: Bool = true
 
     var body: some View {
-        HStack(spacing: 10) {
-            // Empty slot reserves the same horizontal space the selection
-            // circle takes in edit mode, so the row layout is identical.
-            Image(systemName: "circle")
-                .font(.title3)
-                .foregroundStyle(.clear)
+        HStack(spacing: 12) {
             Image(systemName: iconSystemName)
                 .font(.title3)
                 .foregroundStyle(iconColor)
-                .frame(width: 24, alignment: .center)
+                .frame(width: 32, alignment: .center)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.body)
                 if let subtitle, !subtitle.isEmpty {
@@ -796,11 +788,6 @@ struct SongItemRow: View {
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: 10) {
-                // Empty slot reserves the same horizontal space the selection
-                // circle takes in edit mode, so the row layout is identical.
-                Image(systemName: "circle")
-                    .font(.title3)
-                    .foregroundStyle(.clear)
                 Text(song.title.isEmpty ? "Unknown Title" : song.title)
                     .font(.body)
                     .foregroundStyle(isCurrent ? Color.accentColor : Color.primary)
