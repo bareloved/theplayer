@@ -1,6 +1,38 @@
 import AppKit
 import SwiftUI
 
+/// Hosts the LibraryPicker sheet on a parent view and bridges the
+/// `.openLibraryPicker` / `.openAddSongsPanel` notifications. Extracted to its
+/// own modifier to keep `ContentView.body`'s type-check time reasonable.
+struct LibraryPickerHost: ViewModifier {
+    let libraryService: LibraryService
+    let currentSongPath: String?
+    @Binding var isPickerOpen: Bool
+    let onOpenSong: (SongEntry) -> Void
+    let onAddSongsRequested: () -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .sheet(isPresented: $isPickerOpen) {
+                LibraryPicker(
+                    libraryService: libraryService,
+                    currentSongPath: currentSongPath,
+                    onOpen: { song in
+                        isPickerOpen = false
+                        onOpenSong(song)
+                    },
+                    onDismiss: { isPickerOpen = false }
+                )
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .openLibraryPicker)) { _ in
+                isPickerOpen = true
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .openAddSongsPanel)) { _ in
+                onAddSongsRequested()
+            }
+    }
+}
+
 struct LibraryPicker: View {
     @Bindable var libraryService: LibraryService
     let currentSongPath: String?

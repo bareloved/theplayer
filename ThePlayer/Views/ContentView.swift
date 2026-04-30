@@ -1,5 +1,11 @@
+import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
+
+extension Notification.Name {
+    static let openLibraryPicker = Notification.Name("openLibraryPicker")
+    static let openAddSongsPanel = Notification.Name("openAddSongsPanel")
+}
 
 struct ContentView: View {
     @Bindable var audioEngine: AudioEngine
@@ -21,6 +27,7 @@ struct ContentView: View {
     @State private var isBoundaryDragging: Bool = false
     @State private var clickTrackPlayer: ClickTrackPlayer?
     @State private var keyboardMonitor: KeyboardJumpMonitor?
+    @State private var isPickerOpen = false
     @AppStorage("clickTrackEnabled") private var clickEnabled: Bool = false
     @AppStorage("clickTrackVolume") private var clickVolume: Double = 0.5
 
@@ -126,6 +133,13 @@ struct ContentView: View {
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
             handleDrop(providers)
         }
+        .modifier(LibraryPickerHost(
+            libraryService: libraryService,
+            currentSongPath: audioEngine.fileURL?.path,
+            isPickerOpen: $isPickerOpen,
+            onOpenSong: { song in loadSongFromLibrary(song) },
+            onAddSongsRequested: { presentAddSongsPanel() }
+        ))
         .overlay {
             if isTargeted {
                 RoundedRectangle(cornerRadius: 12)
@@ -417,15 +431,67 @@ struct ContentView: View {
     }
 
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
-        guard let provider = providers.first else { return false }
-        provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier) { item, _ in
-            guard let data = item as? Data,
-                  let url = URL(dataRepresentation: data, relativeTo: nil) else { return }
-            Task { @MainActor in
-                openFile(url: url)
+        Task { @MainActor in
+            var urls: [URL] = []
+            for provider in providers {
+                if let url = await loadDroppedURL(from: provider) {
+                    urls.append(url)
+                }
             }
+            guard !urls.isEmpty else { return }
+            // Single audio file dropped → preserve today's "open it" behavior.
+            if urls.count == 1, !isDirectory(urls[0]) {
+                openFile(url: urls[0])
+                return
+            }
+            await importPaths(urls)
         }
         return true
+    }
+
+    private func loadDroppedURL(from provider: NSItemProvider) async -> URL? {
+        await withCheckedContinuation { cont in
+            provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier) { item, _ in
+                if let data = item as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) {
+                    cont.resume(returning: url)
+                } else {
+                    cont.resume(returning: nil)
+                }
+            }
+        }
+    }
+
+    private func isDirectory(_ url: URL) -> Bool {
+        var isDir: ObjCBool = false
+        FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
+        return isDir.boolValue
+    }
+
+    private func presentAddSongsPanel() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = true
+        panel.allowedContentTypes = [.audio]
+        panel.prompt = "Add"
+        if panel.runModal() == .OK {
+            let urls = panel.urls
+            Task { await importPaths(urls) }
+        }
+    }
+
+    private func importPaths(_ urls: [URL]) async {
+        var expanded: [URL] = []
+        for url in urls {
+            if isDirectory(url) {
+                for await audio in FolderImporter.enumerateAudioFiles(at: url) {
+                    expanded.append(audio)
+                }
+            } else {
+                expanded.append(url)
+            }
+        }
+        _ = await libraryService.addSongs(urls: expanded)
     }
 
     func openFile(url: URL) {
@@ -436,13 +502,17 @@ struct ContentView: View {
             loadError = nil
             NSDocumentController.shared.noteNewRecentDocumentURL(url)
             let fallbackTitle = url.deletingPathExtension().lastPathComponent
-            libraryService.addSong(
-                filePath: url.path,
-                title: audioEngine.title.isEmpty ? fallbackTitle : audioEngine.title,
-                artist: audioEngine.artist,
-                bpm: analysisService.lastAnalysis?.bpm ?? 0,
-                duration: audioEngine.duration
-            )
+            let capturedDuration = audioEngine.duration
+            Task { @MainActor in
+                let resolved = await audioEngine.loadEmbeddedMetadata(url: url)
+                libraryService.addSong(
+                    filePath: url.path,
+                    title: resolved.title.isEmpty ? fallbackTitle : resolved.title,
+                    artist: resolved.artist,
+                    bpm: analysisService.lastAnalysis?.bpm ?? 0,
+                    duration: capturedDuration
+                )
+            }
             Task {
                 await analysisService.analyze(fileURL: url)
             }
