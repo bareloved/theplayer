@@ -49,4 +49,34 @@ enum JumpMath {
         }
         return min(max(target, 0), duration)
     }
+
+    /// Bar-aligned snap positions across `[0, duration]`, regenerated from `firstBeatTime`
+    /// outward (forward AND backward), so a downbeat in the middle of the file produces
+    /// a fully-aligned grid. Returns `[]` when `bpm`, `beatsPerBar`, or `duration` is non-positive.
+    /// Drop-in replacement for the previous `SnapDivision.oneBar.snapPositions(...)`.
+    static func barSnapPositions(
+        beats: [Float],
+        bpm: Float,
+        duration: Float,
+        beatsPerBar: Int,
+        firstBeatTime: Float? = nil
+    ) -> [Float] {
+        guard bpm > 0, beatsPerBar > 0, duration > 0 else { return [] }
+        let origin: Float = firstBeatTime ?? (beats.first ?? 0)
+        let barWidth: Float = 60.0 / bpm * Float(beatsPerBar)
+        guard barWidth > 0 else { return [] }
+
+        var positions: [Float] = []
+        var t = origin
+        while t < duration {
+            positions.append(t)
+            t += barWidth
+        }
+        var tBack = origin - barWidth
+        while tBack >= 0 {
+            positions.insert(tBack, at: 0)
+            tBack -= barWidth
+        }
+        return positions
+    }
 }

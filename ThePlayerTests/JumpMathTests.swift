@@ -134,4 +134,42 @@ final class JumpMathTests: XCTestCase {
                                  firstBeatTime: 0.25, duration: 100))
         XCTAssertEqual(result, 2.25, accuracy: 0.0001)
     }
+
+    // MARK: - barSnapPositions
+
+    func testBarSnapPositionsFromOrigin() {
+        // bpm=240, bpb=4 → barWidth=1. Origin=0, duration=5 → [0,1,2,3,4].
+        let positions = JumpMath.barSnapPositions(beats: [0], bpm: 240, duration: 5,
+                                                  beatsPerBar: 4, firstBeatTime: 0)
+        XCTAssertEqual(positions.count, 5)
+        XCTAssertEqual(positions[0], 0, accuracy: 0.0001)
+        XCTAssertEqual(positions[1], 1, accuracy: 0.0001)
+        XCTAssertEqual(positions[4], 4, accuracy: 0.0001)
+    }
+
+    func testBarSnapPositionsExtendsBackwardFromFirstBeat() {
+        // firstBeat=2, barWidth=1, duration=5 → [0,1,2,3,4].
+        let positions = JumpMath.barSnapPositions(beats: [], bpm: 240, duration: 5,
+                                                  beatsPerBar: 4, firstBeatTime: 2)
+        XCTAssertEqual(positions.first ?? -1, 0, accuracy: 0.0001)
+        XCTAssertEqual(positions.last ?? -1, 4, accuracy: 0.0001)
+    }
+
+    func testBarSnapPositionsEmptyWhenInputsInvalid() {
+        XCTAssertTrue(JumpMath.barSnapPositions(beats: [], bpm: 0, duration: 100,
+                                                beatsPerBar: 4, firstBeatTime: 0).isEmpty)
+        XCTAssertTrue(JumpMath.barSnapPositions(beats: [], bpm: 240, duration: 100,
+                                                beatsPerBar: 0, firstBeatTime: 0).isEmpty)
+        XCTAssertTrue(JumpMath.barSnapPositions(beats: [], bpm: 240, duration: 0,
+                                                beatsPerBar: 4, firstBeatTime: 0).isEmpty)
+    }
+
+    func testBarSnapPositionsFallsBackToBeatsFirstWhenNoFirstBeat() {
+        // No firstBeatTime; first element of `beats` is the origin.
+        let positions = JumpMath.barSnapPositions(beats: [0.5], bpm: 240, duration: 3,
+                                                  beatsPerBar: 4, firstBeatTime: nil)
+        XCTAssertEqual(positions.first ?? -1, 0.5, accuracy: 0.0001)
+        XCTAssertEqual(positions[1], 1.5, accuracy: 0.0001)
+        XCTAssertEqual(positions.last ?? -1, 2.5, accuracy: 0.0001)
+    }
 }
