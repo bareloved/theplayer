@@ -6,3 +6,6 @@
 # Xcode per-user state
 xcuserdata/
 *.xcuserstate
+
+# Build output
+build/
