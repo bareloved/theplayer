@@ -332,15 +332,24 @@ private struct SetlistDetailView: View {
     @Bindable var libraryService: LibraryService
     let onSongSelect: (SongEntry, UUID, Int) -> Void
     var currentSongPath: String?
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         List {
             Section {
-                Text(setlist.name)
-                    .font(.title2.bold())
-                    .padding(.vertical, 4)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
+                HStack(spacing: 6) {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "chevron.left")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    Text(setlist.name)
+                        .font(.title2.bold())
+                }
+                .padding(.vertical, 4)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             }
 
             // Add current song button
@@ -391,6 +400,7 @@ private struct SetlistDetailView: View {
         }
         .listStyle(.sidebar)
         .navigationTitle("")
+        .navigationBarBackButtonHidden(true)
     }
 }
 
@@ -402,15 +412,24 @@ private struct PlaylistDetailView: View {
     let onSongSelect: (SongEntry) -> Void
     let onReanalyze: (SongEntry) -> Void
     var currentSongPath: String?
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         List {
             Section {
-                Text(playlist.name)
-                    .font(.title2.bold())
-                    .padding(.vertical, 4)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
+                HStack(spacing: 6) {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "chevron.left")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    Text(playlist.name)
+                        .font(.title2.bold())
+                }
+                .padding(.vertical, 4)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             }
 
             if let path = currentSongPath, let song = libraryService.library.songByPath(path) {
@@ -432,6 +451,7 @@ private struct PlaylistDetailView: View {
         }
         .listStyle(.sidebar)
         .navigationTitle("")
+        .navigationBarBackButtonHidden(true)
     }
 }
 
