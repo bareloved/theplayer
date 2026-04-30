@@ -9,6 +9,8 @@ struct TransportBar: View {
     let onNextInSetlist: () -> Void
     let timingControls: AnyView?
     @State private var showEmptyHint: Bool = false
+    @State private var showSnapHint: Bool = false
+    @State private var snapHintTask: DispatchWorkItem?
 
     var body: some View {
         VStack(spacing: 8) {
@@ -41,10 +43,24 @@ struct TransportBar: View {
             }
             .buttonStyle(.bordered)
             .tint(snapToGrid ? .purple : .secondary)
-            .help("""
-                Snap on:  ←/→ 1 bar · ⇧ 2 · ⌥ 4 · ⌘ 8 · ⌘⇧ 16
-                Snap off: ←/→ 1 s · ⇧ 2 s · ⌥ 5 s · ⌘ 15 s · ⌘⇧ 30 s
-                """)
+            .popover(isPresented: $showSnapHint, arrowEdge: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Snap on:  ←/→ 1 bar · ⇧ 2 · ⌥ 4 · ⌘ 8 · ⌘⇧ 16")
+                    Text("Snap off: ←/→ 1 s · ⇧ 2 s · ⌥ 5 s · ⌘ 15 s · ⌘⇧ 30 s")
+                }
+                .font(.caption)
+                .padding(8)
+            }
+            .onHover { hovering in
+                snapHintTask?.cancel()
+                if hovering {
+                    let task = DispatchWorkItem { showSnapHint = true }
+                    snapHintTask = task
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: task)
+                } else {
+                    showSnapHint = false
+                }
+            }
 
             if isInSetlist {
                 Button(action: onNextInSetlist) {
