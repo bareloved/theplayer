@@ -53,7 +53,6 @@ enum JumpMath {
     /// Bar-aligned snap positions across `[0, duration]`, regenerated from `firstBeatTime`
     /// outward (forward AND backward), so a downbeat in the middle of the file produces
     /// a fully-aligned grid. Returns `[]` when `bpm`, `beatsPerBar`, or `duration` is non-positive.
-    /// Drop-in replacement for the previous `SnapDivision.oneBar.snapPositions(...)`.
     static func barSnapPositions(
         beats: [Float],
         bpm: Float,

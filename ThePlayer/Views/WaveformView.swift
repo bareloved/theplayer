@@ -444,7 +444,7 @@ struct WaveformView: View {
     }
 
     /// Nearest beat time to `t`. Uses BPM-derived beat positions (independent of
-    /// the bar-level `snapDivision`), so seek/hover snap feels musical.
+    /// the bar grid), so seek/hover snap feels musical.
     private func nearestBeatTime(to t: Float) -> Float {
         guard bpm > 0, duration > 0 else { return t }
         let beatDuration: Float = 60.0 / bpm
