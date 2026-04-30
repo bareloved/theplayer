@@ -35,7 +35,14 @@ enum JumpMath {
         let barWidth: Float = 60.0 / bpm * Float(beatsPerBar)
         guard barWidth > 0 else { return nil }
 
-        let offset = (currentTime - firstBeatTime) / barWidth
+        // Snap offset to nearest integer when within Float-drift tolerance, so a
+        // currentTime that is "essentially on a bar boundary" (e.g. set by a previous
+        // seek to firstBeat + N*barWidth, which round-trips with ~ULP error) is
+        // treated as exactly on that bar — otherwise floor/ceil rounds the wrong way
+        // and the next press lands on the same bar instead of advancing.
+        let rawOffset = (currentTime - firstBeatTime) / barWidth
+        let nearestInt = rawOffset.rounded()
+        let offset: Float = abs(rawOffset - nearestInt) < 1e-4 ? nearestInt : rawOffset
         let target: Float
         switch direction {
         case .forward:

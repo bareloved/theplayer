@@ -135,6 +135,32 @@ final class JumpMathTests: XCTestCase {
         XCTAssertEqual(result, 2.25, accuracy: 0.0001)
     }
 
+    func testBarForwardDoesNotGetStuckJustBelowBoundary() throws {
+        // After a previous seek to a bar boundary, currentTime can land 1 ULP below
+        // the integer offset due to Float drift (firstBeat + N*barWidth → divide back
+        // doesn't always recover N exactly). Without snapping, forward gets stuck
+        // because floor(N - ε) + 1 = N → target = same bar.
+        let drifted = Float(27.0).nextDown // ≈ 26.999998 — exactly the failure mode
+        let result = try XCTUnwrap(JumpMath.nextBarTime(
+            from: drifted, direction: .forward, bars: 1,
+            bpm: 240, beatsPerBar: 4, // barWidth = 1.0 → drifted IS the offset
+            firstBeatTime: 0, duration: 1000
+        ))
+        XCTAssertEqual(result, 28.0, accuracy: 0.0001)
+    }
+
+    func testBarBackwardDoesNotGetStuckJustAboveBoundary() throws {
+        // Mirror case: drift puts currentTime 1 ULP above an integer offset.
+        // Without snapping, ceil(N + ε) - 1 = N → backward stuck at same bar.
+        let drifted = Float(27.0).nextUp // ≈ 27.000004
+        let result = try XCTUnwrap(JumpMath.nextBarTime(
+            from: drifted, direction: .backward, bars: 1,
+            bpm: 240, beatsPerBar: 4,
+            firstBeatTime: 0, duration: 1000
+        ))
+        XCTAssertEqual(result, 26.0, accuracy: 0.0001)
+    }
+
     // MARK: - barSnapPositions
 
     func testBarSnapPositionsFromOrigin() {
