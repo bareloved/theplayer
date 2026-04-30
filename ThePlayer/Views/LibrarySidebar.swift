@@ -44,11 +44,18 @@ struct LibrarySidebar: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                header
-                PullToRevealSearch(query: $query, scrollOffset: scrollOffset, pinned: $searchPinned)
-                scroll
-                if isEditing { editActionBar }
+            ZStack(alignment: .bottomTrailing) {
+                VStack(spacing: 0) {
+                    header
+                    PullToRevealSearch(query: $query, scrollOffset: scrollOffset, pinned: $searchPinned)
+                    scroll
+                    if isEditing { editActionBar }
+                }
+                if !isEditing {
+                    floatingNewFolderButton
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 16)
+                }
             }
             .onChange(of: isEditing) { _, editing in
                 if !editing {
@@ -147,7 +154,7 @@ struct LibrarySidebar: View {
     }
 
     private var setlistsSection: some View {
-        DisclosureGroup(isExpanded: $setlistsExpanded) {
+        collapsibleSection(title: "Setlists", isExpanded: $setlistsExpanded) {
             VStack(spacing: 0) {
                 if showFolders {
                     ForEach(libraryService.library.setlistFolders) { folder in
@@ -197,11 +204,7 @@ struct LibrarySidebar: View {
                     .buttonStyle(.plain)
                 }
             }
-        } label: {
-            sectionHeader(title: "Setlists")
         }
-        .padding(.horizontal, 0)
-        .accentColor(.secondary)
     }
 
     @ViewBuilder
@@ -234,7 +237,7 @@ struct LibrarySidebar: View {
     }
 
     private var playlistsSection: some View {
-        DisclosureGroup(isExpanded: $playlistsExpanded) {
+        collapsibleSection(title: "Playlists", isExpanded: $playlistsExpanded) {
             VStack(spacing: 0) {
                 if showFolders {
                     ForEach(libraryService.library.playlistFolders) { folder in
@@ -284,8 +287,6 @@ struct LibrarySidebar: View {
                     .buttonStyle(.plain)
                 }
             }
-        } label: {
-            sectionHeader(title: "Playlists")
         }
     }
 
@@ -371,6 +372,24 @@ struct LibrarySidebar: View {
         if set.contains(id) { set.remove(id) } else { set.insert(id) }
     }
 
+    private var floatingNewFolderButton: some View {
+        Menu {
+            Button("New setlist folder") { promptNewFolder(kind: .setlist) }
+            Button("New playlist folder") { promptNewFolder(kind: .playlist) }
+        } label: {
+            Image(systemName: "folder.badge.plus")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.primary)
+                .frame(width: 36, height: 36)
+                .background(.background.secondary, in: Circle())
+                .overlay(Circle().strokeBorder(.separator, lineWidth: 0.5))
+                .shadow(color: .black.opacity(0.18), radius: 6, y: 2)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+    }
+
     private var editActionBar: some View {
         HStack(spacing: 12) {
             Button(role: .destructive) {
@@ -445,6 +464,43 @@ struct LibrarySidebar: View {
             .padding(.horizontal, 16)
             .padding(.top, 12)
             .padding(.bottom, 4)
+    }
+
+    /// Custom collapsible section: chevron sits on the right of the title and
+    /// rotates when expanded. Avoids the default DisclosureGroup chevron that
+    /// hangs off the leading edge.
+    @ViewBuilder
+    private func collapsibleSection<Content: View>(
+        title: String,
+        isExpanded: Binding<Bool>,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.18)) {
+                    isExpanded.wrappedValue.toggle()
+                }
+            } label: {
+                HStack {
+                    Text(title.uppercased())
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                        .rotationEffect(.degrees(isExpanded.wrappedValue ? 90 : 0))
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 4)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            if isExpanded.wrappedValue {
+                content()
+            }
+        }
     }
 
     private func emptyHint(_ text: String) -> some View {
@@ -548,19 +604,33 @@ struct FolderDisclosureRow<Content: View>: View {
     private var key: String { "libraryFolderExpanded.\(folder.id.uuidString)" }
 
     var body: some View {
-        DisclosureGroup(isExpanded: $isExpanded) {
-            content()
-        } label: {
-            LibraryItemRow(
-                iconSystemName: "folder.fill",
-                iconColor: iconColor,
-                title: folder.name,
-                subtitle: nil,
-                showsChevron: false
-            )
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.18)) { isExpanded.toggle() }
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "folder.fill")
+                        .font(.title3)
+                        .foregroundStyle(iconColor)
+                        .frame(width: 32, alignment: .center)
+                    Text(folder.name).font(.body)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
             .contextMenu {
                 Button("Rename Folder…") { promptRename() }
                 Button("Delete Folder", role: .destructive) { onDelete() }
+            }
+            if isExpanded {
+                content()
             }
         }
         .onAppear {
@@ -633,7 +703,6 @@ struct SongItemRow: View {
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: 12) {
-                Color.clear.frame(width: 32)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(song.title.isEmpty ? "Unknown Title" : song.title)
                         .font(.body)
