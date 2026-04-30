@@ -1,5 +1,12 @@
+import AVFoundation
 import Foundation
 import Observation
+
+struct LibraryImportResult: Equatable {
+    var added: Int = 0
+    var skippedDuplicate: Int = 0
+    var failed: Int = 0
+}
 
 @Observable
 final class LibraryService {
@@ -102,8 +109,8 @@ final class LibraryService {
     // MARK: - Setlists
 
     @discardableResult
-    func createSetlist(name: String) -> Setlist {
-        let setlist = Setlist(name: name)
+    func createSetlist(name: String, description: String? = nil) -> Setlist {
+        let setlist = Setlist(name: name, description: description)
         library.setlists.append(setlist)
         save()
         return setlist
@@ -148,8 +155,8 @@ final class LibraryService {
     // MARK: - Playlists
 
     @discardableResult
-    func createPlaylist(name: String) -> Playlist {
-        let playlist = Playlist(name: name)
+    func createPlaylist(name: String, description: String? = nil) -> Playlist {
+        let playlist = Playlist(name: name, description: description)
         library.playlists.append(playlist)
         save()
         return playlist
@@ -216,5 +223,44 @@ final class LibraryService {
         } catch {
             print("LibraryService: save failed — \(error.localizedDescription)")
         }
+    }
+
+    // MARK: - Batch import
+
+    /// Batch-adds many files. Reads embedded metadata per file (falling back to
+    /// the filename when missing), defers a single `save()` to the end. Existing
+    /// path duplicates are counted, not re-added.
+    func addSongs(urls: [URL]) async -> LibraryImportResult {
+        var result = LibraryImportResult()
+        for url in urls {
+            if Task.isCancelled { break }
+            if library.songByPath(url.path) != nil {
+                result.skippedDuplicate += 1
+                continue
+            }
+            let (title, artist) = await Self.readMetadata(url: url)
+            let fallback = url.deletingPathExtension().lastPathComponent
+            let song = SongEntry(
+                filePath: url.path,
+                title: title.isEmpty ? fallback : title,
+                artist: artist,
+                bpm: 0,
+                duration: 0
+            )
+            library.songs.append(song)
+            result.added += 1
+        }
+        save()
+        return result
+    }
+
+    private static func readMetadata(url: URL) async -> (title: String, artist: String) {
+        let asset = AVURLAsset(url: url)
+        guard let metadata = try? await asset.load(.commonMetadata) else { return ("", "") }
+        let title = (try? await AVMetadataItem.metadataItems(from: metadata, filteredByIdentifier: .commonIdentifierTitle)
+            .first?.load(.stringValue)) ?? nil
+        let artist = (try? await AVMetadataItem.metadataItems(from: metadata, filteredByIdentifier: .commonIdentifierArtist)
+            .first?.load(.stringValue)) ?? nil
+        return (title ?? "", artist ?? "")
     }
 }

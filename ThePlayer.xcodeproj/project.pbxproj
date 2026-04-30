@@ -62,6 +62,7 @@
 		CAD3D2C0E3CD0C4850EFE74C /* ThePlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E6BE5FCB69D04322BDEA0A /* ThePlayerTests.swift */; };
 		D07083A6D6B037EBF0FBFA0F /* SectionEditorViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33D6E4513A8CE2D29BA9839 /* SectionEditorViewModelTests.swift */; };
 		D6D9A4F59AC6FC828DD2AF52 /* TimingControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = F22690D1FF10B6E1709707B6 /* TimingControls.swift */; };
+		DAC0A530217FA587063DF35B /* LibraryServiceImportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7F5FB15393827B148F5B073 /* LibraryServiceImportTests.swift */; };
 		DB5D89D2C767307B9A74CFA6 /* LibraryFilteringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2CF2463A3359CE1AB26334F /* LibraryFilteringTests.swift */; };
 		E4E2D630F2F95D928349B515 /* TimeSignatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A5476FE5A910E95D19415E /* TimeSignatureTests.swift */; };
 		E501FB1442821A07F832D30E /* WaveformRulerBand.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA142BCABBA3999837117912 /* WaveformRulerBand.swift */; };
@@ -151,6 +152,7 @@
 		D33D6E4513A8CE2D29BA9839 /* SectionEditorViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionEditorViewModelTests.swift; sourceTree = "<group>"; };
 		DA142BCABBA3999837117912 /* WaveformRulerBand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformRulerBand.swift; sourceTree = "<group>"; };
 		E2281083B564F3EF05507AAE /* FastTooltip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FastTooltip.swift; sourceTree = "<group>"; };
+		E7F5FB15393827B148F5B073 /* LibraryServiceImportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryServiceImportTests.swift; sourceTree = "<group>"; };
 		EA53DE84D432C4AB70548FC7 /* NewCollectionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewCollectionSheet.swift; sourceTree = "<group>"; };
 		EA9B0495E1332E265855B195 /* ClickTrackPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickTrackPlayer.swift; sourceTree = "<group>"; };
 		EBAFA19FD76857DF511CB74A /* TrackAnalyzerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackAnalyzerProtocol.swift; sourceTree = "<group>"; };
@@ -239,6 +241,7 @@
 				62250A562DC6BF1B7B29094B /* FolderImporterTests.swift */,
 				632C41B73329494E45266981 /* JumpMathTests.swift */,
 				A2CF2463A3359CE1AB26334F /* LibraryFilteringTests.swift */,
+				E7F5FB15393827B148F5B073 /* LibraryServiceImportTests.swift */,
 				4BBB560288245846FECACB7B /* LibraryServiceTests.swift */,
 				AB55C97EE8D9174F2C168E60 /* LoopRegionTests.swift */,
 				51EA60733C4664BD4C3178D3 /* OnsetPickerTests.swift */,
@@ -431,6 +434,7 @@
 				64187B3128F30C7C87073714 /* FolderImporterTests.swift in Sources */,
 				68155E7CB9583454B92D5EE0 /* JumpMathTests.swift in Sources */,
 				DB5D89D2C767307B9A74CFA6 /* LibraryFilteringTests.swift in Sources */,
+				DAC0A530217FA587063DF35B /* LibraryServiceImportTests.swift in Sources */,
 				8627B6EB9945F2DE636DC585 /* LibraryServiceTests.swift in Sources */,
 				A44ABC5715449232881FEF2A /* LoopRegionTests.swift in Sources */,
 				2F4C2D3D08E1E046CA75B68F /* OnsetPickerTests.swift in Sources */,
@@ -520,7 +524,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"0.5\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"0.5\"]";
+				INFOPLIST_VALUES = "[\"LSMinimumSystemVersion\": \"14.0\", \"CFBundleVersion\": \"0.5\", \"CFBundleDisplayName\": \"The Player\", \"CFBundleShortVersionString\": \"0.5\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -627,7 +631,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"CFBundleVersion\": \"0.5\", \"CFBundleDisplayName\": \"The Player\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"0.5\"]";
+				INFOPLIST_VALUES = "[\"LSMinimumSystemVersion\": \"14.0\", \"CFBundleVersion\": \"0.5\", \"CFBundleDisplayName\": \"The Player\", \"CFBundleShortVersionString\": \"0.5\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
