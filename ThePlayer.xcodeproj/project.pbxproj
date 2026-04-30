@@ -552,7 +552,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"LSMinimumSystemVersion\": \"14.0\", \"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"0.5\", \"CFBundleShortVersionString\": \"0.5\"]";
+				INFOPLIST_VALUES = "[\"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"0.6\", \"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"0.6\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -659,7 +659,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"LSMinimumSystemVersion\": \"14.0\", \"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"0.5\", \"CFBundleShortVersionString\": \"0.5\"]";
+				INFOPLIST_VALUES = "[\"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"0.6\", \"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"0.6\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
