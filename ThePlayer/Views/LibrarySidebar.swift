@@ -131,6 +131,7 @@ struct LibrarySidebar: View {
 
                     Button(action: { isAddingSetlist = true }) {
                         Label("New Setlist", systemImage: "plus")
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
@@ -177,6 +178,7 @@ struct LibrarySidebar: View {
 
                     Button(action: { isAddingPlaylist = true }) {
                         Label("New Playlist", systemImage: "plus")
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
