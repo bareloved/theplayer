@@ -46,6 +46,7 @@
 		A1FC707F579F83574BEED62C /* PlayerLibraryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19886AAD63D0E49913A39577 /* PlayerLibraryTests.swift */; };
 		A3617ECD46F2CFFC5E82B380 /* Setlist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 600A5459E47854F1CF8EC9F3 /* Setlist.swift */; };
 		A44ABC5715449232881FEF2A /* LoopRegionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB55C97EE8D9174F2C168E60 /* LoopRegionTests.swift */; };
+		AC88B0D2A4BA4D308AC07D49 /* KeyboardJumpMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A6D4583F862743FABC75AEA /* KeyboardJumpMonitor.swift */; };
 		AFC8793AE840B2F3B45ABF2B /* ClickTrackPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA9B0495E1332E265855B195 /* ClickTrackPlayer.swift */; };
 		B9F24165A95CEDA996213188 /* icon-source.svg in Resources */ = {isa = PBXBuildFile; fileRef = 06CC75C68AC33420992162FC /* icon-source.svg */; };
 		BC92147DB6AE77C3B00EBCE1 /* UserEditsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A29D01F8B31978173A6853 /* UserEditsStore.swift */; };
@@ -94,6 +95,7 @@
 		2186B684F94740C4334F974F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		25E6BE5FCB69D04322BDEA0A /* ThePlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThePlayerTests.swift; sourceTree = "<group>"; };
 		26BF9246DAC36B848385421B /* UserEditsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserEditsStoreTests.swift; sourceTree = "<group>"; };
+		2A6D4583F862743FABC75AEA /* KeyboardJumpMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardJumpMonitor.swift; sourceTree = "<group>"; };
 		2ADD12242074A22EC6EB1E5A /* SongEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongEntry.swift; sourceTree = "<group>"; };
 		3536351E8625D9CB1C72D8D5 /* WaveformExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformExtractor.swift; sourceTree = "<group>"; };
 		3DD1849C48D0FB2C04509BC8 /* SectionLabelPresets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionLabelPresets.swift; sourceTree = "<group>"; };
@@ -171,6 +173,7 @@
 				BCDBF2BE926B571A91E88911 /* AudioEngine.swift */,
 				EA9B0495E1332E265855B195 /* ClickTrackPlayer.swift */,
 				9BA89531AC2C827AF0F485FE /* JumpMath.swift */,
+				2A6D4583F862743FABC75AEA /* KeyboardJumpMonitor.swift */,
 				3536351E8625D9CB1C72D8D5 /* WaveformExtractor.swift */,
 			);
 			path = Audio;
@@ -428,6 +431,7 @@
 				E961C393569D82BC0011A993 /* EssentiaAnalyzer.mm in Sources */,
 				752D179CDF08655ACB7F930F /* HorizontalNSScrollView.swift in Sources */,
 				744B9A1F169EB3005CFCFCBA /* JumpMath.swift in Sources */,
+				AC88B0D2A4BA4D308AC07D49 /* KeyboardJumpMonitor.swift in Sources */,
 				6EA5666C03AF054F8A798A8A /* LibraryService.swift in Sources */,
 				5E5720A7B16935AA06E9FF91 /* LibrarySidebar.swift in Sources */,
 				3A4562BC8654BD495DE7A77C /* LoopRegion.swift in Sources */,
@@ -484,7 +488,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"0.5\", \"CFBundleVersion\": \"0.5\", \"CFBundleDisplayName\": \"The Player\"]";
+				INFOPLIST_VALUES = "[\"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"0.5\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"0.5\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -591,7 +595,7 @@
 					/opt/homebrew/include,
 					/opt/homebrew/include/eigen3,
 				);
-				INFOPLIST_VALUES = "[\"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"0.5\", \"CFBundleVersion\": \"0.5\", \"CFBundleDisplayName\": \"The Player\"]";
+				INFOPLIST_VALUES = "[\"CFBundleDisplayName\": \"The Player\", \"CFBundleVersion\": \"0.5\", \"LSMinimumSystemVersion\": \"14.0\", \"CFBundleShortVersionString\": \"0.5\"]";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
