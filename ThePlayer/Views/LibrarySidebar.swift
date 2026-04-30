@@ -693,11 +693,14 @@ struct FolderDisclosureRow<Content: View>: View {
             Button {
                 withAnimation(.easeInOut(duration: 0.18)) { isExpanded.toggle() }
             } label: {
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
+                    Image(systemName: "circle")
+                        .font(.title3)
+                        .foregroundStyle(.clear)
                     Image(systemName: "folder.fill")
                         .font(.title3)
                         .foregroundStyle(iconColor)
-                        .frame(width: 32, alignment: .center)
+                        .frame(width: 24, alignment: .center)
                     Text(folder.name).font(.body)
                     Spacer()
                     Image(systemName: "chevron.right")
@@ -706,7 +709,7 @@ struct FolderDisclosureRow<Content: View>: View {
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.vertical, 12)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -753,11 +756,16 @@ struct LibraryItemRow: View {
     var showsChevron: Bool = true
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
+            // Empty slot reserves the same horizontal space the selection
+            // circle takes in edit mode, so the row layout is identical.
+            Image(systemName: "circle")
+                .font(.title3)
+                .foregroundStyle(.clear)
             Image(systemName: iconSystemName)
                 .font(.title3)
                 .foregroundStyle(iconColor)
-                .frame(width: 32, alignment: .center)
+                .frame(width: 24, alignment: .center)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.body)
                 if let subtitle, !subtitle.isEmpty {
@@ -787,13 +795,16 @@ struct SongItemRow: View {
 
     var body: some View {
         Button(action: onSelect) {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(song.title.isEmpty ? "Unknown Title" : song.title)
-                        .font(.body)
-                        .foregroundStyle(isCurrent ? Color.accentColor : Color.primary)
-                        .lineLimit(1)
-                }
+            HStack(spacing: 10) {
+                // Empty slot reserves the same horizontal space the selection
+                // circle takes in edit mode, so the row layout is identical.
+                Image(systemName: "circle")
+                    .font(.title3)
+                    .foregroundStyle(.clear)
+                Text(song.title.isEmpty ? "Unknown Title" : song.title)
+                    .font(.body)
+                    .foregroundStyle(isCurrent ? Color.accentColor : Color.primary)
+                    .lineLimit(1)
                 Spacer()
                 if isCurrent {
                     Image(systemName: "speaker.wave.2.fill")
@@ -810,7 +821,7 @@ struct SongItemRow: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.vertical, 12)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
