@@ -94,7 +94,9 @@ struct LibrarySidebar: View {
             Spacer()
             HStack(spacing: 4) {
                 LibrarySortMenu(sortRaw: $sortRaw, showFolders: $showFolders)
-                Button(action: { isEditing.toggle() }) {
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.22)) { isEditing.toggle() }
+                }) {
                     Image(systemName: isEditing ? "checkmark" : "list.bullet")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(isEditing ? Color.accentColor : Color.primary)
@@ -237,6 +239,7 @@ struct LibrarySidebar: View {
             Image(systemName: selected ? "checkmark.circle.fill" : "circle")
                 .font(.title3)
                 .foregroundStyle(selected ? Color.accentColor : .secondary)
+                .transition(.move(edge: .leading).combined(with: .opacity))
             Text(song.title.isEmpty ? "Unknown Title" : song.title)
                 .font(.body)
                 .foregroundStyle(isCurrent ? Color.accentColor : Color.primary)
@@ -252,7 +255,7 @@ struct LibrarySidebar: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
     }
 
@@ -400,10 +403,11 @@ struct LibrarySidebar: View {
             Image(systemName: selected ? "checkmark.circle.fill" : "circle")
                 .font(.title3)
                 .foregroundStyle(selected ? Color.accentColor : .secondary)
+                .transition(.move(edge: .leading).combined(with: .opacity))
             Image(systemName: iconSystemName)
                 .font(.title3)
                 .foregroundStyle(iconColor)
-                .frame(width: 24, alignment: .center)
+                .frame(width: 32, alignment: .center)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.body)
                 if let subtitle, !subtitle.isEmpty {
@@ -413,7 +417,7 @@ struct LibrarySidebar: View {
             Spacer()
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
     }
 
@@ -706,7 +710,7 @@ struct FolderDisclosureRow<Content: View>: View {
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .frame(minHeight: 44)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -772,7 +776,7 @@ struct LibraryItemRow: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
     }
 }
@@ -808,7 +812,7 @@ struct SongItemRow: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
