@@ -88,18 +88,21 @@ struct LibrarySidebar: View {
         HStack {
             Text("Library").font(.largeTitle.bold())
             Spacer()
-            HStack(spacing: 0) {
+            HStack(spacing: 4) {
                 LibrarySortMenu(sortRaw: $sortRaw, showFolders: $showFolders)
-                Divider().frame(height: 18)
                 Button(action: { isEditing.toggle() }) {
                     Image(systemName: isEditing ? "checkmark" : "list.bullet")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(isEditing ? Color.accentColor : Color.primary)
-                        .frame(width: 28, height: 28)
+                        .frame(width: 22, height: 22)
+                        .padding(6)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
-            .background(.background.secondary, in: Capsule())
+            .padding(.horizontal, 4)
+            .background(.regularMaterial, in: Capsule())
+            .overlay(Capsule().strokeBorder(Color.primary.opacity(0.10), lineWidth: 0.5))
         }
         .padding(.horizontal, 16)
         .padding(.top, 12)

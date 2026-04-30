@@ -26,9 +26,12 @@ struct LibrarySortMenu: View {
             }
         } label: {
             Image(systemName: "ellipsis")
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.primary)
-                .frame(width: 28, height: 28)
+                .frame(width: 22, height: 22)
+                .overlay(Circle().strokeBorder(Color.primary.opacity(0.55), lineWidth: 1))
+                .padding(6)
+                .contentShape(Rectangle())
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
