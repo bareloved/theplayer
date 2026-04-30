@@ -522,32 +522,6 @@ struct ContentView: View {
         case 49: // Space
             audioEngine.togglePlayPause()
             return true
-        case 123: // Left arrow
-            if snapToGrid {
-                let positions = getSnapPositions()
-                if !positions.isEmpty {
-                    let prev = positions.last(where: { $0 < audioEngine.currentTime - 0.05 })
-                    audioEngine.seek(to: max(prev ?? 0, 0))
-                } else {
-                    audioEngine.skipBackward()
-                }
-            } else {
-                audioEngine.skipBackward()
-            }
-            return true
-        case 124: // Right arrow
-            if snapToGrid {
-                let positions = getSnapPositions()
-                if !positions.isEmpty {
-                    let next = positions.first(where: { $0 > audioEngine.currentTime + 0.05 })
-                    audioEngine.seek(to: min(next ?? audioEngine.duration, audioEngine.duration))
-                } else {
-                    audioEngine.skipForward()
-                }
-            } else {
-                audioEngine.skipForward()
-            }
-            return true
         case 126: // Up arrow
             audioEngine.speed += 0.05
             return true
@@ -587,17 +561,6 @@ struct ContentView: View {
         }
 
         return false
-    }
-
-    private func getSnapPositions() -> [Float] {
-        let analysis = analysisService.lastAnalysis
-        return JumpMath.barSnapPositions(
-            beats: analysis?.beats ?? [],
-            bpm: analysis?.bpm ?? 0,
-            duration: audioEngine.duration,
-            beatsPerBar: analysis?.timeSignature.beatsPerBar ?? 4,
-            firstBeatTime: analysis?.firstDownbeatTime
-        )
     }
 
     private func jumpToSection(_ index: Int) {
